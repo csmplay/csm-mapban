@@ -1,2 +1,5 @@
 ./node_modules
 .env*
+./apps/backend/node_modules
+./apps/frontend/node_modules
+./.turbo
