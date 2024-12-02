@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 type Lobby = {
     lobbyId: string;
     members: string[];
+    teams: string[];
 };
 
 export default function AdminPage() {
@@ -39,6 +40,11 @@ export default function AdminPage() {
                     {lobbies.map((lobby) => (
                         <li key={lobby.lobbyId}>
                             <strong>Lobby ID:</strong> {lobby.lobbyId}
+                            <ul>
+                                {lobby.teams.map((memberId) => (
+                                    <li key={memberId}>{memberId}</li>
+                                ))}
+                            </ul>
                             <ul>
                                 {lobby.members.map((memberId) => (
                                     <li key={memberId}>{memberId}</li>

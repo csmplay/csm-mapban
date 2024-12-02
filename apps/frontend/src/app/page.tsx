@@ -11,6 +11,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function HomePage() {
   const [lobbyId, setLobbyId] = useState('');
@@ -30,15 +31,21 @@ export default function HomePage() {
   return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
           <Card className="w-full max-w-md bg-white shadow-md">
-              <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-center text-gray-800">CSM MAP BAN</CardTitle>
-              </CardHeader>
+              <div className="text-center py-3">
+                  <Image
+                      src="/CSM Original.svg"
+                      alt="Map Image"
+                      width={100} // Adjust the width as needed
+                      height={100} // Adjust the height as needed
+                      className="mx-auto"
+                  />
+              </div>
               <CardContent className="space-y-6">
                   <Button
                       className="w-full bg-gray-800 text-white hover:bg-gray-700"
                       onClick={handleCreateLobby}
                   >
-                      Create Lobby
+                      Создать лобби
                   </Button>
                   <div className="space-y-4">
                       <Separator className="bg-gray-200"/>
@@ -64,7 +71,7 @@ export default function HomePage() {
                               onClick={handleJoinLobby}
                               disabled={lobbyId.length !== 4}
                           >
-                              Join Lobby
+                              Зайти в лобби
                           </Button>
                       </div>
               </CardContent>

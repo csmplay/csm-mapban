@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { io, Socket } from 'socket.io-client';
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Eye, Lock, Hand, Copy } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React, {useEffect, useState} from 'react';
+import {useRouter, useParams} from 'next/navigation';
+import {io, Socket} from 'socket.io-client';
+import {Button} from "@/components/ui/button"
+import {Card} from "@/components/ui/card"
+import {Input} from "@/components/ui/input"
+import {useToast} from "@/hooks/use-toast"
+import {ArrowLeft, Eye, Lock, Hand, Copy} from 'lucide-react'
+import {motion, AnimatePresence} from 'framer-motion'
 import Image from 'next/image'
 
 export default function LobbyPage() {
-    const { lobbyId } = useParams();
-    const { toast } = useToast();
+    const {lobbyId} = useParams();
+    const {toast} = useToast();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [inputMessage, setInputMessage] = useState('');
     const [mutedCards, setMutedCards] = useState<boolean[]>(Array(7).fill(false))
@@ -23,6 +23,15 @@ export default function LobbyPage() {
     const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true)
     const [teamName, setTeamName] = useState('')
     const router = useRouter();
+    const mapNames = [
+        "Nuke",
+        "Dust 2",
+        "Ancient",
+        "Inferno",
+        "Anubis",
+        "Vertigo",
+        "Mirage"
+    ]
 
     useEffect(() => {
         // Establish a new Socket.IO connection
@@ -55,6 +64,12 @@ export default function LobbyPage() {
     }, [lobbyId, mutedCards]);
 
     const handleCardClick = (index: number) => {
+        if (lastUnmutedCard === index) {
+            setSelectedPrompt(null)
+            setShowPrompts(true);
+            return;
+        }
+
         const newMutedCards = [...mutedCards]
         newMutedCards[index] = !newMutedCards[index]
         setMutedCards(newMutedCards)
@@ -68,10 +83,10 @@ export default function LobbyPage() {
         const sampleText = "https://localhost:3000/lobby/" + `${lobbyId}` + "/obs";
         navigator.clipboard.writeText(sampleText)
             .then(() => toast({
-                description: "Copied OBS URL to clipboard",
+                description: "Код для OBS скопирован в буфер обмена",
             }))
             .catch(() => toast({
-                description: "Failed to copy code to clipboard",
+                description: "Не получилось :(",
             }))
     }
 
@@ -79,10 +94,10 @@ export default function LobbyPage() {
         const sampleText = `${lobbyId}`;
         navigator.clipboard.writeText(sampleText)
             .then(() => toast({
-                description: "Code copied to clipboard",
+                description: "Код скопирован в буфер обмена",
             }))
             .catch(() => toast({
-                description: "Failed to copy code to clipboard",
+                description: "Не получилось :(",
             }))
     }
 
@@ -95,6 +110,9 @@ export default function LobbyPage() {
     const handleTeamNameSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         console.log('Team name submitted:', teamName)
+        if (socket && lobbyId && teamName) {
+            socket.emit('teamName', {lobbyId, teamName});
+        }
         setShowTeamNameOverlay(false)
     }
 
@@ -104,7 +122,7 @@ export default function LobbyPage() {
 
     const handleSendMessage = () => {
         if (socket && lobbyId && inputMessage) {
-            socket.emit('message', { lobbyId, message: inputMessage });
+            socket.emit('message', {lobbyId, message: inputMessage});
             setInputMessage('');
         }
     };
@@ -112,16 +130,20 @@ export default function LobbyPage() {
     return (
         <div className="min-h-screen bg-gray-100 p-8 relative">
             <div className="max-w-2xl mx-auto">
-                <div className="flex justify-between mb-6">
-                    <Button variant="outline" onClick={handleBackClick}>
+                <div className="flex justify-between items-center mb-6">
+                    <Button className="flex-1 max-w-xs" variant="outline" onClick={handleBackClick}>
                         <ArrowLeft className="w-4 h-4 mr-2"/>
-                        Back
+                        Главная
                     </Button>
-                    <Button variant="outline" onClick={handleCopyCodeClick}>
+                    <div className="mx-2"></div>
+                    {/* Spacer */}
+                    <Button className="flex-1 max-w-xs" variant="outline" onClick={handleCopyCodeClick}>
                         <Copy className="w-4 h-4 mr-2"/>
                         {lobbyId}
                     </Button>
-                    <Button variant="outline" onClick={handleCopyObsClick}>
+                    <div className="mx-2"></div>
+                    {/* Spacer */}
+                    <Button className="flex-1 max-w-xs" variant="outline" onClick={handleCopyObsClick}>
                         <Eye className="w-4 h-4"/>
                     </Button>
                 </div>
@@ -130,16 +152,25 @@ export default function LobbyPage() {
                         <Card
                             key={index}
                             className={`
-                p-6 flex items-center justify-between cursor-pointer transition-all duration-300
-                ${muted ? 'bg-gray-200' : 'bg-white hover:shadow-md'}
-                ${lastUnmutedCard === index ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
-                relative overflow-hidden
-              `}
+        p-6 flex items-center justify-between cursor-pointer transition-all duration-300 relative
+        overflow-hidden ${muted ? 'bg-gray-200' : 'bg-white hover:shadow-md'}
+        ${lastUnmutedCard === index ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
+    `}
                             onClick={() => handleCardClick(index)}
                         >
-              <span className={`text-xl font-bold ${muted ? 'text-gray-400 blur-sm' : 'text-gray-700'}`}>
-                Card {index + 1}
-              </span>
+                            {/* Background Image */}
+                            <Image
+                                src={`/maps/de_${mapNames[index].toLowerCase().replace(" ", "")}.png`}
+                                alt={mapNames[index]}
+                                layout="fill" // Fills the card completely
+                                objectFit="cover" // Ensures the image doesn't distort
+                                className="absolute inset-0 z-0 opacity-30 blur-sm"
+                            />
+                            {/* Card Content */}
+                            <span
+                                className={`relative z-10 text-xl font-bold ${muted ? 'text-gray-400 blur-sm' : 'text-gray-700'}`}>
+                                {mapNames[index]}
+                            </span>
                             <AnimatePresence>
                                 {(muted || (lastUnmutedCard === index && selectedPrompt)) && (
                                     <motion.div
@@ -147,7 +178,7 @@ export default function LobbyPage() {
                                         animate={{opacity: 1, x: 0}}
                                         exit={{opacity: 0, x: 20}}
                                         transition={{duration: 0.3}}
-                                        className="flex items-center"
+                                        className="flex items-center relative z-10"
                                     >
                                         {muted ? (
                                             <>
@@ -156,10 +187,10 @@ export default function LobbyPage() {
                                             </>
                                         ) : selectedPrompt ? (
                                             <Image
-                                                src={`/placeholder.svg?height=24&width=24&text=${selectedPrompt}`}
+                                                src={`/${selectedPrompt}.png`}
                                                 alt={selectedPrompt}
-                                                width={24}
-                                                height={24}
+                                                width={60}
+                                                height={60}
                                                 className="rounded-full"
                                             />
                                         ) : null}
@@ -188,23 +219,23 @@ export default function LobbyPage() {
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h2 className="text-2xl font-bold mb-4">Select a Prompt</h2>
+                            <h2 className="text-2xl font-bold mb-4">Выберите сторону</h2>
                             <div className="flex justify-center space-x-4">
                                 <Image
-                                    src="/placeholder.svg?height=100&width=100&text=Prompt 1"
-                                    alt="Prompt 1"
+                                    src="/ct.png"
+                                    alt="CT Icon"
                                     width={100}
                                     height={100}
                                     className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
-                                    onClick={() => handlePromptClick('Prompt 1')}
+                                    onClick={() => handlePromptClick('ct')}
                                 />
                                 <Image
-                                    src="/placeholder.svg?height=100&width=100&text=Prompt 2"
-                                    alt="Prompt 2"
+                                    src="/t.png"
+                                    alt="T Icon"
                                     width={100}
                                     height={100}
                                     className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
-                                    onClick={() => handlePromptClick('Prompt 2')}
+                                    onClick={() => handlePromptClick('t')}
                                 />
                             </div>
                         </motion.div>
@@ -227,7 +258,7 @@ export default function LobbyPage() {
                             transition={{duration: 0.3}}
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                         >
-                            <h2 className="text-2xl font-bold mb-4">Enter Your Team Name</h2>
+                            <h2 className="text-2xl font-bold mb-4">Введите имя команды</h2>
                             <form onSubmit={handleTeamNameSubmit} className="space-y-4">
                                 <Input
                                     type="text"
@@ -238,10 +269,10 @@ export default function LobbyPage() {
                                 />
                                 <div className="flex justify-between">
                                     <Button type="submit" disabled={!teamName.trim()}>
-                                        Submit
+                                        Подтвердить
                                     </Button>
                                     <Button type="button" variant="outline" onClick={handleSkipTeamName}>
-                                        Skip
+                                        Зритель
                                     </Button>
                                 </div>
                             </form>
