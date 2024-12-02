@@ -1,33 +1,83 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 
 export default function HomePage() {
+  const [socket, setSocket] = useState<any>(null);
+  const [lobbyId, setLobbyId] = useState('');
+  const [connected, setConnected] = useState(false);
+  const [messages, setMessages] = useState<string[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+
   useEffect(() => {
-    const socket = io('http://localhost:4000');
+    const newSocket = io('http://localhost:4000');
 
-    socket.on('connect', () => {
+    newSocket.on('connect', () => {
       console.log('Connected to Socket.IO server');
-
-      const lobbyId = 'my-lobby';
-      socket.emit('joinLobby', lobbyId);
-
-      socket.emit('message', { lobbyId, message: 'Hello Lobby!' });
+      setConnected(true);
     });
 
-    socket.on('message', (message) => {
+    newSocket.on('message', (message) => {
       console.log('Received message:', message);
+      setMessages((prevMessages) => [...prevMessages, message]);
     });
+
+    setSocket(newSocket);
 
     return () => {
-      socket.disconnect();
+      newSocket.disconnect();
     };
   }, []);
+
+  const handleJoinLobby = () => {
+    if (socket && lobbyId) {
+      socket.emit('joinLobby', lobbyId);
+      console.log(`Joined lobby ${lobbyId}`);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (socket && lobbyId && inputMessage) {
+      socket.emit('message', { lobbyId, message: inputMessage });
+      setInputMessage('');
+    }
+  };
 
   return (
       <div>
         <h1>Socket.IO with Next.js</h1>
+        {connected ? (
+            <div>
+              <input
+                  type="text"
+                  value={lobbyId}
+                  onChange={(e) => setLobbyId(e.target.value)}
+                  placeholder="Enter Lobby ID"
+              />
+              <button onClick={handleJoinLobby}>Join Lobby</button>
+
+              {lobbyId && (
+                  <div>
+                    <h2>Lobby: {lobbyId}</h2>
+                    <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        placeholder="Enter your message"
+                    />
+                    <button onClick={handleSendMessage}>Send Message</button>
+                    <ul>
+                      {messages.map((msg, idx) => (
+                          <li key={idx}>{msg}</li>
+                      ))}
+                    </ul>
+                  </div>
+              )}
+            </div>
+        ) : (
+            <p>Connecting to server...</p>
+        )}
       </div>
   );
 }
