@@ -1,6 +1,6 @@
 import express from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
+import {Server} from 'socket.io';
 import cors from 'cors';
 
 const app = express();
@@ -25,10 +25,10 @@ const port = process.env.PORT || 4000;
 // Lobby interface
 interface Lobby {
     lobbyId: string;
-    members: Set<string>; // Set of socket IDs
-    teamNames: Map<string, string>; // Map of socket ID to team name
-    picked: string[];
-    banned: string[];
+    members: Set<string>;
+    teamNames: Map<string, string>;
+    picked: Array<{ map: string; teamName: string; side: string }>;
+    banned: Array<{ map: string; teamName: string }>;
 }
 
 // Data structure to store lobbies and their members
@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('teamName', (data: { lobbyId: string; teamName: string }) => {
-        const { lobbyId, teamName } = data;
+        const {lobbyId, teamName} = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             // Update the teamNames Map
@@ -93,24 +93,25 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('pick', (data: { lobbyId: string; item: string }) => {
-        const { lobbyId, item } = data;
+    socket.on('pick', (data: { lobbyId: string; map: string; teamName: string; side: string }) => {
+        console.log(data);
+        const { lobbyId, map, teamName, side } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
-            lobby.picked.push(item);
+            lobby.picked.push({ map, teamName, side });
 
-            // Broadcast the updated picked array to all lobby members
+            // Broadcast the updated picks to all lobby members
             io.to(lobbyId).emit('pickedUpdated', lobby.picked);
         }
     });
 
-    socket.on('banned', (data: { lobbyId: string; item: string }) => {
-        const { lobbyId, item } = data;
+    socket.on('banned', (data: { lobbyId: string; map: string; teamName: string }) => {
+        const { lobbyId, map, teamName } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
-            lobby.banned.push(item);
+            lobby.banned.push({ map, teamName });
 
-            // Broadcast the updated banned array to all lobby members
+            // Broadcast the updated bans to all lobby members
             io.to(lobbyId).emit('bannedUpdated', lobby.banned);
         }
     });
@@ -151,6 +152,9 @@ io.on('connection', (socket) => {
                 lobby.members.delete(socket.id);
                 lobby.teamNames.delete(socket.id);
                 console.log(`User ${socket.id} left lobby ${lobbyId}`);
+
+                // Broadcast the updated team names to all lobby members
+                io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
 
                 // If the lobby is empty, delete it
                 if (lobby.members.size === 0) {

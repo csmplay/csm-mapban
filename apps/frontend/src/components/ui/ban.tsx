@@ -1,17 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from '@/components/ui/button'
+import React, {useState} from 'react'
+import {motion, AnimatePresence} from 'framer-motion'
+import {Button} from '@/components/ui/button'
 import Image from "next/image";
 
 interface AnimatedBanCardProps {
     teamName: string;
-    action: string;
     mapName: string;
 }
 
-export default function AnimatedBanCard({ teamName, action, mapName }: AnimatedBanCardProps) {
+export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardProps) {
     const [isVisible, setIsVisible] = useState(true)
 
     const replay = () => {
@@ -20,29 +19,32 @@ export default function AnimatedBanCard({ teamName, action, mapName }: AnimatedB
     }
 
     return (
-        <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-8 p-4">
+        <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
             <AnimatePresence mode="wait">
                 {isVisible && (
-                    <div className="relative w-80 aspect-[3/4]">
+                    <div className="relative w-80 aspect-[3/4] space-y-1">
                         {/* Team Name Section */}
                         <motion.div
-                            initial={{ x: -100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 1.2 }}
-                            className="absolute top-0 left-0 right-0 bg-gray-800 p-4"
+                            initial={{x: -100, opacity: 0}}
+                            animate={{x: 0, opacity: 1}}
+                            transition={{delay: 1}}
+                            className="absolute top-0 left-0 right-0 bg-gray-800 p-3 overflow-hidden"
                             style={{
-                                clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)'
+                                clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
+                                height: '60px'
                             }}
                         >
-                            <span className="text-xl font-bold text-white block text-center">{teamName}</span>
+                            <span className="text-3xl font-bold text-white block text-center">{
+                                teamName.length > 10 ? `${teamName.slice(0, 10)}...` : teamName
+                            }</span>
                         </motion.div>
 
                         {/* Image Section */}
                         <motion.div
-                            initial={{ scaleY: 0 }}
-                            animate={{ scaleY: 1 }}
-                            transition={{ delay: 0.8 }}
-                            style={{ originY: 1 }}
+                            initial={{y: 100, opacity: 0}}
+                            animate={{y: 0, opacity: 1}}
+                            transition={{delay: 0.5}}
+                            style={{originY: 1}}
                             className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-gray-800 overflow-hidden"
                         >
                             <Image
@@ -52,40 +54,43 @@ export default function AnimatedBanCard({ teamName, action, mapName }: AnimatedB
                                 fill
                                 object-fit="cover"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                style={{
+                                    clipPath: 'polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)'
+                                }}
                             />
                         </motion.div>
 
                         {/* Bottom Info Section */}
                         <motion.div
-                            initial={{ y: 100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
+                            initial={{y: 100, opacity: 0}}
+                            animate={{y: 0, opacity: 1}}
                             className="absolute bottom-0 left-0 right-0 bg-gray-800 p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
-                                className="flex flex-col items-center gap-2"
+                                className="flex flex-col items-center"
                                 initial="hidden"
                                 animate="visible"
                                 variants={{
-                                    hidden: { opacity: 0 },
-                                    visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.3 } }
+                                    hidden: {opacity: 0},
+                                    visible: {opacity: 1, transition: {staggerChildren: 0.2, delayChildren: 0.3}}
                                 }}
                             >
                                 <motion.div
                                     variants={{
-                                        hidden: { y: -20, opacity: 0 },
-                                        visible: { y: 0, opacity: 1 }
+                                        hidden: {y: -20, opacity: 0},
+                                        visible: {y: 0, opacity: 1}
                                     }}
                                     className="text-4xl font-bold text-white"
                                 >
-                                    {action}
+                                    BAN
                                 </motion.div>
-                                <div className="w-16 h-0.5 bg-gray-600" />
+                                <div className="w-48 h-0.5 bg-white"/>
                                 <motion.div
                                     variants={{
-                                        hidden: { y: 20, opacity: 0 },
-                                        visible: { y: 0, opacity: 1 }
+                                        hidden: {y: 20, opacity: 0},
+                                        visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-3xl text-gray-300"
+                                    className="text-3xl font-bold text-white pt-1"
                                 >
                                     {mapName}
                                 </motion.div>
@@ -94,14 +99,6 @@ export default function AnimatedBanCard({ teamName, action, mapName }: AnimatedB
                     </div>
                 )}
             </AnimatePresence>
-
-            <Button
-                onClick={replay}
-                variant="outline"
-                className="bg-gray-800 text-white hover:bg-gray-700"
-            >
-                Replay Animation
-            </Button>
         </div>
     )
 }
