@@ -18,6 +18,8 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
         setTimeout(() => setIsVisible(true), 10)
     }
 
+    const teamTextSize = teamName.length > 9 ? 'text-2xl' : 'text-3xl';
+
     return (
         <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
             <AnimatePresence mode="wait">
@@ -28,14 +30,14 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-gray-800 p-3 overflow-hidden"
+                            className="absolute top-0 left-0 right-0 bg-[#26262a] p-3 overflow-hidden"
                             style={{
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
                             }}
                         >
-                            <span className="text-3xl font-bold text-white block text-center">{
-                                teamName.length > 10 ? `${teamName.slice(0, 10)}...` : teamName
+                            <span className={`${teamTextSize} font-bold text-white block text-center`}>{
+                                teamName
                             }</span>
                         </motion.div>
 
@@ -45,7 +47,7 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
                             style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-gray-800 overflow-hidden"
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
                         >
                             <Image
                                 src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
@@ -64,7 +66,7 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-gray-800 p-4 rounded-bl-lg rounded-br-lg"
+                            className="absolute bottom-0 left-0 right-0 bg-[#26262a] p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"

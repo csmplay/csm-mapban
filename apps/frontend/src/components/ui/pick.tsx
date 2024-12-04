@@ -19,6 +19,8 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
         setTimeout(() => setIsVisible(true), 10)
     }
 
+    const teamTextSize = teamName.length > 9 ? 'text-2xl' : 'text-3xl';
+
     return (
         <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
             <AnimatePresence mode="wait">
@@ -29,7 +31,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-gray-800 px-3 overflow-hidden"
+                            className="absolute top-0 left-0 right-0 bg-[#26262a] px-3 overflow-hidden"
                             style={{
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
@@ -49,9 +51,9 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                                         hidden: {x: -20, opacity: 0},
                                         visible: {x: 0, opacity: 1}
                                     }}
-                                    className="text-3xl font-bold text-green-400 block text-center pt-3"
+                                    className={`${teamTextSize} font-bold text-[#8ce1ff] block text-center pt-3`}
                                 >
-                                    {teamName.length > 7 ? `${teamName.slice(0, 7)}...` : teamName}
+                                    {teamName}
                                 </motion.div>
                                 <motion.div
                                     variants={{
@@ -80,7 +82,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
                             style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-gray-800 overflow-hidden"
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
                         >
                             <Image
                                 src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
@@ -99,7 +101,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-green-400 p-4 rounded-bl-lg rounded-br-lg"
+                            className="absolute bottom-0 left-0 right-0 bg-[#8ce1ff] p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
