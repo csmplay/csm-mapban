@@ -87,7 +87,9 @@ io.on('connection', (socket) => {
         if (lobby) {
             // Update the teamNames Map
             lobby.teamNames.set(socket.id, teamName);
-
+            if (lobby.teamNames.size < 2) {
+                io.to(socket.id).emit('canWorkUpdated', true);
+            }
             // Broadcast the updated team names to all lobby members
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
         }
@@ -99,9 +101,11 @@ io.on('connection', (socket) => {
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             lobby.picked.push({ map, teamName, side });
+            io.to(lobbyId).emit('canWorkUpdated', false);
 
             // Broadcast the updated picks to all lobby members
             io.to(lobbyId).emit('pickedUpdated', lobby.picked);
+            io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
         }
     });
 
@@ -111,8 +115,28 @@ io.on('connection', (socket) => {
         if (lobby) {
             lobby.banned.push({ map, teamName });
 
+            // Send updated canWork to sending socket
+            io.to(socket.id).emit('canWorkUpdated', false);
+
+            // Send updated canWork to another team socket
+            let otherSocketId = "";
+            let otherName = "";
+            for (const [otherSocketIdKey, otherNames] of lobby.teamNames.entries()) {
+                if (otherNames !== teamName) {
+                    otherName = otherNames;
+                    otherSocketId = otherSocketIdKey;
+                    break;
+                }
+            }
+            io.to(otherSocketId).emit('canWorkUpdated', true);
+
             // Broadcast the updated bans to all lobby members
             io.to(lobbyId).emit('bannedUpdated', lobby.banned);
+            if (lobby.banned.length === 6) {
+                io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
+            } else {
+                io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
+            }
         }
     });
 
@@ -155,6 +179,13 @@ io.on('connection', (socket) => {
 
                 // Broadcast the updated team names to all lobby members
                 io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
+                if (lobby.teamNames.size === 0) {
+                    // Set the timer for 5 minutes to delete the lobby
+                    setTimeout(() => {
+                        lobbies.delete(lobbyId);
+                        console.log(`Lobby ${lobbyId} deleted as it has no more members`);
+                    }, 300000);
+                }
 
                 // If the lobby is empty, delete it
                 if (lobby.members.size === 0) {

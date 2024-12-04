@@ -25,7 +25,9 @@ export default function LobbyPage() {
     const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
     const [showPrompts, setShowPrompts] = useState(false);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
+    const [canWork, setCanWork] = useState(false);
     const [teamColor, setTeamColor] = useState<string>(''); // 'blue' or 'red'
+    const [gameState, setGameState] = useState<string>('Выберите карту для бана');
     const router = useRouter();
     const mapNames = [
         "Nuke",
@@ -67,18 +69,32 @@ export default function LobbyPage() {
             'pickedUpdated',
             (picked: Array<{ map: string; teamName: string; side: string }>) => {
                 setPickedMaps(picked);
+                setSelectedPrompt(picked[0].side);
+                setSelectedMapIndex(null);
             }
         );
 
         // Handle 'bannedUpdated' event
         newSocket.on('bannedUpdated', (banned: Array<{ map: string; teamName: string }>) => {
             setBannedMaps(banned);
+            setSelectedMapIndex(null);
         });
 
         // Handle 'lobbyDeleted' event
         newSocket.on('lobbyDeleted', () => {
             console.log('Lobby deleted');
             router.push('/');
+        });
+
+        // Handle 'canWorkUpdated' event
+        newSocket.on('canWorkUpdated', (canWorkVar: boolean) => {
+            setCanWork(canWorkVar);
+            setSelectedMapIndex(null);
+        });
+
+        // Handle 'gameStateUpdated' event
+        newSocket.on('gameStateUpdated', (gameStateVar: string) => {
+            setGameState(gameStateVar);
         });
 
         setSocket(newSocket);
@@ -202,12 +218,19 @@ export default function LobbyPage() {
 
                 {/* Team Names */}
                 <div className="flex justify-between items-center mb-6">
-                    <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-3xl">
+                    <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-2xl">
                         {blueTeamName}
                     </div>
-                    <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-3xl">
+                    <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-2xl">
                         {redTeamName}
                     </div>
+                </div>
+
+
+                <div className="flex justify-center items-center mb-6">
+                    <Card className="bg-white text-black px-4 py-2 rounded-lg font-bold text-xl">
+                        {gameState}
+                    </Card>
                 </div>
 
                 {/* Map Cards */}
@@ -246,7 +269,7 @@ export default function LobbyPage() {
                                             ? 'bg-gray-200'
                                             : isSelected
                                                 ? 'bg-gray-800'
-                                                : 'bg-white hover:shadow-md'
+                                                : 'bg-white hover:shadow-2xl'
                                     }
                     h-64 
                   `}
@@ -260,11 +283,13 @@ export default function LobbyPage() {
                                         priority={true}
                                         objectFit="cover"
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        className={`absolute inset-0 z-0 blur-sm ${
-                                            isDisabled && !isPicked ? 'grayscale' : ''
-                                        } transition-all duration-300`}
+                                        className={`absolute inset-0 z-0 border-4 rounded-xl ${
+                                            isDisabled && !isPicked ? 'grayscale blur-sm' : ''
+                                        } transition-all duration-300 
+                                        ${isSelected && !isPicked ? 'border-gray-500' : 'border-gray-300'}
+                                        ${isPicked ? 'border-green-400' : ''}`}
                                     />
-                                    <div className="relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md">
+                                    <div className={`relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md`}>
                     <span
                         className={`text-xl font-bold ${
                             isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
@@ -296,14 +321,14 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${selectedPrompt === 'ct' ? 't' : 'ct'}.png`}
-                                                        alt={`${selectedPrompt === 'ct' ? 't' : 'ct'}`}
+                                                        src={`/${selectedPrompt || 'ct'}.png`}
+                                                        alt={`${selectedPrompt || 'ct'}`}
                                                         draggable={false}
                                                         width={80}
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                                            banTeamColor === 'blue' ? 'border-red-500' : 'border-blue-500'
                                                         }`}
                                                     />
                                                 </motion.div>
@@ -317,8 +342,8 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${selectedPrompt || 'ct'}.png`}
-                                                        alt={`${selectedPrompt || 'ct'}`}
+                                                        src={`/${selectedPrompt === 'ct' ? 't' : 'ct'}.png`}
+                                                        alt={`${selectedPrompt === 'ct' ? 't' : 'ct'}`}
                                                         draggable={false}
                                                         width={80}
                                                         height={80}
@@ -377,12 +402,12 @@ export default function LobbyPage() {
                                                         animate={{opacity: 1}}
                                                         exit={{opacity: 0}}
                                                         transition={{duration: 0.3}}
-                                    className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
-                                        banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
-                                    }`}
-                                ></motion.div>
-                                            </motion.div>
-                                        )}
+                                                        className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
+                                                            banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                                        }`}
+                                                    ></motion.div>
+                                                </motion.div>
+                                            )}
                                     </AnimatePresence>
                                 </Card>
                             </motion.div>
@@ -392,8 +417,8 @@ export default function LobbyPage() {
 
                 {/* Submit Button */}
                 <div className="flex justify-center mt-4">
-                    <Button onClick={handleSubmit} disabled={selectedMapIndex === null}>
-                        Submit
+                    <Button onClick={handleSubmit} disabled={selectedMapIndex === null || !canWork}>
+                        Подтвердить
                     </Button>
                 </div>
             </div>

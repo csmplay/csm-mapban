@@ -1,5 +1,7 @@
-./node_modules
+node_modules
+.idea
 .env*
-./apps/backend/node_modules
-./apps/frontend/node_modules
-./.turbo
+apps/backend/node_modules
+apps/frontend/node_modules
+apps/backend/dist
+.turbo
