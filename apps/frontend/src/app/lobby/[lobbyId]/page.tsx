@@ -88,6 +88,7 @@ export default function LobbyPage() {
 
         // Handle 'canWorkUpdated' event
         newSocket.on('canWorkUpdated', (canWorkVar: boolean) => {
+            console.log("PRILETELO " + canWorkVar);
             setCanWork(canWorkVar);
             setSelectedMapIndex(null);
         });

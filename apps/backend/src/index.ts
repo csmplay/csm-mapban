@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
         if (lobby) {
             // Update the teamNames Map
             lobby.teamNames.set(socket.id, teamName);
-            if (lobby.teamNames.size < 2) {
+            if (lobby.teamNames.size < 3) {
                 io.to(socket.id).emit('canWorkUpdated', true);
             }
             // Broadcast the updated team names to all lobby members

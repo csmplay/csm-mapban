@@ -11,12 +11,15 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ClipboardCopy, Trash2, LogIn, Users } from 'lucide-react';
 
+type PickedMap = { map: string; teamName: string; side: string };
+type BannedMap = { map: string; teamName: string };
+
 type Lobby = {
     lobbyId: string;
     members: string[];
     teamNames: [string, string][]; // [socketId, teamName]
-    picked: string[];
-    banned: string[];
+    picked: PickedMap[];
+    banned: BannedMap[];
 };
 
 export default function AdminPage() {
@@ -120,7 +123,9 @@ export default function AdminPage() {
                                                 <h3 className="font-semibold text-gray-600 mb-2">Picked:</h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     {lobby.picked.map((item, index) => (
-                                                        <Badge key={index} variant="secondary">{item}</Badge>
+                                                        <Badge key={index} variant="secondary">
+                                                            {item.map} ({item.teamName}, Side: {item.side.toUpperCase()})
+                                                        </Badge>
                                                     ))}
                                                 </div>
                                             </div>
@@ -129,7 +134,9 @@ export default function AdminPage() {
                                                 <h3 className="font-semibold text-gray-600 mb-2">Banned:</h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     {lobby.banned.map((item, index) => (
-                                                        <Badge key={index} variant="destructive">{item}</Badge>
+                                                        <Badge key={index} variant="destructive">
+                                                            {item.map} ({item.teamName})
+                                                        </Badge>
                                                     ))}
                                                 </div>
                                             </div>
@@ -164,4 +171,3 @@ export default function AdminPage() {
         </div>
     );
 }
-
