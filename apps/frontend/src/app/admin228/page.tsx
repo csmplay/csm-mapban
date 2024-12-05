@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ClipboardCopy, Trash2, LogIn, Users } from 'lucide-react';
+import { ClipboardCopy, Trash2, LogIn, Users, Eye } from 'lucide-react';
 
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
@@ -149,8 +149,8 @@ export default function AdminPage() {
                                         Connect
                                     </Button>
                                     <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline" className="flex-1">
-                                        <ClipboardCopy className="w-4 h-4 mr-2" />
-                                        Copy Link
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        Copy Obs Link
                                     </Button>
                                     <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive" className="flex-1">
                                         <Trash2 className="w-4 h-4 mr-2" />

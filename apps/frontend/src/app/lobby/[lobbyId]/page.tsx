@@ -201,7 +201,7 @@ export default function LobbyPage() {
         <div className="min-h-screen bg-gray-100 p-8 relative">
             <div className="max-w-6xl mx-auto">
                 {/* Header Buttons */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center mb-6">
                     <Button className="flex-1 max-w-xs" variant="outline" onClick={handleBackClick}>
                         <ArrowLeft className="w-4 h-4 mr-2"/>
                         Главная
@@ -212,9 +212,6 @@ export default function LobbyPage() {
                         {lobbyId}
                     </Button>
                     <div className="mx-2"></div>
-                    <Button className="flex-1 max-w-xs" variant="outline" onClick={handleCopyObsClick}>
-                        <Eye className="w-4 h-4"/>
-                    </Button>
                 </div>
 
                 {/* Team Names */}
