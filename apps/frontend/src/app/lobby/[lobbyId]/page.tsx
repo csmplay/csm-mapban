@@ -53,6 +53,7 @@ export default function LobbyPage() {
 
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
+            console.log(teamNamesArray);
             setTeamNames(teamNamesArray);
 
             // // Set team color based on the user's team
@@ -72,13 +73,7 @@ export default function LobbyPage() {
                 setPickedMaps(picked);
                 setSelectedPrompt(picked[0].side);
                 setSelectedMapIndex(null);
-                const blueTeamEntry = teamNames[0];
-                const blueTeamName = blueTeamEntry ? blueTeamEntry[1] : 'Team Blue';
-                if (teamName === blueTeamName) {
-                    setPickColor('blue');
-                } else {
-                    setPickColor('red');
-                }
+                setPickColor(picked[0].teamName);
             }
         );
 
@@ -90,7 +85,6 @@ export default function LobbyPage() {
 
         // Handle 'lobbyDeleted' event
         newSocket.on('lobbyDeleted', () => {
-            console.log('Lobby deleted');
             router.push('/');
         });
 
@@ -332,7 +326,7 @@ export default function LobbyPage() {
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            pickColor === 'red' ? 'border-red-500' : 'border-blue-500'
+                                                            pickColor === redTeamName ? 'border-red-500' : 'border-blue-500'
                                                         }`}
                                                     />
                                                 </motion.div>
@@ -353,7 +347,7 @@ export default function LobbyPage() {
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            pickColor === 'red' ? 'border-blue-500' : 'border-red-500'
+                                                            pickColor === redTeamName ? 'border-blue-500' : 'border-red-500'
                                                         }`}
                                                     />
                                                 </motion.div>
