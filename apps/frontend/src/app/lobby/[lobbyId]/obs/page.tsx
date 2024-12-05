@@ -26,7 +26,7 @@ type Action = BanAction | PickAction;
 
 const LobbyObsPage = () => {
     const { lobbyId } = useParams();
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const [_, setSocket] = useState<Socket | null>(null);
     const [actions, setActions] = useState<Action[]>([]);
 
     useEffect(() => {

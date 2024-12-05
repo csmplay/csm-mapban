@@ -7,7 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
-import {ArrowLeft, Eye, Copy} from 'lucide-react';
+import {ArrowLeft, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
 
@@ -26,7 +26,8 @@ export default function LobbyPage() {
     const [showPrompts, setShowPrompts] = useState(false);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [canWork, setCanWork] = useState(false);
-    const [teamColor, setTeamColor] = useState<string>(''); // 'blue' or 'red'
+    const [pickColor, setPickColor] = useState('');
+    //const [teamColor, setTeamColor] = useState<string>(''); // 'blue' or 'red'
     const [gameState, setGameState] = useState<string>('Выберите карту для бана');
     const router = useRouter();
     const mapNames = [
@@ -54,14 +55,14 @@ export default function LobbyPage() {
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
 
-            // Set team color based on the user's team
-            const userTeam = teamNamesArray.find(([socketId]) => socketId === newSocket.id);
-            const teamIndex = teamNamesArray.findIndex(([socketId]) => socketId === newSocket.id);
-            if (userTeam) {
-                setTeamColor(teamIndex === 0 ? 'blue' : 'red');
-            } else {
-                setTeamColor(''); // Spectator or not assigned
-            }
+            // // Set team color based on the user's team
+            // const userTeam = teamNamesArray.find(([socketId]) => socketId === newSocket.id);
+            // const teamIndex = teamNamesArray.findIndex(([socketId]) => socketId === newSocket.id);
+            // if (userTeam) {
+            //     setTeamColor(teamIndex === 0 ? 'blue' : 'red');
+            // } else {
+            //     setTeamColor(''); // Spectator or not assigned
+            // }
         });
 
         // Handle 'pickedUpdated' event
@@ -71,6 +72,13 @@ export default function LobbyPage() {
                 setPickedMaps(picked);
                 setSelectedPrompt(picked[0].side);
                 setSelectedMapIndex(null);
+                const blueTeamEntry = teamNames[0];
+                const blueTeamName = blueTeamEntry ? blueTeamEntry[1] : 'Team Blue';
+                if (teamName === blueTeamName) {
+                    setPickColor('blue');
+                } else {
+                    setPickColor('red');
+                }
             }
         );
 
@@ -88,7 +96,6 @@ export default function LobbyPage() {
 
         // Handle 'canWorkUpdated' event
         newSocket.on('canWorkUpdated', (canWorkVar: boolean) => {
-            console.log("PRILETELO " + canWorkVar);
             setCanWork(canWorkVar);
             setSelectedMapIndex(null);
         });
@@ -178,12 +185,12 @@ export default function LobbyPage() {
         router.push('/');
     };
 
-    const handleCopyObsClick = () => {
-        const sampleText = `http://localhost:3000/lobby/${lobbyId}/obs`;
-        navigator.clipboard.writeText(sampleText)
-            .then(() => toast({description: "Ссылка для OBS скопирована в буфер обмена"}))
-            .catch(() => toast({description: "Не получилось :("}));
-    };
+    // const handleCopyObsClick = () => {
+    //     const sampleText = `http://localhost:3000/lobby/${lobbyId}/obs`;
+    //     navigator.clipboard.writeText(sampleText)
+    //         .then(() => toast({description: "Ссылка для OBS скопирована в буфер обмена"}))
+    //         .catch(() => toast({description: "Не получилось :("}));
+    // };
 
     const handleCopyCodeClick = () => {
         navigator.clipboard.writeText(`${lobbyId}`)
@@ -246,8 +253,8 @@ export default function LobbyPage() {
                                     ? 'red'
                                     : null;
 
-                        const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
-                        const pickSide = pickEntry ? pickEntry.side : null;
+                        // const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
+                        // const pickSide = pickEntry ? pickEntry.side : null;
 
                         return (
                             <motion.div
@@ -325,7 +332,7 @@ export default function LobbyPage() {
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            banTeamColor === 'blue' ? 'border-red-500' : 'border-blue-500'
+                                                            pickColor === 'red' ? 'border-red-500' : 'border-blue-500'
                                                         }`}
                                                     />
                                                 </motion.div>
@@ -346,7 +353,7 @@ export default function LobbyPage() {
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                                            pickColor === 'red' ? 'border-blue-500' : 'border-red-500'
                                                         }`}
                                                     />
                                                 </motion.div>
@@ -377,8 +384,7 @@ export default function LobbyPage() {
                                                     >
 
                                                         <div
-                                                            className={`transform text-${
-                                                                banTeamColor === 'blue' ? 'blue-500' : 'red-500'} 
+                                                            className={`transform text-white
                                             px-4 py-1 font-bold text-xl`}
                                                             style={{
                                                                 position: 'absolute',
