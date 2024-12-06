@@ -15,7 +15,7 @@ export default function LobbyPage() {
     const {lobbyId} = useParams();
     const {toast} = useToast();
     const [socket, setSocket] = useState<Socket | null>(null);
-    const [teamNames, setTeamNames] = useState<[string, string][]>([]); // [socketId, teamName]
+    const [teamNames, setTeamNames] = useState<[string, string][]>([]);
     const [pickedMaps, setPickedMaps] = useState<
         Array<{ map: string; teamName: string; side: string }>
     >([]);
@@ -27,7 +27,6 @@ export default function LobbyPage() {
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [canWork, setCanWork] = useState(false);
     const [pickColor, setPickColor] = useState('');
-    //const [teamColor, setTeamColor] = useState<string>(''); // 'blue' or 'red'
     const [gameState, setGameState] = useState<string>('Выберите карту для бана');
     const router = useRouter();
     const mapNames = [
@@ -55,15 +54,6 @@ export default function LobbyPage() {
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             console.log(teamNamesArray);
             setTeamNames(teamNamesArray);
-
-            // // Set team color based on the user's team
-            // const userTeam = teamNamesArray.find(([socketId]) => socketId === newSocket.id);
-            // const teamIndex = teamNamesArray.findIndex(([socketId]) => socketId === newSocket.id);
-            // if (userTeam) {
-            //     setTeamColor(teamIndex === 0 ? 'blue' : 'red');
-            // } else {
-            //     setTeamColor(''); // Spectator or not assigned
-            // }
         });
 
         // Handle 'pickedUpdated' event

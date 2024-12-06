@@ -29,10 +29,17 @@ interface Lobby {
     teamNames: Map<string, string>;
     picked: Array<{ map: string; teamName: string; side: string }>;
     banned: Array<{ map: string; teamName: string }>;
+    gameType: number;
+    gameStateList: Set<string>;
 }
 
 // Data structure to store lobbies and their members
 const lobbies = new Map<string, Lobby>();
+const gameTypeLists = [
+    ['ban', 'ban', 'ban', 'ban', 'ban', 'ban', 'pick'], // 0 Element - BO1
+    ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'pick'], // 1 Element - BO3
+    ['ban', 'ban', 'pick', 'pick', 'pick', 'pick', 'pick'], // 2 Element - BO5
+]
 
 app.get('/', (_req, res) => {
     res.send('Express + TypeScript Server');
@@ -46,6 +53,8 @@ app.get('/admin/lobbies', (_req, res) => {
         teamNames: Array.from(lobby.teamNames.entries()),
         picked: lobby.picked,
         banned: lobby.banned,
+        gameType: lobby.gameType,
+        gameStateList: Array.from(lobby.gameStateList),
     }));
     res.json(lobbyList);
 });
@@ -70,6 +79,8 @@ io.on('connection', (socket) => {
                 teamNames: new Map<string, string>(),
                 picked: [],
                 banned: [],
+                gameType: 0,
+                gameStateList: new Set<string>()
             };
             lobbies.set(lobbyId, lobby);
         }
@@ -81,15 +92,50 @@ io.on('connection', (socket) => {
         socket.data.lobbies.add(lobbyId);
     });
 
+    socket.on('gameType', (data: {lobbyId: string; gameType: number }) => {
+        const {lobbyId, gameType} = data;
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            lobby.gameType = data.gameType;
+
+            for (let i = 0; i < 7; i++) {
+                lobby.gameStateList.add(gameTypeLists[gameType][i]);
+            }
+
+            io.to(lobbyId).emit('gameTypeUpdate', gameType);
+        }
+    });
+
+    // Process choosing the side of the coin
+    // TODO: Maybe put deciding logic here???
+    socket.on('coinSide', (data: {lobbyId: string; gameType: number}) => {
+
+    })
+
+    // TODO: Change it so that it waits for two entries and then decides who won
+    socket.on('coin', (data: {lobbyId: string; teamName: string; }) => {
+        const {lobbyId, teamName} = data;
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            // Give the right permission to go for the team that won according to rules (BO1, BO3, BO5)
+            // Also broadcast the game state to everybody
+            if (lobby.gameStateList.values().next().value === 'ban') {
+                io.to(socket.id).emit('canBan');
+                io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбирают карту для бана');
+            } else {
+                io.to(socket.id).emit('canPick');
+                io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбирают карту для пика');
+            }
+        }
+    })
+
     socket.on('teamName', (data: { lobbyId: string; teamName: string }) => {
         const {lobbyId, teamName} = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             // Update the teamNames Map
             lobby.teamNames.set(socket.id, teamName);
-            if (lobby.teamNames.size < 3) {
-                io.to(socket.id).emit('canWorkUpdated', true);
-            }
+
             // Broadcast the updated team names to all lobby members
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
         }
