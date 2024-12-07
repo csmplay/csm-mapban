@@ -108,12 +108,16 @@ io.on('connection', (socket) => {
 
     // Process choosing the side of the coin
     // TODO: Maybe put deciding logic here???
-    socket.on('coinSide', (data: {lobbyId: string; gameType: number}) => {
+        socket.on('coinSide', (data: {lobbyId: string; teamName: number}) => {
+            const {lobbyId, side} = data;
+            const lobby = lobbies.get(lobbyId);
+            if (lobby) {
 
+            }
     })
 
     // TODO: Change it so that it waits for two entries and then decides who won
-    socket.on('coin', (data: {lobbyId: string; teamName: string; }) => {
+    socket.on('coin', (data: { lobbyId: string; teamName: string; }) => {
         const {lobbyId, teamName} = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
