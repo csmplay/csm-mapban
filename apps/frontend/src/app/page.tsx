@@ -17,6 +17,7 @@ import {AnimatePresence, motion} from "framer-motion";
 export default function HomePage() {
     const [lobbyId, setLobbyId] = useState('');
     const [showJoinLobbyOverlay, setShowJoinLobbyOverlay] = useState(false);
+    const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
     const router = useRouter();
 
     const handleJoinLobby = () => {
@@ -27,6 +28,12 @@ export default function HomePage() {
 
     const handleCreateLobby = () => {
         let rndmId = Math.floor(1000 + Math.random() * 9000).toString();
+        // TODO: Handle option to start a lobby without coin flip
+        //  + Choosing rules (BO1, BO3, BO5)
+        //  Plan:
+        //  Planning to move socket.emit('joinLobby') here with passing chosen settings
+        //  both for game rules and coin flip server doesn't need to send back anything.
+        //  However, when you join the lobby, you don't need to send anything.
         router.push(`/lobby/${rndmId}`);
     };
 

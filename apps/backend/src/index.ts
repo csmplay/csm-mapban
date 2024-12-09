@@ -80,7 +80,8 @@ io.on('connection', (socket) => {
                 picked: [],
                 banned: [],
                 gameType: 0,
-                gameStateList: new Set<string>()
+                gameStateList: new Set<string>(),
+                // Maybe add coinflip variable for setting coin flipping in games
             };
             lobbies.set(lobbyId, lobby);
         }
@@ -106,33 +107,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Process choosing the side of the coin
-    // TODO: Maybe put deciding logic here???
-        socket.on('coinSide', (data: {lobbyId: string; teamName: number}) => {
-            const {lobbyId, side} = data;
-            const lobby = lobbies.get(lobbyId);
-            if (lobby) {
-
-            }
-    })
-
-    // TODO: Change it so that it waits for two entries and then decides who won
-    socket.on('coin', (data: { lobbyId: string; teamName: string; }) => {
-        const {lobbyId, teamName} = data;
-        const lobby = lobbies.get(lobbyId);
-        if (lobby) {
-            // Give the right permission to go for the team that won according to rules (BO1, BO3, BO5)
-            // Also broadcast the game state to everybody
-            if (lobby.gameStateList.values().next().value === 'ban') {
-                io.to(socket.id).emit('canBan');
-                io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбирают карту для бана');
-            } else {
-                io.to(socket.id).emit('canPick');
-                io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбирают карту для пика');
-            }
-        }
-    })
-
     socket.on('teamName', (data: { lobbyId: string; teamName: string }) => {
         const {lobbyId, teamName} = data;
         const lobby = lobbies.get(lobbyId);
@@ -142,6 +116,20 @@ io.on('connection', (socket) => {
 
             // Broadcast the updated team names to all lobby members
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
+
+            // With two teams present flip the coin and assign values for initiating mapban
+            if (lobby.teamNames.size === 2) {
+                const result = Math.floor(Math.random() * 2);
+                io.to(lobbyId).emit('coinFlip', result);
+                const entry = Array.from(lobby.teamNames.entries())[result];
+                if (lobby.gameStateList.values().next().value === 'ban') {
+                    io.to(entry[1]).emit('canBan');
+                    io.to(lobbyId).emit('gameStateUpdated', entry[0] + ' выбирают карту для бана');
+                } else {
+                    io.to(entry[1]).emit('canPick');
+                    io.to(lobbyId).emit('gameStateUpdated', entry[0] + ' выбирают карту для пика');
+                }
+            }
         }
     });
 

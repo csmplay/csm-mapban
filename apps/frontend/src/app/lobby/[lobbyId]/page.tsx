@@ -27,7 +27,10 @@ export default function LobbyPage() {
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [canWork, setCanWork] = useState(false);
     const [pickColor, setPickColor] = useState('');
-    const [gameState, setGameState] = useState<string>('Выберите карту для бана');
+    const [gameState, setGameState] = useState<string>('');
+    const [canPick, setCanPick] = useState(false);
+    const [canBan, setCanBan] = useState(false);
+    const [coinFlip, setCoinFlip] = useState(true);
     const router = useRouter();
     const mapNames = [
         "Nuke",
@@ -88,6 +91,18 @@ export default function LobbyPage() {
         newSocket.on('gameStateUpdated', (gameStateVar: string) => {
             setGameState(gameStateVar);
         });
+
+        newSocket.on('canBan', () => {
+            setCanBan(true);
+        })
+
+        newSocket.on('canPick', () => {
+            setCanPick(true);
+        })
+
+        newSocket.on('coinFlip', (result: number) => {
+            setCoinFlip(false);
+        })
 
         setSocket(newSocket);
 
