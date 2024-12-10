@@ -31,6 +31,7 @@ interface Lobby {
     banned: Array<{ map: string; teamName: string }>;
     gameType: number;
     gameStateList: Set<string>;
+    coinFlip: boolean;
 }
 
 // Data structure to store lobbies and their members
@@ -55,6 +56,7 @@ app.get('/admin/lobbies', (_req, res) => {
         banned: lobby.banned,
         gameType: lobby.gameType,
         gameStateList: Array.from(lobby.gameStateList),
+        coinFlip: lobby.coinFlip,
     }));
     res.json(lobbyList);
 });
@@ -72,17 +74,37 @@ io.on('connection', (socket) => {
         // Check if the lobby exists
         let lobby = lobbies.get(lobbyId);
         if (!lobby) {
+            io.to(socket.id).emit('lobbyUndefined', lobbyId);
+            return;
+        }
+
+        // Add the socket ID to the lobby's member list
+        lobby.members.add(socket.id);
+
+        // Add the lobbyId to the socket's list of lobbies
+        socket.data.lobbies.add(lobbyId);
+    });
+
+    socket.on('createLobby', (data: {lobbyId: string; gameType: number; coinFlip: boolean }) => {
+        const {lobbyId, gameType, coinFlip} = data;
+        socket.join(data.lobbyId);
+        console.log(`User ${socket.id} created lobby ${data.lobbyId}`);
+
+        // Create a new lobby
+        let lobby = lobbies.get(lobbyId);
+        if (!lobby) {
             // Create a new lobby
             lobby = {
-                lobbyId,
+                lobbyId: data.lobbyId,
                 members: new Set<string>(),
                 teamNames: new Map<string, string>(),
                 picked: [],
                 banned: [],
-                gameType: 0,
+                gameType: data.gameType,
                 gameStateList: new Set<string>(),
-                // Maybe add coinflip variable for setting coin flipping in games
+                coinFlip: data.coinFlip,
             };
+
             lobbies.set(lobbyId, lobby);
         }
 

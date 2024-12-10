@@ -44,6 +44,8 @@ export default function LobbyPage() {
 
     useEffect(() => {
         const newSocket = io('http://localhost:4000');
+        // TODO: Don't join the lobby if you're the creator of the lobby
+        //  Also fix the creation of unidentified lobby
 
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
