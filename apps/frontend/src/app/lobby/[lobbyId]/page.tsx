@@ -11,6 +11,13 @@ import {ArrowLeft, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
 
+// TODO:
+//  1. Add needed variables and states
+//  2. Add needed socket calls
+//  3. Handle + send socket calls
+//  4. Coin animation
+//  5. Handle rights given from socket calls
+
 export default function LobbyPage() {
     const {lobbyId} = useParams();
     const {toast} = useToast();
@@ -27,10 +34,12 @@ export default function LobbyPage() {
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [canWork, setCanWork] = useState(false);
     const [pickColor, setPickColor] = useState('');
-    const [gameState, setGameState] = useState<string>('');
+    const [gameState, setGameState] = useState<string>('Игра начинается...');
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [isAnimated, setIsAnimated] = useState(false);
+    const [coinResult, setCoinResult] = useState<number>(0);
     const [canPick, setCanPick] = useState(false);
     const [canBan, setCanBan] = useState(false);
-    const [coinFlip, setCoinFlip] = useState(true);
     const router = useRouter();
     const mapNames = [
         "Nuke",
@@ -44,8 +53,6 @@ export default function LobbyPage() {
 
     useEffect(() => {
         const newSocket = io('http://localhost:4000');
-        // TODO: Don't join the lobby if you're the creator of the lobby
-        //  Also fix the creation of unidentified lobby
 
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
@@ -57,14 +64,11 @@ export default function LobbyPage() {
 
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
-            console.log(teamNamesArray);
             setTeamNames(teamNamesArray);
         });
 
         // Handle 'pickedUpdated' event
-        newSocket.on(
-            'pickedUpdated',
-            (picked: Array<{ map: string; teamName: string; side: string }>) => {
+        newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
                 setPickedMaps(picked);
                 setSelectedPrompt(picked[0].side);
                 setSelectedMapIndex(null);
@@ -80,6 +84,13 @@ export default function LobbyPage() {
 
         // Handle 'lobbyDeleted' event
         newSocket.on('lobbyDeleted', () => {
+            console.log('lobbyDeleted');
+            router.push('/');
+        });
+
+        // Handle 'lobbyUndefined'
+        newSocket.on('lobbyUndefined', () => {
+            console.log('lobbyUndefined');
             router.push('/');
         });
 
@@ -103,7 +114,12 @@ export default function LobbyPage() {
         })
 
         newSocket.on('coinFlip', (result: number) => {
-            setCoinFlip(false);
+            setCoinResult(result);
+            setIsWaiting(false);
+            setIsAnimated(true);
+            setTimeout(() => {
+                setShowTeamNameOverlay(false);
+            }, 7000); // NOT SURE ABOUT THAT
         })
 
         setSocket(newSocket);
@@ -132,20 +148,23 @@ export default function LobbyPage() {
 
         const mapName = mapNames[selectedMapIndex];
 
-        const remainingMaps = mapNames.filter(
-            (map) =>
-                !pickedMaps.some((pick) => pick.map === map) &&
-                !bannedMaps.some((ban) => ban.map === map)
-        );
+        // const remainingMaps = mapNames.filter(
+        //     (map) =>
+        //         !pickedMaps.some((pick) => pick.map === map) &&
+        //         !bannedMaps.some((ban) => ban.map === map)
+        // );
 
         const team = teamNames.find(([socketId]) => socketId === socket.id);
         const teamName = team ? team[1] : 'Spectator';
 
-        if (remainingMaps.length > 1) {
+        {/*
+        TODO: Adapt this to new pick and ban calls
+        */}
+        if (canBan) {
             // Ban the map
-            socket.emit('banned', {lobbyId, map: mapName, teamName});
-        } else {
-            // Pick the last map and select side
+            socket.emit('ban', {lobbyId, map: mapName, teamName});
+        } else if (canPick) {
+            // TODO: Pick the SELECTED map and select the side
             setShowPrompts(true);
             return;
         }
@@ -175,7 +194,9 @@ export default function LobbyPage() {
         if (socket && lobbyId && teamName) {
             socket.emit('teamName', {lobbyId, teamName});
         }
-        setShowTeamNameOverlay(false);
+
+        // TODO: Change behavior if there are is a team present already
+        setIsWaiting(true);
     };
 
     const handleSkipTeamName = () => {
@@ -185,13 +206,6 @@ export default function LobbyPage() {
     const handleBackClick = () => {
         router.push('/');
     };
-
-    // const handleCopyObsClick = () => {
-    //     const sampleText = `http://localhost:3000/lobby/${lobbyId}/obs`;
-    //     navigator.clipboard.writeText(sampleText)
-    //         .then(() => toast({description: "Ссылка для OBS скопирована в буфер обмена"}))
-    //         .catch(() => toast({description: "Не получилось :("}));
-    // };
 
     const handleCopyCodeClick = () => {
         navigator.clipboard.writeText(`${lobbyId}`)
@@ -485,26 +499,59 @@ export default function LobbyPage() {
                             animate={{scale: 1, opacity: 1}}
                             exit={{scale: 0.9, opacity: 0}}
                             transition={{duration: 0.3}}
+                            style={{width:'600px', height: '180px'}}
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                         >
-                            <h2 className="text-2xl font-bold mb-4">Введите имя команды</h2>
-                            <form onSubmit={handleTeamNameSubmit} className="space-y-4">
-                                <Input
-                                    type="text"
-                                    placeholder="Имя команды..."
-                                    value={teamName}
-                                    onChange={(e) => setTeamName(e.target.value)}
-                                    className="w-full"
-                                />
-                                <div className="flex justify-between">
-                                    <Button type="submit" disabled={!teamName.trim()}>
-                                        Подтвердить
-                                    </Button>
-                                    <Button type="button" variant="outline" onClick={handleSkipTeamName}>
-                                        Я зритель
-                                    </Button>
+                            {!isWaiting && !isAnimated && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-center">Введите имя команды</h2>
+                                    <form onSubmit={handleTeamNameSubmit} className="space-y-4">
+                                        <Input
+                                            type="text"
+                                            placeholder="Имя команды..."
+                                            value={teamName}
+                                            onChange={(e) => setTeamName(e.target.value)}
+                                            className="w-full"
+                                        />
+                                        <div className="flex justify-between">
+                                            <Button type="submit" disabled={!teamName.trim()}>
+                                                Подтвердить
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={handleSkipTeamName}>
+                                                Я зритель
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </div>
-                            </form>
+                            )}
+
+                            {isWaiting && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность команд...</h2>
+                                    <video
+                                        src={"/coinIdle.mp4"} //TODO: Create coin animation
+                                        preload={"auto"}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        className={"mx-auto w-full max-w-md"}
+                                    />
+                                </div>
+                            )}
+
+                            {isAnimated && (
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4 text-center">{`${teamNames[coinResult]} начинают первыми`}</h2>
+                                    <video
+                                        src={`coin_${coinResult}.mp4`} //TODO: Create coin animation
+                                        preload={"auto"}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        className={"mx-auto w-full max-w-md"}
+                                    />
+                                </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 )}

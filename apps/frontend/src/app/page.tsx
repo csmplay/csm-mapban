@@ -52,19 +52,17 @@ export default function HomePage() {
     };
 
     const handleChooseRules = () => {
+        setLobbyId(`${Math.floor(1000 + Math.random() * 9000).toString()}`);
         setShowSettingsOverlay(true);
     }
 
     const handleCreateLobby = () => {
         if (socket) {
-            let rndmId = Math.floor(1000 + Math.random() * 9000).toString();
             let gameTypeNum = 0;
-            if (gameType === "BO1") gameTypeNum = 0;
             if (gameType === "BO3") gameTypeNum = 1;
             if (gameType === "BO5") gameTypeNum = 2;
-            console.log(rndmId);
-            socket.emit('createLobby', { rndmId, gameTypeNum, coinFlip });
-            router.push(`/lobby/${rndmId}`);
+            socket.emit('createLobby', { lobbyId, gameTypeNum, coinFlip });
+            router.push(`/lobby/${lobbyId}`);
         }
     };
 

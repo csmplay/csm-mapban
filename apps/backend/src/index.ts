@@ -87,32 +87,29 @@ io.on('connection', (socket) => {
 
     socket.on('createLobby', (data: {lobbyId: string; gameType: number; coinFlip: boolean }) => {
         const {lobbyId, gameType, coinFlip} = data;
-        socket.join(data.lobbyId);
-        console.log(`User ${socket.id} created lobby ${data.lobbyId}`);
+        // socket.join(data.lobbyId);
+        console.log(`User ${socket.id} created lobby ${lobbyId}`);
 
         // Create a new lobby
         let lobby = lobbies.get(lobbyId);
         if (!lobby) {
             // Create a new lobby
             lobby = {
-                lobbyId: data.lobbyId,
+                lobbyId: lobbyId,
                 members: new Set<string>(),
                 teamNames: new Map<string, string>(),
                 picked: [],
                 banned: [],
-                gameType: data.gameType,
+                gameType: gameType,
                 gameStateList: new Set<string>(),
-                coinFlip: data.coinFlip,
+                coinFlip: coinFlip,
             };
 
             lobbies.set(lobbyId, lobby);
         }
 
-        // Add the socket ID to the lobby's member list
-        lobby.members.add(socket.id);
-
         // Add the lobbyId to the socket's list of lobbies
-        socket.data.lobbies.add(lobbyId);
+        // socket.data.lobbies.add(lobbyId);
     });
 
     socket.on('gameType', (data: {lobbyId: string; gameType: number }) => {
@@ -145,31 +142,48 @@ io.on('connection', (socket) => {
                 io.to(lobbyId).emit('coinFlip', result);
                 const entry = Array.from(lobby.teamNames.entries())[result];
                 if (lobby.gameStateList.values().next().value === 'ban') {
-                    io.to(entry[1]).emit('canBan');
-                    io.to(lobbyId).emit('gameStateUpdated', entry[0] + ' выбирают карту для бана');
+                    io.to(entry[0]).emit('canBan');
+                    io.to(entry[0]).emit('canWorkUpdated', true);
+                    io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для бана');
                 } else {
-                    io.to(entry[1]).emit('canPick');
-                    io.to(lobbyId).emit('gameStateUpdated', entry[0] + ' выбирают карту для пика');
+                    io.to(entry[0]).emit('canPick');
+                    io.to(entry[0]).emit('canWorkUpdated', true);
+                    io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для пика');
                 }
             }
         }
     });
 
+    // TODO: Depending on the ruleset send the right permissions according to the list of steps
     socket.on('pick', (data: { lobbyId: string; map: string; teamName: string; side: string }) => {
         console.log(data);
         const { lobbyId, map, teamName, side } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             lobby.picked.push({ map, teamName, side });
-            io.to(lobbyId).emit('canWorkUpdated', false);
+            io.to(socket.id).emit('canWorkUpdated', false);
+
+            // Send updated canWork to another team socket
+            let otherSocketId = "";
+            for (const [otherSocketIdKey, otherNames] of lobby.teamNames.entries()) {
+                if (otherNames !== teamName) {
+                    otherSocketId = otherSocketIdKey;
+                    break;
+                }
+            }
+
+            io.to(otherSocketId).emit('canWorkUpdated', true);
 
             // Broadcast the updated picks to all lobby members
             io.to(lobbyId).emit('pickedUpdated', lobby.picked);
+
+            // TODO: Maybe Change the message below
             io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
         }
     });
 
-    socket.on('banned', (data: { lobbyId: string; map: string; teamName: string }) => {
+    // TODO: Depending on the ruleset send the right permissions according to the list of steps
+    socket.on('ban', (data: { lobbyId: string; map: string; teamName: string }) => {
         const { lobbyId, map, teamName } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
@@ -232,20 +246,21 @@ io.on('connection', (socket) => {
         // Remove the socket ID from all lobbies it was in
         for (const lobbyId of socket.data.lobbies) {
             const lobby = lobbies.get(lobbyId);
-            if (lobby) {
+            if (lobby !== undefined) {
                 lobby.members.delete(socket.id);
                 lobby.teamNames.delete(socket.id);
                 console.log(`User ${socket.id} left lobby ${lobbyId}`);
 
                 // Broadcast the updated team names to all lobby members
                 io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
-                if (lobby.teamNames.size === 0) {
-                    // Set the timer for 5 minutes to delete the lobby
-                    setTimeout(() => {
-                        lobbies.delete(lobbyId);
-                        console.log(`Lobby ${lobbyId} deleted as it has no more members`);
-                    }, 300000);
-                }
+
+                // if (lobby.teamNames.size === 0) {
+                //     // Set the timer for 5 minutes to delete the lobby
+                //     setTimeout(() => {
+                //         lobbies.delete(lobbyId);
+                //         console.log(`Lobby ${lobbyId} deleted as it has no more members`);
+                //     }, 300000);
+                // }
 
                 // If the lobby is empty, delete it
                 if (lobby.members.size === 0) {
