@@ -1,8 +1,12 @@
 {
   "name": "csm-cs-mapban",
   "version": "1.0.0",
+  "private": true,
   "main": "index.js",
-  "packageManager": "npm@10.6.0",
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "npm": "use yarn"
+  },
   "scripts": {
     "dev": "turbo run dev --parallel",
     "build": "turbo run build",
