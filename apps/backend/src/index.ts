@@ -136,20 +136,20 @@ io.on('connection', (socket) => {
                     const entry = Array.from(lobby.teamNames.entries())[result];
                     io.to(entry[0]).emit('canWorkUpdated', true);
                     if (lobby.gameStateList[0] === 'ban') {
-                        io.to(entry[0]).emit('canBan');
+                        io.to(entry[0]).emit('canBan', true);
                         io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для бана');
                     } else {
-                        io.to(entry[0]).emit('canPick');
+                        io.to(entry[0]).emit('canPick', true);
                         io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для пика');
                     }
                 }
             } else {
                 io.to(socket.id).emit('canWorkUpdated', true);
                 if (lobby.gameStateList[0] === 'ban') {
-                    io.to(socket.id).emit('canBan');
+                    io.to(socket.id).emit('canBan', true);
                     io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для бана');
                 } else {
-                    io.to(socket.id).emit('canPick');
+                    io.to(socket.id).emit('canPick', true);
                     io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для пика');
                 }
             }
@@ -164,7 +164,7 @@ io.on('connection', (socket) => {
             lobby.picked.push({ map, teamName, side });
             lobby.gameStep++;
             io.to(socket.id).emit('canWorkUpdated', false);
-            io.to(socket.id).emit('canPick');
+            io.to(socket.id).emit('canPick', false);
 
             // Send updated canWork to another team socket
             let otherSocketId = "";
@@ -178,9 +178,9 @@ io.on('connection', (socket) => {
             if (lobby.gameStep < 7) {
                 io.to(otherSocketId).emit('canWorkUpdated', true);
                 if (lobby.gameStateList[lobby.gameStep] === 'pick') {
-                    io.to(otherSocketId).emit('canPick');
+                    io.to(otherSocketId).emit('canPick', true);
                 } else {
-                    io.to(otherSocketId).emit('canBan');
+                    io.to(otherSocketId).emit('canBan', true);
                 }
             } else {
                 io.to(lobbyId).emit('canWorkUpdated', false);
@@ -202,7 +202,7 @@ io.on('connection', (socket) => {
 
             // Send updated canWork to sending socket and turn off canBan
             io.to(socket.id).emit('canWorkUpdated', false);
-            io.to(socket.id).emit('canBan');
+            io.to(socket.id).emit('canBan', false);
 
             // Send updated canWork to another team socket
             let otherSocketId = "";
@@ -217,10 +217,10 @@ io.on('connection', (socket) => {
             if (lobby.gameStep < 7) {
                 io.to(otherSocketId).emit('canWorkUpdated', true);
                 if (lobby.gameStateList[lobby.gameStep] === 'pick') {
-                    io.to(otherSocketId).emit('canPick');
+                    io.to(otherSocketId).emit('canPick', true);
                     io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
                 } else {
-                    io.to(otherSocketId).emit('canBan');
+                    io.to(otherSocketId).emit('canBan', true);
                     io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
                 }
             } else {

@@ -48,6 +48,7 @@ export default function LobbyPage() {
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
     const [pickedMaps, setPickedMaps] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
     const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+    const [selectedPromptMap, setSelectedPromptMap] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
 
     // Socket Calls Handling
@@ -65,7 +66,7 @@ export default function LobbyPage() {
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
-            if (teamNamesArray.length === 2 && isCoin) {
+            if (teamNamesArray.length === 2 && !isCoin) {
                 setShowTeamNameOverlay(false);
             }
         });
@@ -109,12 +110,18 @@ export default function LobbyPage() {
             setGameState(gameStateVar);
         });
 
-        newSocket.on('canBan', () => {
-            setCanBan(!canBan);
+        newSocket.on('canBan', (banVar: boolean) => {
+            console.log('I can ban now');
+            setCanBan(() => {
+                return banVar;
+            });
         })
 
-        newSocket.on('canPick', () => {
-            setCanPick(!canBan);
+        newSocket.on('canPick', (pickVar: boolean) => {
+            console.log('I can pick now');
+            setCanPick(() => {
+                return pickVar;
+            });
         })
 
         newSocket.on('coinFlip', (result: number) => {
@@ -157,9 +164,11 @@ export default function LobbyPage() {
         const teamName = team ? team[1] : 'Spectator';
 
         if (canBan) {
-            // Ban the map
+            console.log('Banning map');
             socket.emit('ban', {lobbyId, map: mapName, teamName});
         } else if (canPick) {
+            console.log('Picking map');
+            // For some reason doesn't get inside here
             setShowPrompts(true);
             return;
         }
@@ -179,7 +188,6 @@ export default function LobbyPage() {
             const teamName = team ? team[1] : 'Spectator';
 
             socket.emit('pick', {lobbyId, map: mapName, teamName, side});
-
             // Reset selected map
             setSelectedMapIndex(null);
         }
@@ -514,6 +522,10 @@ export default function LobbyPage() {
                                                         !teamName.trim() ||
                                                         teamNames.length === 2}>
                                                 Подтвердить
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={handleCopyCodeClick}>
+                                                <Copy className="h-4 mr-2"/>
+                                                {lobbyId}
                                             </Button>
                                             <Button type="button" variant="outline" onClick={handleSkipTeamName}>
                                                 Я зритель
