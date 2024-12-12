@@ -8,9 +8,9 @@
     "npm": "use yarn"
   },
   "scripts": {
-    "dev": "turbo run dev --parallel",
-    "build": "turbo run build",
-    "lint": "turbo run lint"
+    "dev": "dotenv -- turbo run dev --parallel",
+    "build": "dotenv -- turbo run build",
+    "lint": "dotenv -- turbo run lint"
   },
   "keywords": [],
   "author": "",
@@ -27,5 +27,8 @@
     "rules": {
       "@typescript-eslint/no-unused-vars": "off"
     }
+  },
+  "dependencies": {
+    "dotenv-cli": "github:motdotla/dotenv-cli"
   }
 }

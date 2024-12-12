@@ -28,12 +28,16 @@ export default function AdminPage() {
     const router = useRouter();
     const { toast } = useToast();
 
+    const port = 4000;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
+
     useEffect(() => {
-        socketRef.current = io('http://localhost:4000');
+        socketRef.current = io(backendUrl);
 
         const fetchLobbies = async () => {
             try {
-                const response = await fetch('http://localhost:4000/admin/lobbies');
+                const response = await fetch(`${backendUrl}/admin/lobbies`);
                 const data: Lobby[] = await response.json();
                 setLobbies(data);
             } catch (error) {
@@ -68,7 +72,7 @@ export default function AdminPage() {
     };
 
     const handleCopyLink = (lobbyId: string) => {
-        const lobbyUrl = `http://localhost:3000/lobby/${lobbyId}/obs`;
+        const lobbyUrl = `${frontendUrl}/lobby/${lobbyId}/obs`;
         navigator.clipboard.writeText(lobbyUrl).then(
             () => {
                 toast({

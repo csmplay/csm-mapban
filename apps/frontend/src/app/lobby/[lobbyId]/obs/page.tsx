@@ -29,8 +29,13 @@ const LobbyObsPage = () => {
     const [_, setSocket] = useState<Socket | null>(null);
     const [actions, setActions] = useState<Action[]>([]);
 
+    const port = 4000;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
+
+
     useEffect(() => {
-        const newSocket = io('http://localhost:4000');
+        const newSocket = io(backendUrl);
 
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');

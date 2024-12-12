@@ -30,8 +30,12 @@ export default function HomePage() {
     const [gameType, setGameType] = useState("BO1");
     const [coinFlip, setCoinFlip] = useState(false);
 
+    const port = 4000;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
+
     useEffect(() => {
-        const newSocket = io('http://localhost:4000');
+        const newSocket = io(backendUrl);
 
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
