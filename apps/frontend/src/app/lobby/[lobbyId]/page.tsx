@@ -11,35 +11,11 @@ import {ArrowLeft, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
 
-// TODO:
-//  1. Add needed variables and states
-//  2. Add needed socket calls
-//  3. Handle + send socket calls
-//  4. Coin animation
-//  5. Handle rights given from socket calls
-
 export default function LobbyPage() {
+    // Core variables and states
     const {lobbyId} = useParams();
     const {toast} = useToast();
     const [socket, setSocket] = useState<Socket | null>(null);
-    const [teamNames, setTeamNames] = useState<[string, string][]>([]);
-    const [pickedMaps, setPickedMaps] = useState<
-        Array<{ map: string; teamName: string; side: string }>
-    >([]);
-    const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
-    const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
-    const [teamName, setTeamName] = useState('');
-    const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
-    const [showPrompts, setShowPrompts] = useState(false);
-    const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
-    const [canWork, setCanWork] = useState(false);
-    const [pickColor, setPickColor] = useState('');
-    const [gameState, setGameState] = useState<string>('Игра начинается...');
-    const [isWaiting, setIsWaiting] = useState(false);
-    const [isAnimated, setIsAnimated] = useState(false);
-    const [coinResult, setCoinResult] = useState<number>(0);
-    const [canPick, setCanPick] = useState(false);
-    const [canBan, setCanBan] = useState(false);
     const router = useRouter();
     const mapNames = [
         "Nuke",
@@ -51,6 +27,30 @@ export default function LobbyPage() {
         "Mirage"
     ];
 
+    // Overlay states
+    const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
+    const [showPrompts, setShowPrompts] = useState(false);
+    const [isWaiting, setIsWaiting] = useState(false);
+    const [isAnimated, setIsAnimated] = useState(false);
+
+    // Lobby data
+    const [teamName, setTeamName] = useState('');
+    const [teamNames, setTeamNames] = useState<[string, string][]>([]);
+    const [gameState, setGameState] = useState<string>('Игра начинается...');
+    const [pickColor, setPickColor] = useState('');
+    const [canPick, setCanPick] = useState(false);
+    const [canBan, setCanBan] = useState(false);
+    const [canWork, setCanWork] = useState(false);
+    const [coinResult, setCoinResult] = useState<number>(0);
+    const [isCoin, setIsCoin] = useState(false);
+
+    // Map data
+    const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
+    const [pickedMaps, setPickedMaps] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
+    const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+    const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
+
+    // Socket Calls Handling
     useEffect(() => {
         const newSocket = io('http://localhost:4000');
 
@@ -65,10 +65,14 @@ export default function LobbyPage() {
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
+            if (teamNamesArray.length === 2 && isCoin) {
+                setShowTeamNameOverlay(false);
+            }
         });
 
         // Handle 'pickedUpdated' event
         newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
+            console.log('RECEIVE PICKED UPDATED');
                 setPickedMaps(picked);
                 setSelectedPrompt(picked[0].side);
                 setSelectedMapIndex(null);
@@ -106,20 +110,21 @@ export default function LobbyPage() {
         });
 
         newSocket.on('canBan', () => {
-            setCanBan(true);
+            setCanBan(!canBan);
         })
 
         newSocket.on('canPick', () => {
-            setCanPick(true);
+            setCanPick(!canBan);
         })
 
         newSocket.on('coinFlip', (result: number) => {
             setCoinResult(result);
             setIsWaiting(false);
             setIsAnimated(true);
-            setTimeout(() => {
-                setShowTeamNameOverlay(false);
-            }, 7000); // NOT SURE ABOUT THAT
+        })
+
+        newSocket.on('isCoin', (isCoin: boolean) => {
+            setIsCoin(isCoin);
         })
 
         setSocket(newSocket);
@@ -129,6 +134,8 @@ export default function LobbyPage() {
         };
     }, [lobbyId]);
 
+
+    // Buttons handling
     const handleCardClick = (index: number) => {
         const mapName = mapNames[index];
 
@@ -145,26 +152,14 @@ export default function LobbyPage() {
 
     const handleSubmit = () => {
         if (selectedMapIndex === null || !socket || !lobbyId) return;
-
         const mapName = mapNames[selectedMapIndex];
-
-        // const remainingMaps = mapNames.filter(
-        //     (map) =>
-        //         !pickedMaps.some((pick) => pick.map === map) &&
-        //         !bannedMaps.some((ban) => ban.map === map)
-        // );
-
         const team = teamNames.find(([socketId]) => socketId === socket.id);
         const teamName = team ? team[1] : 'Spectator';
 
-        {/*
-        TODO: Adapt this to new pick and ban calls
-        */}
         if (canBan) {
             // Ban the map
             socket.emit('ban', {lobbyId, map: mapName, teamName});
         } else if (canPick) {
-            // TODO: Pick the SELECTED map and select the side
             setShowPrompts(true);
             return;
         }
@@ -174,6 +169,7 @@ export default function LobbyPage() {
     };
 
     const handlePromptClick = (side: string) => {
+        // TODO: Make selected prompts in a Set<MapName, Side>
         setSelectedPrompt(side);
         setShowPrompts(false);
 
@@ -195,12 +191,11 @@ export default function LobbyPage() {
             socket.emit('teamName', {lobbyId, teamName});
         }
 
-        // TODO: Change behavior if there are is a team present already
         setIsWaiting(true);
     };
 
     const handleSkipTeamName = () => {
-        setShowTeamNameOverlay(false);
+        setIsWaiting(true);
     };
 
     const handleBackClick = () => {
@@ -514,7 +509,10 @@ export default function LobbyPage() {
                                             className="w-full"
                                         />
                                         <div className="flex justify-between">
-                                            <Button type="submit" disabled={!teamName.trim()}>
+                                            <Button type="submit"
+                                                    disabled={
+                                                        !teamName.trim() ||
+                                                        teamNames.length === 2}>
                                                 Подтвердить
                                             </Button>
                                             <Button type="button" variant="outline" onClick={handleSkipTeamName}>
@@ -529,7 +527,7 @@ export default function LobbyPage() {
                                 <div>
                                     <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность команд...</h2>
                                     <video
-                                        src={"/coinIdle.mp4"} //TODO: Create coin animation
+                                        src={"/coinIdle.mp4"}
                                         preload={"auto"}
                                         autoPlay
                                         loop
@@ -543,7 +541,7 @@ export default function LobbyPage() {
                                 <div>
                                     <h2 className="text-2xl font-bold mb-4 text-center">{`${teamNames[coinResult]} начинают первыми`}</h2>
                                     <video
-                                        src={`coin_${coinResult}.mp4`} //TODO: Create coin animation
+                                        src={`coin_${coinResult}.mp4`}
                                         preload={"auto"}
                                         autoPlay
                                         loop

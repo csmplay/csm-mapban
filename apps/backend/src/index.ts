@@ -30,8 +30,9 @@ interface Lobby {
     picked: Array<{ map: string; teamName: string; side: string }>;
     banned: Array<{ map: string; teamName: string }>;
     gameType: number;
-    gameStateList: Set<string>;
+    gameStateList: string[];
     coinFlip: boolean;
+    gameStep: number;
 }
 
 // Data structure to store lobbies and their members
@@ -83,12 +84,19 @@ io.on('connection', (socket) => {
 
         // Add the lobbyId to the socket's list of lobbies
         socket.data.lobbies.add(lobbyId);
+        io.to(socket.id).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
+        io.to(socket.id).emit('isCoin', lobby.coinFlip);
+        if (lobby.picked.length > 0) {
+            io.to(socket.id).emit('pickedUpdated', lobby.picked);
+        }
+        if (lobby.banned.length > 0) {
+            io.to(socket.id).emit('bannedUpdated', lobby.banned);
+        }
     });
 
-    socket.on('createLobby', (data: {lobbyId: string; gameType: number; coinFlip: boolean }) => {
-        const {lobbyId, gameType, coinFlip} = data;
-        // socket.join(data.lobbyId);
-        console.log(`User ${socket.id} created lobby ${lobbyId}`);
+    socket.on('createLobby', (data: {lobbyId: string; gameTypeNum: number; coinFlip: boolean }) => {
+        const {lobbyId, gameTypeNum, coinFlip} = data;
+        console.log('Lobby created with id ' + lobbyId);
 
         // Create a new lobby
         let lobby = lobbies.get(lobbyId);
@@ -100,29 +108,13 @@ io.on('connection', (socket) => {
                 teamNames: new Map<string, string>(),
                 picked: [],
                 banned: [],
-                gameType: gameType,
-                gameStateList: new Set<string>(),
+                gameType: gameTypeNum,
+                gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: coinFlip,
+                gameStep: 0
             };
 
             lobbies.set(lobbyId, lobby);
-        }
-
-        // Add the lobbyId to the socket's list of lobbies
-        // socket.data.lobbies.add(lobbyId);
-    });
-
-    socket.on('gameType', (data: {lobbyId: string; gameType: number }) => {
-        const {lobbyId, gameType} = data;
-        const lobby = lobbies.get(lobbyId);
-        if (lobby) {
-            lobby.gameType = data.gameType;
-
-            for (let i = 0; i < 7; i++) {
-                lobby.gameStateList.add(gameTypeLists[gameType][i]);
-            }
-
-            io.to(lobbyId).emit('gameTypeUpdate', gameType);
         }
     });
 
@@ -137,31 +129,42 @@ io.on('connection', (socket) => {
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
 
             // With two teams present flip the coin and assign values for initiating mapban
-            if (lobby.teamNames.size === 2) {
-                const result = Math.floor(Math.random() * 2);
-                io.to(lobbyId).emit('coinFlip', result);
-                const entry = Array.from(lobby.teamNames.entries())[result];
-                if (lobby.gameStateList.values().next().value === 'ban') {
-                    io.to(entry[0]).emit('canBan');
+            if (lobby.coinFlip) {
+                if (lobby.teamNames.size === 2) {
+                    const result = Math.floor(Math.random() * 2);
+                    io.to(lobbyId).emit('coinFlip', result);
+                    const entry = Array.from(lobby.teamNames.entries())[result];
                     io.to(entry[0]).emit('canWorkUpdated', true);
-                    io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для бана');
+                    if (lobby.gameStateList[0] === 'ban') {
+                        io.to(entry[0]).emit('canBan');
+                        io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для бана');
+                    } else {
+                        io.to(entry[0]).emit('canPick');
+                        io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для пика');
+                    }
+                }
+            } else {
+                io.to(socket.id).emit('canWorkUpdated', true);
+                if (lobby.gameStateList[0] === 'ban') {
+                    io.to(socket.id).emit('canBan');
+                    io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для бана');
                 } else {
-                    io.to(entry[0]).emit('canPick');
-                    io.to(entry[0]).emit('canWorkUpdated', true);
-                    io.to(lobbyId).emit('gameStateUpdated', entry[1] + ' выбирают карту для пика');
+                    io.to(socket.id).emit('canPick');
+                    io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для пика');
                 }
             }
         }
     });
 
-    // TODO: Depending on the ruleset send the right permissions according to the list of steps
     socket.on('pick', (data: { lobbyId: string; map: string; teamName: string; side: string }) => {
         console.log(data);
         const { lobbyId, map, teamName, side } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             lobby.picked.push({ map, teamName, side });
+            lobby.gameStep++;
             io.to(socket.id).emit('canWorkUpdated', false);
+            io.to(socket.id).emit('canPick');
 
             // Send updated canWork to another team socket
             let otherSocketId = "";
@@ -172,25 +175,34 @@ io.on('connection', (socket) => {
                 }
             }
 
-            io.to(otherSocketId).emit('canWorkUpdated', true);
+            if (lobby.gameStep < 7) {
+                io.to(otherSocketId).emit('canWorkUpdated', true);
+                if (lobby.gameStateList[lobby.gameStep] === 'pick') {
+                    io.to(otherSocketId).emit('canPick');
+                } else {
+                    io.to(otherSocketId).emit('canBan');
+                }
+            } else {
+                io.to(lobbyId).emit('canWorkUpdated', false);
+            }
 
             // Broadcast the updated picks to all lobby members
             io.to(lobbyId).emit('pickedUpdated', lobby.picked);
-
-            // TODO: Maybe Change the message below
+            console.log('SEND PICKED UPDATED');
             io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
         }
     });
 
-    // TODO: Depending on the ruleset send the right permissions according to the list of steps
     socket.on('ban', (data: { lobbyId: string; map: string; teamName: string }) => {
         const { lobbyId, map, teamName } = data;
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             lobby.banned.push({ map, teamName });
+            lobby.gameStep++;
 
-            // Send updated canWork to sending socket
+            // Send updated canWork to sending socket and turn off canBan
             io.to(socket.id).emit('canWorkUpdated', false);
+            io.to(socket.id).emit('canBan');
 
             // Send updated canWork to another team socket
             let otherSocketId = "";
@@ -202,15 +214,21 @@ io.on('connection', (socket) => {
                     break;
                 }
             }
-            io.to(otherSocketId).emit('canWorkUpdated', true);
+            if (lobby.gameStep < 7) {
+                io.to(otherSocketId).emit('canWorkUpdated', true);
+                if (lobby.gameStateList[lobby.gameStep] === 'pick') {
+                    io.to(otherSocketId).emit('canPick');
+                    io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
+                } else {
+                    io.to(otherSocketId).emit('canBan');
+                    io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
+                }
+            } else {
+                io.to(lobbyId).emit('canWorkUpdated', false);
+            }
 
             // Broadcast the updated bans to all lobby members
             io.to(lobbyId).emit('bannedUpdated', lobby.banned);
-            if (lobby.banned.length === 6) {
-                io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
-            } else {
-                io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
-            }
         }
     });
 
@@ -236,8 +254,11 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('message', (data) => {
-        io.to(data.lobbyId).emit('message', data.message);
+    socket.on('replay', (lobbyId: string) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            // TODO: Synchronization in order
+        }
     });
 
     socket.on('disconnect', () => {
@@ -254,6 +275,7 @@ io.on('connection', (socket) => {
                 // Broadcast the updated team names to all lobby members
                 io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
 
+                // Code for deleting the lobby after 5 minutes of inactivity
                 // if (lobby.teamNames.size === 0) {
                 //     // Set the timer for 5 minutes to delete the lobby
                 //     setTimeout(() => {
