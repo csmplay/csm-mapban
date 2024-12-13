@@ -37,7 +37,6 @@ export default function LobbyPage() {
     const [teamName, setTeamName] = useState('');
     const [teamNames, setTeamNames] = useState<[string, string][]>([]);
     const [gameState, setGameState] = useState<string>('Игра начинается...');
-    const [pickColor, setPickColor] = useState('');
     const [canPick, setCanPick] = useState(false);
     const [canBan, setCanBan] = useState(false);
     const [canWork, setCanWork] = useState(false);
@@ -47,12 +46,9 @@ export default function LobbyPage() {
     // Map data
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
     const [pickedMaps, setPickedMaps] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
-    const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
-    const [selectedPromptMap, setSelectedPromptMap] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
 
     const port = 4000;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
 
     // Socket Calls Handling
@@ -78,12 +74,9 @@ export default function LobbyPage() {
         // Handle 'pickedUpdated' event
         newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
             console.log('RECEIVE PICKED UPDATED');
-                setPickedMaps(picked);
-                setSelectedPrompt(picked[0].side);
-                setSelectedMapIndex(null);
-                setPickColor(picked[0].teamName);
-            }
-        );
+            setPickedMaps(picked);
+            setSelectedMapIndex(null);
+        });
 
         // Handle 'bannedUpdated' event
         newSocket.on('bannedUpdated', (banned: Array<{ map: string; teamName: string }>) => {
@@ -116,27 +109,23 @@ export default function LobbyPage() {
 
         newSocket.on('canBan', (banVar: boolean) => {
             console.log('I can ban now');
-            setCanBan(() => {
-                return banVar;
-            });
-        })
+            setCanBan(() => banVar);
+        });
 
         newSocket.on('canPick', (pickVar: boolean) => {
             console.log('I can pick now');
-            setCanPick(() => {
-                return pickVar;
-            });
-        })
+            setCanPick(() => pickVar);
+        });
 
         newSocket.on('coinFlip', (result: number) => {
             setCoinResult(result);
             setIsWaiting(false);
             setIsAnimated(true);
-        })
+        });
 
         newSocket.on('isCoin', (isCoin: boolean) => {
             setIsCoin(isCoin);
-        })
+        });
 
         setSocket(newSocket);
 
@@ -144,7 +133,6 @@ export default function LobbyPage() {
             newSocket.disconnect();
         };
     }, [lobbyId]);
-
 
     // Buttons handling
     const handleCardClick = (index: number) => {
@@ -172,18 +160,14 @@ export default function LobbyPage() {
             socket.emit('ban', {lobbyId, map: mapName, teamName});
         } else if (canPick) {
             console.log('Picking map');
-            // For some reason doesn't get inside here
             setShowPrompts(true);
             return;
         }
 
-        // Reset selected map
         setSelectedMapIndex(null);
     };
 
     const handlePromptClick = (side: string) => {
-        // TODO: Make selected prompts in a Set<MapName, Side>
-        setSelectedPrompt(side);
         setShowPrompts(false);
 
         if (socket && lobbyId && selectedMapIndex !== null) {
@@ -275,8 +259,13 @@ export default function LobbyPage() {
                                     ? 'red'
                                     : null;
 
-                        // const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
-                        // const pickSide = pickEntry ? pickEntry.side : null;
+                        const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
+                        const pickSide = pickEntry ? pickEntry.side : null;
+                        const pickTeamColor = pickEntry
+                            ? pickEntry.teamName === redTeamName
+                                ? 'red'
+                                : 'blue'
+                            : null;
 
                         return (
                             <motion.div
@@ -289,16 +278,16 @@ export default function LobbyPage() {
                             >
                                 <Card
                                     className={`
-                    w-full sm:w-64 p-6 flex flex-col items-center justify-between cursor-pointer transition-all duration-300 relative
-                    overflow-hidden ${
+                                        w-full sm:w-64 p-6 flex flex-col items-center justify-between cursor-pointer transition-all duration-300 relative
+                                        overflow-hidden ${
                                         isDisabled && !isPicked
                                             ? 'bg-gray-200'
                                             : isSelected
                                                 ? 'bg-gray-800'
                                                 : 'bg-white hover:shadow-2xl'
                                     }
-                    h-64 
-                  `}
+                                        h-64 
+                                    `}
                                     onClick={() => !isDisabled && handleCardClick(index)}
                                 >
                                     <Image
@@ -316,16 +305,16 @@ export default function LobbyPage() {
                                         ${isPicked ? 'border-green-400' : ''}`}
                                     />
                                     <div className={`relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md`}>
-                    <span
-                        className={`text-xl font-bold ${
-                            isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
-                        }`}
-                    >
-                      {mapName}
-                    </span>
+                                        <span
+                                            className={`text-xl font-bold ${
+                                                isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
+                                            }`}
+                                        >
+                                            {mapName}
+                                        </span>
                                     </div>
                                     <AnimatePresence>
-                                        {isPicked && (
+                                        {isPicked && pickEntry && (
                                             <motion.div
                                                 className="flex flex-row justify-between overflow-hidden space-x-6"
                                                 initial="hidden"
@@ -338,7 +327,7 @@ export default function LobbyPage() {
                                                     },
                                                 }}
                                             >
-                                                {/* Left Image */}
+                                                {/* Left Image (picked side) */}
                                                 <motion.div
                                                     initial={{y: 100, opacity: 0}}
                                                     animate={{y: 0, opacity: 1}}
@@ -347,19 +336,19 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${selectedPrompt || 'ct'}.png`}
-                                                        alt={`${selectedPrompt || 'ct'}`}
+                                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                                        alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                                         draggable={false}
                                                         width={80}
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            pickColor === redTeamName ? 'border-red-500' : 'border-blue-500'
+                                                            pickTeamColor === 'red' ? 'border-red-500' : 'border-blue-500'
                                                         }`}
                                                     />
                                                 </motion.div>
 
-                                                {/* Right Image */}
+                                                {/* Right Image (opposite side) */}
                                                 <motion.div
                                                     initial={{y: 100, opacity: 0}}
                                                     animate={{y: 0, opacity: 1}}
@@ -368,71 +357,67 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${selectedPrompt === 'ct' ? 't' : 'ct'}.png`}
-                                                        alt={`${selectedPrompt === 'ct' ? 't' : 'ct'}`}
+                                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                                        alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                                         draggable={false}
                                                         width={80}
                                                         height={80}
                                                         priority={true}
                                                         className={`rounded-full border-4 ${
-                                                            pickColor === redTeamName ? 'border-blue-500' : 'border-red-500'
+                                                            pickTeamColor === 'red' ? 'border-blue-500' : 'border-red-500'
                                                         }`}
                                                     />
                                                 </motion.div>
                                             </motion.div>
+                                        )}
 
-                                        )
-                                        }
-                                        {
-                                            isBanned && (
+                                        {isBanned && (
+                                            <motion.div
+                                                className="flex flex-row justify-between overflow-hidden"
+                                                initial="hidden"
+                                                animate="visible"
+                                                variants={{
+                                                    hidden: {opacity: 0},
+                                                    visible: {
+                                                        opacity: 1,
+                                                        transition: {staggerChildren: 0.2, delayChildren: 0.3}
+                                                    }
+                                                }}
+                                            >
                                                 <motion.div
-                                                    className="flex flex-row justify-between overflow-hidden"
-                                                    initial="hidden"
-                                                    animate="visible"
-                                                    variants={{
-                                                        hidden: {opacity: 0},
-                                                        visible: {
-                                                            opacity: 1,
-                                                            transition: {staggerChildren: 0.2, delayChildren: 0.3}
-                                                        }
-                                                    }}
+                                                    initial={{y: 100, opacity: 0}}
+                                                    animate={{y: 0, opacity: 1}}
+                                                    exit={{opacity: 0}}
+                                                    transition={{duration: 0.3}}
+                                                    className="absolute inset-0 flex items-center justify-center"
                                                 >
-                                                    <motion.div
-                                                        initial={{y: 100, opacity: 0}}
-                                                        animate={{y: 0, opacity: 1}}
-                                                        exit={{opacity: 0}}
-                                                        transition={{duration: 0.3}}
-                                                        className="absolute inset-0 flex items-center justify-center"
+                                                    <div
+                                                        className={`transform text-white
+                                                        px-4 py-1 font-bold text-xl`}
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '80%',
+                                                            width: '150%',
+                                                            height: '150%',
+                                                            textAlign: 'center',
+                                                            opacity: 0.8,
+                                                            backgroundColor: '#000000',
+                                                        }}
                                                     >
-
-                                                        <div
-                                                            className={`transform text-white
-                                            px-4 py-1 font-bold text-xl`}
-                                                            style={{
-                                                                position: 'absolute',
-                                                                top: '80%',
-                                                                width: '150%',
-                                                                height: '150%',
-                                                                textAlign: 'center',
-                                                                opacity: 0.8,
-                                                                backgroundColor: '#000000',
-                                                            }}
-                                                        >
-                                                            BANNED
-                                                        </div>
-                                                    </motion.div>
-                                                    {/* Animated outline */}
-                                                    <motion.div
-                                                        initial={{opacity: 0}}
-                                                        animate={{opacity: 1}}
-                                                        exit={{opacity: 0}}
-                                                        transition={{duration: 0.3}}
-                                                        className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
-                                                            banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
-                                                        }`}
-                                                    ></motion.div>
+                                                        BANNED
+                                                    </div>
                                                 </motion.div>
-                                            )}
+                                                <motion.div
+                                                    initial={{opacity: 0}}
+                                                    animate={{opacity: 1}}
+                                                    exit={{opacity: 0}}
+                                                    transition={{duration: 0.3}}
+                                                    className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
+                                                        banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                                    }`}
+                                                ></motion.div>
+                                            </motion.div>
+                                        )}
                                     </AnimatePresence>
                                 </Card>
                             </motion.div>

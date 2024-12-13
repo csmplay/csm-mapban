@@ -2,7 +2,6 @@
 
 import React, {useState} from 'react'
 import {motion, AnimatePresence} from 'framer-motion'
-import {Button} from '@/components/ui/button'
 import Image from "next/image";
 
 interface AnimatedBanCardProps {
@@ -11,12 +10,12 @@ interface AnimatedBanCardProps {
 }
 
 export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardProps) {
-    const [isVisible, setIsVisible] = useState(true)
+    const [isVisible, _] = useState(true)
 
-    const replay = () => {
-        setIsVisible(false)
-        setTimeout(() => setIsVisible(true), 10)
-    }
+    // const replay = () => {
+    //     setIsVisible(false)
+    //     setTimeout(() => setIsVisible(true), 10)
+    // }
 
     const teamTextSize = teamName.length > 9 ? 'text-2xl' : 'text-3xl';
 

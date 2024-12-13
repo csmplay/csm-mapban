@@ -16,6 +16,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+require('dotenv').config();
 
 const AnimatedCheckbox = motion(Checkbox);
 
@@ -31,7 +32,7 @@ export default function HomePage() {
     const [coinFlip, setCoinFlip] = useState(false);
 
     const port = 4000;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
 
     useEffect(() => {

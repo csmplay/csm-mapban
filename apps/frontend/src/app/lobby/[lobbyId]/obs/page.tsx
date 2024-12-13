@@ -30,7 +30,6 @@ const LobbyObsPage = () => {
     const [actions, setActions] = useState<Action[]>([]);
 
     const port = 4000;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
 
 

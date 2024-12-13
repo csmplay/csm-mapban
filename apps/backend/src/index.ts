@@ -257,10 +257,35 @@ io.on('connection', (socket) => {
     });
 
     socket.on('replay', (lobbyId: string) => {
+        // TODO: MIGHT NOT WORK!!!!
         const lobby = lobbies.get(lobbyId);
-        if (lobby) {
-            // TODO: Synchronization in order
-        }
+        if (!lobby) return;
+
+        let bannedIndex = 0;
+        let pickedIndex = 0;
+        const delayBetweenSteps = 5000; // e.g. 5 seconds delay
+        let accumulatedDelay = 0;
+
+        lobby.gameStateList.forEach((step) => {
+            accumulatedDelay += delayBetweenSteps;
+            if (step === 'ban') {
+                const banEntry = lobby.banned[bannedIndex++];
+                if (banEntry) {
+                    setTimeout(() => {
+                        // Emit this banned map to all members
+                        io.to(lobbyId).emit('bannedReplay', banEntry);
+                    }, accumulatedDelay);
+                }
+            } else if (step === 'pick') {
+                const pickEntry = lobby.picked[pickedIndex++];
+                if (pickEntry) {
+                    setTimeout(() => {
+                        // Emit this picked map to all members
+                        io.to(lobbyId).emit('pickedReplay', pickEntry);
+                    }, accumulatedDelay);
+                }
+            }
+        });
     });
 
     socket.on('disconnect', () => {

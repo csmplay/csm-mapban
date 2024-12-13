@@ -9,10 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ClipboardCopy, Trash2, LogIn, Users, Eye } from 'lucide-react';
+import { Trash2, LogIn, Users, Eye } from 'lucide-react';
 
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
+
+// TODO: Add replay button and Start game button
 
 type Lobby = {
     lobbyId: string;
@@ -20,6 +22,9 @@ type Lobby = {
     teamNames: [string, string][]; // [socketId, teamName]
     picked: PickedMap[];
     banned: BannedMap[];
+    gameType: number;
+    gameStateList: string[];
+    coinFlip: boolean;
 };
 
 export default function AdminPage() {
@@ -52,17 +57,19 @@ export default function AdminPage() {
         // Polling every 5 seconds to update the lobby list
         const interval = setInterval(fetchLobbies, 5000);
 
-        socketRef.current.on('lobbyDeleted', (deletedLobbyId: string) => {
-            setLobbies((prevLobbies) =>
-                prevLobbies.filter((lobby) => lobby.lobbyId !== deletedLobbyId)
-            );
-        });
+        if (socketRef.current) {
+            socketRef.current.on('lobbyDeleted', (deletedLobbyId: string) => {
+                setLobbies((prevLobbies) =>
+                    prevLobbies.filter((lobby) => lobby.lobbyId !== deletedLobbyId)
+                );
+            });
+        }
 
         return () => {
             clearInterval(interval);
             socketRef.current?.disconnect();
         };
-    }, []);
+    }, [backendUrl]);
 
     const handleDeleteLobby = (lobbyId: string) => {
         if (socketRef.current) {
@@ -142,6 +149,15 @@ export default function AdminPage() {
                                                             {item.map} ({item.teamName})
                                                         </Badge>
                                                     ))}
+                                                </div>
+                                            </div>
+                                            <Separator />
+                                            {/* Optional display of new fields */}
+                                            <div className="space-y-2">
+                                                <div className="text-sm text-gray-700">Game Type: {lobby.gameType}</div>
+                                                <div className="text-sm text-gray-700">Coin Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
+                                                <div className="text-sm text-gray-700">
+                                                    Game State List: {lobby.gameStateList.join(', ')}
                                                 </div>
                                             </div>
                                         </div>
