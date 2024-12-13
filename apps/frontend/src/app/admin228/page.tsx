@@ -14,8 +14,6 @@ import { Trash2, LogIn, Users, Eye } from 'lucide-react';
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
 
-// TODO: Add replay button and Start game button
-
 type Lobby = {
     lobbyId: string;
     members: string[];
@@ -98,6 +96,12 @@ export default function AdminPage() {
         router.push(`/lobby/${lobbyId}`);
     };
 
+    const handleReplay = (lobbyId: string) => {
+        if (socketRef.current) {
+            socketRef.current.emit('replay', { lobbyId });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 p-8">
             <div className="max-w-7xl mx-auto">
@@ -171,6 +175,9 @@ export default function AdminPage() {
                                     <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline" className="flex-1">
                                         <Eye className="w-4 h-4 mr-2" />
                                         Copy Obs Link
+                                    </Button>
+                                    <Button onClick={() => handleReplay(lobby.lobbyId)} variant="outline" className="flex-1">
+                                        Replay
                                     </Button>
                                     <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive" className="flex-1">
                                         <Trash2 className="w-4 h-4 mr-2" />

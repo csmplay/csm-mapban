@@ -39,12 +39,14 @@ const LobbyObsPage = () => {
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
             if (lobbyId) {
+                // TODO: Change this to joinObs instead
                 newSocket.emit('joinLobby', lobbyId);
                 console.log(`Joined lobby ${lobbyId}`);
             }
         });
 
         // Handle 'pickedUpdated' event
+        // TODO: Also add bannedReplay and pickedReplay to this
         newSocket.on(
             'pickedUpdated',
             (picked: Array<{ map: string; teamName: string; side: string; timestamp: number }>) => {

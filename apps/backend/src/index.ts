@@ -273,6 +273,7 @@ io.on('connection', (socket) => {
                 if (banEntry) {
                     setTimeout(() => {
                         // Emit this banned map to all members
+                        // TODO: Emit only to sockets not in the teams (watchers)
                         io.to(lobbyId).emit('bannedReplay', banEntry);
                     }, accumulatedDelay);
                 }

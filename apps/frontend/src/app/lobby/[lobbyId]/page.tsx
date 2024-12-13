@@ -117,6 +117,7 @@ export default function LobbyPage() {
             setCanPick(() => pickVar);
         });
 
+        // TODO: Fix coinFlip
         newSocket.on('coinFlip', (result: number) => {
             setCoinResult(result);
             setIsWaiting(false);
