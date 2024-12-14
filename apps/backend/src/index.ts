@@ -64,6 +64,8 @@ app.get('/admin/lobbies', (_req, res) => {
     res.json(lobbyList);
 });
 
+// TODO: Add socket calls for admin that flip the coin and start the game
+//  Also, add a way for OBS to fetch the lobby data without the endpoint so that you don't have to be an admin for it
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
@@ -129,6 +131,7 @@ io.on('connection', (socket) => {
 
             // Broadcast the updated team names to all lobby members
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
+            io.to(lobbyId).emit('isCoin', lobby.coinFlip);
 
             // With two teams present flip the coin and assign values for initiating mapban
             if (lobby.coinFlip) {
@@ -256,8 +259,8 @@ io.on('connection', (socket) => {
         }
     });
 
+    // TODO: Make it 'clear' and 'start' events
     socket.on('replay', (lobbyId: string) => {
-        // TODO: MIGHT NOT WORK!!!!
         const lobby = lobbies.get(lobbyId);
         if (!lobby) return;
 
@@ -273,7 +276,6 @@ io.on('connection', (socket) => {
                 if (banEntry) {
                     setTimeout(() => {
                         // Emit this banned map to all members
-                        // TODO: Emit only to sockets not in the teams (watchers)
                         io.to(lobbyId).emit('bannedReplay', banEntry);
                     }, accumulatedDelay);
                 }

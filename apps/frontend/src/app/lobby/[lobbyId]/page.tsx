@@ -1,13 +1,13 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useRouter, useParams} from 'next/navigation';
 import {io, Socket} from 'socket.io-client';
 import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
-import {ArrowLeft, Copy} from 'lucide-react';
+import {ArrowLeft, Check, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
 
@@ -41,7 +41,7 @@ export default function LobbyPage() {
     const [canBan, setCanBan] = useState(false);
     const [canWork, setCanWork] = useState(false);
     const [coinResult, setCoinResult] = useState<number>(0);
-    const [isCoin, setIsCoin] = useState(false);
+    const isCoin = useRef(false);
 
     // Map data
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
@@ -66,7 +66,7 @@ export default function LobbyPage() {
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
-            if (teamNamesArray.length === 2 && !isCoin) {
+            if (teamNamesArray.length === 2 && !isCoin.current) {
                 setShowTeamNameOverlay(false);
             }
         });
@@ -107,25 +107,32 @@ export default function LobbyPage() {
             setGameState(gameStateVar);
         });
 
+        // Handle 'canBan' event
         newSocket.on('canBan', (banVar: boolean) => {
             console.log('I can ban now');
             setCanBan(() => banVar);
         });
 
+        // Handle 'canPick' event
         newSocket.on('canPick', (pickVar: boolean) => {
             console.log('I can pick now');
             setCanPick(() => pickVar);
         });
 
-        // TODO: Fix coinFlip
+        // Handle 'coinFlip' event
         newSocket.on('coinFlip', (result: number) => {
             setCoinResult(result);
             setIsWaiting(false);
             setIsAnimated(true);
+            setTimeout(() => {
+                setIsAnimated(false);
+                setShowTeamNameOverlay(false);
+            }, 5000);
         });
 
-        newSocket.on('isCoin', (isCoin: boolean) => {
-            setIsCoin(isCoin);
+        // Handle 'isCoin' event
+        newSocket.on('isCoin', (isCoinVar: boolean) => {
+            isCoin.current = isCoinVar;
         });
 
         setSocket(newSocket);
@@ -541,7 +548,14 @@ export default function LobbyPage() {
 
                             {isAnimated && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-center">{`${teamNames[coinResult]} начинают первыми`}</h2>
+                                    <div className="flex justify-center space-x-4">
+                                        <h2 className="text-2xl font-bold mb-4 text-center">{
+                                            `${teamNames[coinResult][1]} начинают первыми`}
+                                        </h2>
+                                        <Button variant="outline" onClick={() => setShowTeamNameOverlay(false)}>
+                                            <Check className="w-8 h-8 text-green-500"/>
+                                        </Button>
+                                    </div>
                                     <video
                                         src={`coin_${coinResult}.mp4`}
                                         preload={"auto"}

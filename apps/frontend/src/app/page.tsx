@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import {
@@ -24,6 +24,7 @@ export default function HomePage() {
     const [lobbyId, setLobbyId] = useState('');
     const [showJoinLobbyOverlay, setShowJoinLobbyOverlay] = useState(false);
     const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
     // Things for sending lobby settings to server
@@ -41,6 +42,10 @@ export default function HomePage() {
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
         });
+
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
 
         setSocket(newSocket);
 
@@ -131,34 +136,36 @@ export default function HomePage() {
                             transition={{ duration: 0.3 }}
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full justify-center"
                         >
+                            <form onSubmit={handleJoinLobby}>
                             <h2 className="text-2xl font-bold mb-4">Введите код лобби</h2>
-                            <div className="space-y-4">
-                                <div className="flex justify-center space-x-2">
-                                    <InputOTP
-                                        maxLength={4}
-                                        pattern={REGEXP_ONLY_DIGITS}
-                                        value={lobbyId}
-                                        onChange={(value) => setLobbyId(value)}
-                                    >
-                                        <InputOTPGroup>
-                                            <InputOTPSlot index={0}/>
-                                            <InputOTPSlot index={1}/>
-                                            <InputOTPSlot index={2}/>
-                                            <InputOTPSlot index={3}/>
-                                        </InputOTPGroup>
-                                    </InputOTP>
+                                <div className="space-y-4">
+                                    <div className="flex justify-center space-x-2">
+                                        <InputOTP
+                                            ref={inputRef}
+                                            maxLength={4}
+                                            pattern={REGEXP_ONLY_DIGITS}
+                                            value={lobbyId}
+                                            onChange={(value) => setLobbyId(value)}
+                                        >
+                                            <InputOTPGroup>
+                                                <InputOTPSlot index={0}/>
+                                                <InputOTPSlot index={1}/>
+                                                <InputOTPSlot index={2}/>
+                                                <InputOTPSlot index={3}/>
+                                            </InputOTPGroup>
+                                        </InputOTP>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <Button type="submit" disabled={lobbyId.length !== 4}>
+                                            Подтвердить
+                                        </Button>
+                                        <Button type="button" variant="outline"
+                                                onClick={() => setShowJoinLobbyOverlay(false)}>
+                                            Назад
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <Button type="button" disabled={lobbyId.length !== 4}
-                                            onClick={handleJoinLobby}>
-                                        Подтвердить
-                                    </Button>
-                                    <Button type="button" variant="outline"
-                                            onClick={() => setShowJoinLobbyOverlay(false)}>
-                                        Назад
-                                    </Button>
-                                </div>
-                            </div>
+                            </form>
                         </motion.div>
                     </motion.div>
                 )}

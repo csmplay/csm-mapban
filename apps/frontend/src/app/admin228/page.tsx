@@ -158,11 +158,10 @@ export default function AdminPage() {
                                             <Separator />
                                             {/* Optional display of new fields */}
                                             <div className="space-y-2">
-                                                <div className="text-sm text-gray-700">Game Type: {lobby.gameType}</div>
+                                                <div className="text-sm text-gray-700">Game Type: {
+                                                    lobby.gameType === 0 ? 'BO1' : lobby.gameType === 1 ? 'BO3' : 'BO5'
+                                                }</div>
                                                 <div className="text-sm text-gray-700">Coin Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
-                                                <div className="text-sm text-gray-700">
-                                                    Game State List: {lobby.gameStateList.join(', ')}
-                                                </div>
                                             </div>
                                         </div>
                                     </ScrollArea>
