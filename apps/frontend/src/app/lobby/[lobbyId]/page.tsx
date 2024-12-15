@@ -41,7 +41,7 @@ export default function LobbyPage() {
     const [canBan, setCanBan] = useState(false);
     const [canWork, setCanWork] = useState(false);
     const [coinResult, setCoinResult] = useState<number>(0);
-    const isCoin = useRef(false);
+    const isCoin = useRef(true);
 
     // Map data
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);

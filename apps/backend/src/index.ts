@@ -64,8 +64,6 @@ app.get('/admin/lobbies', (_req, res) => {
     res.json(lobbyList);
 });
 
-// TODO: Add socket calls for admin that flip the coin and start the game
-//  Also, add a way for OBS to fetch the lobby data without the endpoint so that you don't have to be an admin for it
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
@@ -89,7 +87,6 @@ io.on('connection', (socket) => {
         // Add the lobbyId to the socket's list of lobbies
         socket.data.lobbies.add(lobbyId);
         io.to(socket.id).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
-        io.to(socket.id).emit('isCoin', lobby.coinFlip);
         if (lobby.picked.length > 0) {
             io.to(socket.id).emit('pickedUpdated', lobby.picked);
         }
@@ -122,6 +119,20 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('coinFlipUpdate', (lobbyId: string, coinFlip: boolean) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            lobby.coinFlip = coinFlip;
+        }
+    });
+
+    socket.on('getPatternList', (lobbyId: string) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            io.to(socket.id).emit('patternList', lobby.gameStateList);
+        }
+    });
+
     socket.on('teamName', (data: { lobbyId: string; teamName: string }) => {
         const {lobbyId, teamName} = data;
         const lobby = lobbies.get(lobbyId);
@@ -131,9 +142,15 @@ io.on('connection', (socket) => {
 
             // Broadcast the updated team names to all lobby members
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
+        }
+    });
+
+    socket.on('start', (lobbyId: string) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
             io.to(lobbyId).emit('isCoin', lobby.coinFlip);
 
-            // With two teams present flip the coin and assign values for initiating mapban
             if (lobby.coinFlip) {
                 if (lobby.teamNames.size === 2) {
                     const result = Math.floor(Math.random() * 2);
@@ -149,13 +166,15 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
-                io.to(socket.id).emit('canWorkUpdated', true);
-                if (lobby.gameStateList[0] === 'ban') {
-                    io.to(socket.id).emit('canBan', true);
-                    io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для бана');
-                } else {
-                    io.to(socket.id).emit('canPick', true);
-                    io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для пика');
+                for (const [otherSocketIdKey] of lobby.teamNames.entries()) {
+                    io.to(otherSocketIdKey).emit('canWorkUpdated', true);
+                    if (lobby.gameStateList[0] === 'ban') {
+                        io.to(otherSocketIdKey).emit('canBan', true);
+                        io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для бана');
+                    } else {
+                        io.to(otherSocketIdKey).emit('canPick', true);
+                        io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для пика');
+                    }
                 }
             }
         }
@@ -259,7 +278,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // TODO: Make it 'clear' and 'start' events
+    // TODO: Make it 'clear' and 'start' events (maybe do this from Admin page)
     socket.on('replay', (lobbyId: string) => {
         const lobby = lobbies.get(lobbyId);
         if (!lobby) return;

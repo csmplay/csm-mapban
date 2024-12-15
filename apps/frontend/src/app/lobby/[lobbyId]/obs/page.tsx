@@ -40,25 +40,25 @@ const LobbyObsPage = () => {
     const backendUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
 
     // Fetch pattern (Game Rules) from the lobby data
-    useEffect(() => {
-        if (!lobbyId) return;
-        const fetchPattern = async () => {
-            try {
-                const res = await fetch(`${backendUrl}/admin/lobbies`);
-                const data = await res.json();
-                // Find the lobby with the matching lobbyId
-                const currentLobby = data.find((l: any) => l.lobbyId === lobbyId);
-                if (currentLobby && currentLobby.gameStateList) {
-                    setPattern(currentLobby.gameStateList);
-                }
-            } catch (error) {
-                console.error('Error fetching pattern:', error);
-            }
-        };
-        (async () => {
-            await fetchPattern();
-        })();
-    }, [lobbyId, backendUrl]);
+    // useEffect(() => {
+    //     if (!lobbyId) return;
+    //     const fetchPattern = async () => {
+    //         try {
+    //             const res = await fetch(`${backendUrl}/admin/lobbies`);
+    //             const data = await res.json();
+    //             // Find the lobby with the matching lobbyId
+    //             const currentLobby = data.find((l: any) => l.lobbyId === lobbyId);
+    //             if (currentLobby && currentLobby.gameStateList) {
+    //                 setPattern(currentLobby.gameStateList);
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching pattern:', error);
+    //         }
+    //     };
+    //     (async () => {
+    //         await fetchPattern();
+    //     })();
+    // }, [lobbyId, backendUrl]);
 
     useEffect(() => {
         const newSocket = io(backendUrl);
@@ -66,6 +66,7 @@ const LobbyObsPage = () => {
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
             if (lobbyId) {
+                newSocket.emit('getPatternList', lobbyId);
                 newSocket.emit('joinLobby', lobbyId);
                 console.log(`Joined lobby ${lobbyId}`);
             }
@@ -77,6 +78,10 @@ const LobbyObsPage = () => {
 
         newSocket.on('bannedUpdated', (banned: Array<{ map: string; teamName: string }>) => {
             setBannedEntries(banned);
+        });
+
+        newSocket.on('patternList', (pattern: string[]) => {
+            setPattern(pattern);
         });
 
         // Handle 'clear' event from the server
