@@ -67,7 +67,7 @@ const LobbyObsPage = () => {
             console.log('Connected to Socket.IO server');
             if (lobbyId) {
                 newSocket.emit('getPatternList', lobbyId);
-                newSocket.emit('joinLobby', lobbyId);
+                newSocket.emit('joinLobbyObs', lobbyId);
                 console.log(`Joined lobby ${lobbyId}`);
             }
         });

@@ -142,10 +142,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('coinFlipUpdate', (lobbyId: string, coinFlip: boolean) => {
+    socket.on('coinFlipUpdate', (data : {lobbyId: string, coinFlip: boolean}) => {
+        const {lobbyId, coinFlip} = data;
+
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
             lobby.coinFlip = coinFlip;
+            console.log('Lobby updated with coinFlip ' + lobby.coinFlip);
         }
     });
 
@@ -192,6 +195,7 @@ io.on('connection', (socket) => {
             } else {
                 for (const [otherSocketIdKey] of lobby.teamNames.entries()) {
                     io.to(otherSocketIdKey).emit('canWorkUpdated', true);
+                    io.to(lobbyId).emit('startWithoutCoin');
                     if (lobby.gameStateList[0] === 'ban') {
                         io.to(otherSocketIdKey).emit('canBan', true);
                         io.to(lobbyId).emit('gameStateUpdated', 'Выберите карту для бана');

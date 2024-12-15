@@ -31,6 +31,7 @@ type Lobby = {
 
 const AnimatedCheckbox = motion.create(Checkbox);
 
+// TODO: Maybe add coinFlip state for more fluent workflow
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
     const socketRef = useRef<Socket | null>(null);
@@ -59,7 +60,7 @@ export default function AdminPage() {
         })();
 
         // Polling every 5 seconds to update the lobby list
-        const interval = setInterval(fetchLobbies, 5000);
+        const interval = setInterval(fetchLobbies, 500);
 
         if (socketRef.current) {
             socketRef.current.on('lobbyDeleted', (deletedLobbyId: string) => {
@@ -148,7 +149,7 @@ export default function AdminPage() {
                                             {lobby.members.length}
                                         </Badge>
                                         <Button onClick={() => handleStartGame(lobby.lobbyId)} variant="outline"
-                                                className="flex-1">
+                                                className="flex-1" disabled={lobby.teamNames.length !== 2}>
                                             Start Game
                                         </Button>
                                     </CardTitle>

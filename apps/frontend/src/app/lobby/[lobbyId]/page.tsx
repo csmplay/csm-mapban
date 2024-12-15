@@ -66,10 +66,11 @@ export default function LobbyPage() {
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
-            if (teamNamesArray.length === 2 && !isCoin.current) {
-                setShowTeamNameOverlay(false);
-            }
         });
+
+        newSocket.on('startWithoutCoin', () => {
+            setShowTeamNameOverlay(false);
+        })
 
         // Handle 'pickedUpdated' event
         newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
@@ -199,6 +200,9 @@ export default function LobbyPage() {
     };
 
     const handleSkipTeamName = () => {
+        if (pickedMaps.length !== 0 || bannedMaps.length !== 0) {
+            setShowTeamNameOverlay(false);
+        }
         setIsWaiting(true);
     };
 
