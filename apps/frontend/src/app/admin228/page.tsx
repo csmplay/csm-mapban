@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -10,6 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, LogIn, Users, Eye } from 'lucide-react';
+import { Checkbox } from "@/components/ui/checkbox"
+import {Label} from "@/components/ui/label";
+import {motion} from "framer-motion";
 
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
@@ -18,12 +21,15 @@ type Lobby = {
     lobbyId: string;
     members: string[];
     teamNames: [string, string][]; // [socketId, teamName]
+    observers: string[];
     picked: PickedMap[];
     banned: BannedMap[];
     gameType: number;
     gameStateList: string[];
     coinFlip: boolean;
 };
+
+const AnimatedCheckbox = motion.create(Checkbox);
 
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
@@ -96,10 +102,34 @@ export default function AdminPage() {
         router.push(`/lobby/${lobbyId}`);
     };
 
-    const handleReplay = (lobbyId: string) => {
+    const handleClear = (lobbyId: string) => {
         if (socketRef.current) {
-            socketRef.current.emit('replay', { lobbyId });
+            socketRef.current.emit('clear', lobbyId);
         }
+    };
+
+    const handlePlayAnimation = (lobbyId: string) => {
+        if (socketRef.current) {
+            socketRef.current.emit('play', lobbyId);
+        }
+    }
+
+    const handleCoinFlip = (lobbyId: string, coinFlip: boolean) => {
+        if (socketRef.current) {
+            console.log(coinFlip);
+            socketRef.current.emit('coinFlipUpdate', { lobbyId, coinFlip });
+        }
+    }
+
+    const handleStartGame = (lobbyId: string) => {
+        if (socketRef.current) {
+            socketRef.current.emit('start', lobbyId);
+        }
+    }
+
+    const checkboxVariants = {
+        checked: { scale: 1.1 },
+        unchecked: { scale: 1 },
     };
 
     return (
@@ -117,11 +147,28 @@ export default function AdminPage() {
                                             <Users className="w-4 h-4 mr-1" />
                                             {lobby.members.length}
                                         </Badge>
+                                        <Button onClick={() => handleStartGame(lobby.lobbyId)} variant="outline"
+                                                className="flex-1">
+                                            Start Game
+                                        </Button>
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <ScrollArea className="h-64 pr-4">
                                         <div className="space-y-4">
+                                            <div className="flex items-center justify-center space-x-2">
+                                                <AnimatedCheckbox
+                                                    id="coinFlip"
+                                                    checked={lobby.coinFlip}
+                                                    onCheckedChange={(checked) => {
+                                                        handleCoinFlip(lobby.lobbyId, checked as boolean);
+                                                    }}
+                                                    variants={checkboxVariants}
+                                                    animate={lobby.coinFlip ? "checked" : "unchecked"}
+                                                    transition={{type: "spring", stiffness: 300, damping: 10}}
+                                                />
+                                                <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+                                            </div>
                                             <div>
                                                 <h3 className="font-semibold text-gray-600 mb-2">Teams:</h3>
                                                 <ul className="space-y-1">
@@ -133,7 +180,7 @@ export default function AdminPage() {
                                                     ))}
                                                 </ul>
                                             </div>
-                                            <Separator />
+                                            <Separator/>
                                             <div>
                                                 <h3 className="font-semibold text-gray-600 mb-2">Picked:</h3>
                                                 <div className="flex flex-wrap gap-2">
@@ -144,7 +191,7 @@ export default function AdminPage() {
                                                     ))}
                                                 </div>
                                             </div>
-                                            <Separator />
+                                            <Separator/>
                                             <div>
                                                 <h3 className="font-semibold text-gray-600 mb-2">Banned:</h3>
                                                 <div className="flex flex-wrap gap-2">
@@ -155,28 +202,34 @@ export default function AdminPage() {
                                                     ))}
                                                 </div>
                                             </div>
-                                            <Separator />
+                                            <Separator/>
                                             {/* Optional display of new fields */}
                                             <div className="space-y-2">
                                                 <div className="text-sm text-gray-700">Game Type: {
                                                     lobby.gameType === 0 ? 'BO1' : lobby.gameType === 1 ? 'BO3' : 'BO5'
                                                 }</div>
-                                                <div className="text-sm text-gray-700">Coin Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
+                                                <div className="text-sm text-gray-700">Coin
+                                                    Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
                                             </div>
                                         </div>
                                     </ScrollArea>
                                 </CardContent>
                                 <CardFooter className="bg-gray-50 border-t p-4 flex flex-wrap gap-2">
-                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline" className="flex-1">
-                                        <LogIn className="w-4 h-4 mr-2" />
+                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline"
+                                            className="flex-1">
+                                        <LogIn className="w-4 h-4 mr-2"/>
                                         Connect
                                     </Button>
-                                    <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline" className="flex-1">
-                                        <Eye className="w-4 h-4 mr-2" />
+                                    <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline"
+                                            className="flex-1">
+                                        <Eye className="w-4 h-4 mr-2"/>
                                         Copy Obs Link
                                     </Button>
-                                    <Button onClick={() => handleReplay(lobby.lobbyId)} variant="outline" className="flex-1">
-                                        Replay
+                                    <Button onClick={() => handleClear(lobby.lobbyId)} variant="outline" className="flex-1">
+                                        Clear Obs View
+                                    </Button>
+                                    <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline" className="flex-1">
+                                        Play Pick Animation
                                     </Button>
                                     <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive" className="flex-1">
                                         <Trash2 className="w-4 h-4 mr-2" />

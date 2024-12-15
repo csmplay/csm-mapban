@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 import { REGEXP_ONLY_DIGITS } from "input-otp"
 import {
@@ -14,23 +14,17 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 require('dotenv').config();
-
-const AnimatedCheckbox = motion(Checkbox);
 
 export default function HomePage() {
     const [lobbyId, setLobbyId] = useState('');
     const [showJoinLobbyOverlay, setShowJoinLobbyOverlay] = useState(false);
     const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
     // Things for sending lobby settings to server
     const [socket, setSocket] = useState<Socket | null>(null);
     const [gameType, setGameType] = useState("BO1");
-    const [coinFlip, setCoinFlip] = useState(false);
 
     const port = 4000;
 
@@ -43,10 +37,6 @@ export default function HomePage() {
             console.log('Connected to Socket.IO server');
         });
 
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-
         setSocket(newSocket);
 
         return () => {
@@ -54,9 +44,9 @@ export default function HomePage() {
         };
     }, []);
 
-    const handleJoinLobby = () => {
+    const handleJoinLobby = (event: React.FormEvent) => {
+        event.preventDefault();
         if (lobbyId && socket) {
-            socket.emit('joinLobby', lobbyId);
             router.push(`/lobby/${lobbyId}`);
         }
     };
@@ -71,6 +61,7 @@ export default function HomePage() {
             let gameTypeNum = 0;
             if (gameType === "BO3") gameTypeNum = 1;
             if (gameType === "BO5") gameTypeNum = 2;
+            const coinFlip = true;
             socket.emit('createLobby', { lobbyId, gameTypeNum, coinFlip });
             router.push(`/lobby/${lobbyId}`);
         }
@@ -84,11 +75,6 @@ export default function HomePage() {
     const contentVariants = {
         hidden: { scale: 0.9, opacity: 0 },
         visible: { scale: 1, opacity: 1 },
-    };
-
-    const checkboxVariants = {
-        checked: { scale: 1.1 },
-        unchecked: { scale: 1 },
     };
 
     return (
@@ -141,7 +127,6 @@ export default function HomePage() {
                                 <div className="space-y-4">
                                     <div className="flex justify-center space-x-2">
                                         <InputOTP
-                                            ref={inputRef}
                                             maxLength={4}
                                             pattern={REGEXP_ONLY_DIGITS}
                                             value={lobbyId}
@@ -202,17 +187,6 @@ export default function HomePage() {
                                             </Button>
                                         ))}
                                     </div>
-                                </div>
-                                <div className="flex items-center justify-center space-x-2">
-                                    <AnimatedCheckbox
-                                        id="coinFlip"
-                                        checked={coinFlip}
-                                        onCheckedChange={(checked) => setCoinFlip(checked as boolean)}
-                                        variants={checkboxVariants}
-                                        animate={coinFlip ? "checked" : "unchecked"}
-                                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                                    />
-                                    <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
                                 </div>
                                 <div className="flex justify-between">
                                     <Button type="button" onClick={handleCreateLobby}>

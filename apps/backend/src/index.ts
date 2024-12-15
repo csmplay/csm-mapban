@@ -29,6 +29,7 @@ interface Lobby {
     lobbyId: string;
     members: Set<string>;
     teamNames: Map<string, string>;
+    observers: Set<string>;
     picked: Array<{ map: string; teamName: string; side: string }>;
     banned: Array<{ map: string; teamName: string }>;
     gameType: number;
@@ -55,6 +56,7 @@ app.get('/admin/lobbies', (_req, res) => {
         lobbyId: lobby.lobbyId,
         members: Array.from(lobby.members),
         teamNames: Array.from(lobby.teamNames.entries()),
+        observers: Array.from(lobby.observers),
         picked: lobby.picked,
         banned: lobby.banned,
         gameType: lobby.gameType,
@@ -95,6 +97,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('joinLobbyObs', (lobbyId: string) => {
+        socket.join(lobbyId);
+        console.log(`User ${socket.id} observing lobby ${lobbyId}`);
+
+        // Check if the lobby exists
+        let lobby = lobbies.get(lobbyId);
+        if (!lobby) {
+            io.to(socket.id).emit('lobbyUndefined', lobbyId);
+            return;
+        }
+
+        // Add the socket ID to the lobby's member list
+        lobby.observers.add(socket.id);
+
+        // Add the lobbyId to the socket's list of lobbies
+        socket.data.lobbies.add(lobbyId);
+        io.to(socket.id).emit('pickedUpdated', lobby.picked);
+        io.to(socket.id).emit('bannedUpdated', lobby.banned);
+    })
+
     socket.on('createLobby', (data: {lobbyId: string; gameTypeNum: number; coinFlip: boolean }) => {
         const {lobbyId, gameTypeNum, coinFlip} = data;
         console.log('Lobby created with id ' + lobbyId);
@@ -107,6 +129,7 @@ io.on('connection', (socket) => {
                 lobbyId: lobbyId,
                 members: new Set<string>(),
                 teamNames: new Map<string, string>(),
+                observers: new Set<string>(),
                 picked: [],
                 banned: [],
                 gameType: gameTypeNum,
@@ -148,6 +171,7 @@ io.on('connection', (socket) => {
     socket.on('start', (lobbyId: string) => {
         const lobby = lobbies.get(lobbyId);
         if (lobby) {
+            console.log('Game Started in lobby: ' + lobbyId);
             io.to(lobbyId).emit('teamNamesUpdated', Array.from(lobby.teamNames.entries()));
             io.to(lobbyId).emit('isCoin', lobby.coinFlip);
 
@@ -278,7 +302,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // TODO: Make it 'clear' and 'start' events (maybe do this from Admin page)
     socket.on('replay', (lobbyId: string) => {
         const lobby = lobbies.get(lobbyId);
         if (!lobby) return;
@@ -309,6 +332,28 @@ io.on('connection', (socket) => {
             }
         });
     });
+
+    // Socket calls for clearing and restarting animation for the observer (streamer)
+    // Clear all action lists
+    socket.on('clear', (lobbyId: string) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            lobby.observers.forEach((observer) => {
+                io.to(observer).emit('clear');
+            })
+        }
+    })
+
+    // Refill action lists again
+    socket.on('play', (lobbyId: string) => {
+        const lobby = lobbies.get(lobbyId);
+        if (lobby) {
+            lobby.observers.forEach((observer) => {
+                io.to(observer).emit('bannedUpdated', lobby.banned);
+                io.to(observer).emit('pickedUpdated', lobby.picked);
+            })
+        }
+    })
 
     socket.on('disconnect', () => {
         console.log('user disconnected', socket.id);
