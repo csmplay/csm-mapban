@@ -31,7 +31,6 @@ type Lobby = {
 
 const AnimatedCheckbox = motion.create(Checkbox);
 
-// TODO: Maybe add coinFlip state for more fluent workflow
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
     const socketRef = useRef<Socket | null>(null);
