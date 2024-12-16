@@ -30,6 +30,6 @@
     }
   },
   "dependencies": {
-    "dotenv-cli": "github:motdotla/dotenv-cli"
+    "dotenv-cli": "^7.4.4"
   }
 }
