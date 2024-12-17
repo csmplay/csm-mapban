@@ -256,7 +256,8 @@ io.on('connection', (socket) => {
                 }
             }
 
-            io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
+            io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за ' + (side === 't' ? 'атакующих' : side === 'ct' ? 'обороняющих' : side.toUpperCase()));
+            
 
             if (lobby.gameStep < 7) {
                 io.to(otherSocketId).emit('canWorkUpdated', true);
