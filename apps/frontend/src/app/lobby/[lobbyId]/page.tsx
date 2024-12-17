@@ -578,7 +578,7 @@ export default function LobbyPage() {
                                         </Button>
                                     </div>
                                     <video
-                                        src={`coin_${coinResult}.mp4`}
+                                        src={`/coin_${coinResult}.mp4`}
                                         preload={"auto"}
                                         autoPlay
                                         loop
