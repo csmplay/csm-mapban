@@ -7,6 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Card} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
+import {ActionLog} from "@/components/ui/ActionLog";
 import {ArrowLeft, Check, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
@@ -37,6 +38,7 @@ export default function LobbyPage() {
     const [teamName, setTeamName] = useState('');
     const [teamNames, setTeamNames] = useState<[string, string][]>([]);
     const [gameState, setGameState] = useState<string>('Игра начинается...');
+    const [gameStateHistory, setGameStateHistory] = useState<string[]>([]);
     const [canPick, setCanPick] = useState(false);
     const [canBan, setCanBan] = useState(false);
     const [canWork, setCanWork] = useState(false);
@@ -106,6 +108,7 @@ export default function LobbyPage() {
         // Handle 'gameStateUpdated' event
         newSocket.on('gameStateUpdated', (gameStateVar: string) => {
             setGameState(gameStateVar);
+            setGameStateHistory(prevHistory => [gameStateVar, ...prevHistory]);
         });
 
         // Handle 'canBan' event
@@ -250,9 +253,19 @@ export default function LobbyPage() {
 
 
                 <div className="flex justify-center items-center mb-6">
-                    <Card className="bg-white text-black px-4 py-2 rounded-lg font-bold text-xl">
-                        {gameState}
-                    </Card>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={gameState}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                        >
+                            <Card className="bg-white text-black px-4 py-2 rounded-lg font-bold text-xl">
+                                {gameState}
+                            </Card>
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 {/* Map Cards */}
@@ -442,6 +455,10 @@ export default function LobbyPage() {
                     <Button onClick={handleSubmit} disabled={selectedMapIndex === null || !canWork}>
                         Подтвердить
                     </Button>
+                </div>
+
+                <div className="flex items-center justify-center p-4">
+                    <ActionLog entries={gameStateHistory} blueTeamName={blueTeamName} redTeamName={redTeamName}/>
                 </div>
             </div>
 

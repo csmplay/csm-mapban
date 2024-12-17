@@ -36,6 +36,7 @@ interface Lobby {
     gameStateList: string[];
     coinFlip: boolean;
     gameStep: number;
+    admin: boolean;
 }
 
 // Data structure to store lobbies and their members
@@ -63,6 +64,7 @@ app.get('/admin/lobbies', (_req, res) => {
         gameType: lobby.gameType,
         gameStateList: Array.from(lobby.gameStateList),
         coinFlip: lobby.coinFlip,
+        admin: lobby.admin,
     }));
     res.json(lobbyList);
 });
@@ -136,11 +138,40 @@ io.on('connection', (socket) => {
                 gameType: gameTypeNum,
                 gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: globalCoinFlip,
-                gameStep: 0
+                gameStep: 0,
+                admin: false
             };
 
             lobbies.set(lobbyId, lobby);
         }
+    });
+
+    // TODO: Add admin lobbies
+    socket.on('createObsLobby', (data: {lobbyId: string; gameTypeNum: number; coinFlip: boolean}) => {
+        const {lobbyId, gameTypeNum, coinFlip} = data;
+        console.log('Admin Lobby created with id ' + lobbyId);
+
+        let lobby = lobbies.get(lobbyId);
+        if (!lobby) {
+            // Create a new ADMIN lobby
+            lobby = {
+                lobbyId: lobbyId,
+                members: new Set<string>(),
+                teamNames: new Map<string, string>(),
+                observers: new Set<string>(),
+                picked: [],
+                banned: [],
+                gameType: gameTypeNum,
+                gameStateList: gameTypeLists[gameTypeNum],
+                coinFlip: coinFlip,
+                gameStep: 0,
+                admin: true
+            };
+
+            lobbies.set(lobbyId, lobby);
+        }
+
+        console.log('Admin Lobby created with id ' + lobbyId);
     });
 
     socket.on('coinFlipUpdate', (coinFlip: boolean) => {
@@ -225,14 +256,20 @@ io.on('connection', (socket) => {
                 }
             }
 
+            io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
+
             if (lobby.gameStep < 7) {
                 io.to(otherSocketId).emit('canWorkUpdated', true);
                 if (lobby.gameStateList[lobby.gameStep] === 'pick') {
                     io.to(otherSocketId).emit('canPick', true);
-                    io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
+                    setTimeout(() => {
+                        io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для пика');
+                    }, 3000);
                 } else {
                     io.to(otherSocketId).emit('canBan', true);
-                    io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
+                    setTimeout(() => {
+                        io.to(lobbyId).emit('gameStateUpdated', otherName + ' выбирают карту для бана');
+                    }, 3000);
                 }
             } else {
                 io.to(lobbyId).emit('canWorkUpdated', false);
@@ -240,7 +277,6 @@ io.on('connection', (socket) => {
 
             // Broadcast the updated picks to all lobby members
             io.to(lobbyId).emit('pickedUpdated', lobby.picked);
-            // io.to(lobbyId).emit('gameStateUpdated', teamName + ' выбрали ' + map + ' за сторону ' + side.toUpperCase());
         }
     });
 

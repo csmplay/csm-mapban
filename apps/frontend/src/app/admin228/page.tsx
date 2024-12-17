@@ -27,6 +27,7 @@ type Lobby = {
     gameType: number;
     gameStateList: string[];
     coinFlip: boolean;
+    admin: boolean;
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
