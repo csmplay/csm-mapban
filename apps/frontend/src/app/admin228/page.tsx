@@ -33,6 +33,7 @@ const AnimatedCheckbox = motion.create(Checkbox);
 
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
+    const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
     const socketRef = useRef<Socket | null>(null);
     const router = useRouter();
     const { toast } = useToast();
@@ -114,10 +115,10 @@ export default function AdminPage() {
         }
     }
 
-    const handleCoinFlip = (lobbyId: string, coinFlip: boolean) => {
+    const handleCoinFlip = (coinFlip: boolean) => {
         if (socketRef.current) {
-            console.log(coinFlip);
-            socketRef.current.emit('coinFlipUpdate', { lobbyId, coinFlip });
+            setGlobalCoinFlip(coinFlip);
+            socketRef.current.emit('coinFlipUpdate', coinFlip);
         }
     }
 
@@ -136,6 +137,21 @@ export default function AdminPage() {
         <div className="min-h-screen bg-gray-100 p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Admin</h1>
+                <Card className="w-full max-w-md mx-auto bg-white shadow-lg mb-8">
+                    <CardContent className="p-6 ml-8 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                        <AnimatedCheckbox
+                            id="coinFlip"
+                            checked={globalCoinFlip}
+                            onCheckedChange={(checked) => {
+                                handleCoinFlip(checked as boolean);
+                            }}
+                            variants={checkboxVariants}
+                            animate={globalCoinFlip ? "checked" : "unchecked"}
+                            transition={{type: "spring", stiffness: 300, damping: 10}}
+                        />
+                        <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+                    </CardContent>
+                </Card>
                 {lobbies.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {lobbies.map((lobby) => (
@@ -156,19 +172,6 @@ export default function AdminPage() {
                                 <CardContent className="p-6">
                                     <ScrollArea className="h-64 pr-4">
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-center space-x-2">
-                                                <AnimatedCheckbox
-                                                    id="coinFlip"
-                                                    checked={lobby.coinFlip}
-                                                    onCheckedChange={(checked) => {
-                                                        handleCoinFlip(lobby.lobbyId, checked as boolean);
-                                                    }}
-                                                    variants={checkboxVariants}
-                                                    animate={lobby.coinFlip ? "checked" : "unchecked"}
-                                                    transition={{type: "spring", stiffness: 300, damping: 10}}
-                                                />
-                                                <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
-                                            </div>
                                             <div>
                                                 <h3 className="font-semibold text-gray-600 mb-2">Teams:</h3>
                                                 <ul className="space-y-1">
@@ -179,6 +182,15 @@ export default function AdminPage() {
                                                         </li>
                                                     ))}
                                                 </ul>
+                                            </div>
+                                            <Separator/>
+                                            {/* Optional display of new fields */}
+                                            <div className="space-y-2">
+                                                <div className="text-sm text-gray-700">Game Type: {
+                                                    lobby.gameType === 0 ? 'BO1' : lobby.gameType === 1 ? 'BO3' : 'BO5'
+                                                }</div>
+                                                <div className="text-sm text-gray-700">Coin
+                                                    Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
                                             </div>
                                             <Separator/>
                                             <div>
@@ -201,15 +213,6 @@ export default function AdminPage() {
                                                         </Badge>
                                                     ))}
                                                 </div>
-                                            </div>
-                                            <Separator/>
-                                            {/* Optional display of new fields */}
-                                            <div className="space-y-2">
-                                                <div className="text-sm text-gray-700">Game Type: {
-                                                    lobby.gameType === 0 ? 'BO1' : lobby.gameType === 1 ? 'BO3' : 'BO5'
-                                                }</div>
-                                                <div className="text-sm text-gray-700">Coin
-                                                    Flip: {lobby.coinFlip ? 'Yes' : 'No'}</div>
                                             </div>
                                         </div>
                                     </ScrollArea>

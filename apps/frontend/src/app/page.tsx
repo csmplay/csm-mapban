@@ -61,8 +61,7 @@ export default function HomePage() {
             let gameTypeNum = 0;
             if (gameType === "BO3") gameTypeNum = 1;
             if (gameType === "BO5") gameTypeNum = 2;
-            const coinFlip = true;
-            socket.emit('createLobby', { lobbyId, gameTypeNum, coinFlip });
+            socket.emit('createLobby', { lobbyId, gameTypeNum});
             router.push(`/lobby/${lobbyId}`);
         }
     };
