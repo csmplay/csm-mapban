@@ -557,7 +557,7 @@ export default function LobbyPage() {
                                 <div>
                                     <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность команд...</h2>
                                     <video
-                                        src={"/coinIdle.mp4"}
+                                        src={"/coinIdle.webm"}
                                         preload={"auto"}
                                         autoPlay
                                         loop
@@ -578,7 +578,7 @@ export default function LobbyPage() {
                                         </Button>
                                     </div>
                                     <video
-                                        src={`/coin_${coinResult}.mp4`}
+                                        src={`/coin_${coinResult}.webm`}
                                         preload={"auto"}
                                         autoPlay
                                         loop
