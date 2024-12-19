@@ -520,7 +520,7 @@ export default function LobbyPage() {
                             animate={{scale: 1, opacity: 1}}
                             exit={{scale: 0.9, opacity: 0}}
                             transition={{duration: 0.3}}
-                            style={{width:'600px', height: '180px'}}
+                            style={{width:'600px'}}
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                         >
                             {!isWaiting && !isAnimated && (
@@ -556,34 +556,17 @@ export default function LobbyPage() {
                             {isWaiting && (
                                 <div>
                                     <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность команд...</h2>
-                                    <video
-                                        src={"/coinIdle.webm"}
-                                        preload={"auto"}
-                                        autoPlay
-                                        loop
-                                        muted
-                                        className={"mx-auto w-full max-w-md"}
-                                    />
                                 </div>
                             )}
-
                             {isAnimated && (
-                                <div>
-                                    <div className="flex justify-center space-x-4">
-                                        <h2 className="text-2xl font-bold mb-4 text-center">{
-                                            `${teamNames[coinResult][1]} начинают первыми`}
-                                        </h2>
-                                        <Button variant="outline" onClick={() => setShowTeamNameOverlay(false)}>
-                                            <Check className="w-8 h-8 text-green-500"/>
-                                        </Button>
-                                    </div>
+                                <div className="-mb-28">
+                                    <h2 className="text-2xl font-bold mb-4 text-center">Подбрасываем монетку...</h2>
                                     <video
                                         src={`/coin_${coinResult}.webm`}
                                         preload={"auto"}
                                         autoPlay
-                                        loop
                                         muted
-                                        className={"mx-auto w-full max-w-md"}
+                                        className={"mx-auto w-full max-w-md -mt-32"}
                                     />
                                 </div>
                             )}
