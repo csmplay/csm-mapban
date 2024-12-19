@@ -8,7 +8,7 @@ import {Card} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
 import {ActionLog} from "@/components/ui/ActionLog";
-import {ArrowLeft, Check, Copy} from 'lucide-react';
+import {ArrowLeft, Copy} from 'lucide-react';
 import {motion, AnimatePresence} from 'framer-motion';
 import Image from 'next/image';
 
@@ -49,6 +49,7 @@ export default function LobbyPage() {
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
     const [pickedMaps, setPickedMaps] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
+    const [pickMapName, setPickMapName] = useState<string>("");
 
     const port = 4000;
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
@@ -76,7 +77,6 @@ export default function LobbyPage() {
 
         // Handle 'pickedUpdated' event
         newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
-            console.log('RECEIVE PICKED UPDATED');
             setPickedMaps(picked);
             setSelectedMapIndex(null);
         });
@@ -139,6 +139,17 @@ export default function LobbyPage() {
             isCoin.current = isCoinVar;
         });
 
+        newSocket.on('startPick', (index: number) => {
+            setPickMapName(mapNames[index]);
+            setSelectedMapIndex(index);
+            setShowPrompts(true);
+        });
+
+        newSocket.on('endPick', () => {
+            setShowTeamNameOverlay(false);
+            setIsWaiting(false);
+        });
+
         setSocket(newSocket);
 
         return () => {
@@ -171,8 +182,10 @@ export default function LobbyPage() {
             console.log('Banning map');
             socket.emit('ban', {lobbyId, map: mapName, teamName});
         } else if (canPick) {
-            console.log('Picking map');
-            setShowPrompts(true);
+            console.log('Started picking map');
+            socket.emit('startPick', {lobbyId, teamName, selectedMapIndex});
+            setIsWaiting(true);
+            setShowTeamNameOverlay(true);
             return;
         }
 
@@ -256,12 +269,15 @@ export default function LobbyPage() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={gameState}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            initial={{opacity: 0}}
+                            animate={{opacity: 1}}
+                            exit={{opacity: 0}}
+                            transition={{duration: 0.3}}
                         >
-                            <Card className="bg-white text-black px-4 py-2 rounded-lg font-bold text-xl">
+                            <Card className={`
+                            bg-white text-black px-4 py-2 rounded-lg font-bold text-xl border-2 
+                            ${gameState.includes(redTeamName) ? 'border-red-500' : 'border-blue-500'}
+                            `}>
                                 {gameState}
                             </Card>
                         </motion.div>
@@ -269,7 +285,8 @@ export default function LobbyPage() {
                 </div>
 
                 {/* Map Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 justify-center">
+                <div
+                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 justify-items-center">
                     {mapNames.map((mapName, index) => {
                         const isPicked = pickedMaps.some((pick) => pick.map === mapName);
                         const isBanned = bannedMaps.some((ban) => ban.map === mapName);
@@ -471,7 +488,6 @@ export default function LobbyPage() {
                         exit={{opacity: 0}}
                         transition={{duration: 0.3}}
                         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-                        onClick={() => setShowPrompts(false)}
                     >
                         <motion.div
                             initial={{scale: 0.9, opacity: 0}}
@@ -481,7 +497,9 @@ export default function LobbyPage() {
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h2 className="text-2xl font-bold mb-4 text-center">Выберите сторону</h2>
+                            <h2 className="text-2xl font-bold mb-4 text-center">
+                                Выберите сторону на карте {pickMapName}
+                            </h2>
                             <div className="flex justify-center space-x-4">
                                 <Image
                                     src="/ct.png"
@@ -520,7 +538,7 @@ export default function LobbyPage() {
                             animate={{scale: 1, opacity: 1}}
                             exit={{scale: 0.9, opacity: 0}}
                             transition={{duration: 0.3}}
-                            style={{width:'600px'}}
+                            style={{width: '600px'}}
                             className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
                         >
                             {!isWaiting && !isAnimated && (
@@ -555,7 +573,8 @@ export default function LobbyPage() {
 
                             {isWaiting && (
                                 <div>
-                                    <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность команд...</h2>
+                                    <h2 className="text-2xl font-bold mb-4 text-center">Ждём готовность
+                                        противника...</h2>
                                 </div>
                             )}
                             {isAnimated && (
@@ -577,3 +596,365 @@ export default function LobbyPage() {
         </div>
     );
 }
+
+{/* TODO: Try this grid approach }
+<div className="grid grid-cols-4 gap-4 justify-items-center">
+    {mapNames.slice(0, 4).map((mapName, index) => {
+        const isPicked = pickedMaps.some((pick) => pick.map === mapName);
+        const isBanned = bannedMaps.some((ban) => ban.map === mapName);
+        const isDisabled = isPicked || isBanned;
+        const isSelected = selectedMapIndex === index;
+
+        const banEntry = bannedMaps.find((ban) => ban.map === mapName);
+        const banTeamColor =
+            banEntry && banEntry.teamName === blueTeamName
+                ? 'blue'
+                : banEntry && banEntry.teamName === redTeamName
+                    ? 'red'
+                    : null;
+
+        const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
+        const pickSide = pickEntry ? pickEntry.side : null;
+        const pickTeamColor = pickEntry
+            ? pickEntry.teamName === redTeamName
+                ? 'red'
+                : 'blue'
+            : null;
+
+        return (
+            <motion.div
+                key={index}
+                layout
+                transition={{
+                    layout: {duration: 0.3},
+                    opacity: {duration: 0.2}
+                }}
+            >
+                <Card
+                    className={`
+                        w-full sm:w-64 p-6 flex flex-col items-center justify-between cursor-pointer transition-all duration-300 relative
+                        overflow-hidden ${
+                        isDisabled && !isPicked
+                            ? 'bg-gray-200'
+                            : isSelected
+                                ? 'bg-gray-800'
+                                : 'bg-white hover:shadow-2xl'
+                    }
+                        h-64
+                    `}
+                    onClick={() => !isDisabled && handleCardClick(index)}
+                >
+                    <Image
+                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
+                        alt={mapName}
+                        draggable={false}
+                        fill
+                        priority={true}
+                        objectFit="cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className={`
+                            absolute inset-0 z-0 border-4 rounded-xl ${
+                            isDisabled && !isPicked ? 'grayscale blur-sm' : ''
+                        } transition-all duration-300
+                            ${isSelected && !isPicked ? 'border-gray-500' : 'border-gray-300'}
+                            ${isPicked ? 'border-green-400' : ''}
+                        `}
+                    />
+                    <div className={`relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md`}>
+                        <span
+                            className={`text-xl font-bold ${
+                                isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
+                            }`}
+                        >
+                            {mapName}
+                        </span>
+                    </div>
+                    <AnimatePresence>
+                        {isPicked && pickEntry && (
+                            <motion.div
+                                className="flex flex-row justify-between overflow-hidden space-x-6"
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: {opacity: 0},
+                                    visible: {
+                                        opacity: 1,
+                                        transition: {staggerChildren: 0.2, delayChildren: 0.3},
+                                    },
+                                }}
+                            >
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="relative flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                        alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
+                                        draggable={false}
+                                        width={80}
+                                        height={80}
+                                        priority={true}
+                                        className={`rounded-full border-4 ${
+                                            pickTeamColor === 'red' ? 'border-red-500' : 'border-blue-500'
+                                        }`}
+                                    />
+                                </motion.div>
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="relative flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                        alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
+                                        draggable={false}
+                                        width={80}
+                                        height={80}
+                                        priority={true}
+                                        className={`rounded-full border-4 ${
+                                            pickTeamColor === 'red' ? 'border-blue-500' : 'border-red-500'
+                                        }`}
+                                    />
+                                </motion.div>
+                            </motion.div>
+                        )}
+
+                        {isBanned && (
+                            <motion.div
+                                className="flex flex-row justify-between overflow-hidden"
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: {opacity: 0},
+                                    visible: {
+                                        opacity: 1,
+                                        transition: {staggerChildren: 0.2, delayChildren: 0.3}
+                                    }
+                                }}
+                            >
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="absolute inset-0 flex items-center justify-center"
+                                >
+                                    <div
+                                        className="transform text-white px-4 py-1 font-bold text-xl"
+                                        style={{
+                                            position: 'absolute',
+                                            top: '80%',
+                                            width: '150%',
+                                            height: '150%',
+                                            textAlign: 'center',
+                                            opacity: 0.8,
+                                            backgroundColor: '#000000',
+                                        }}
+                                    >
+                                        BANNED
+                                    </div>
+                                </motion.div>
+                                <motion.div
+                                    initial={{opacity: 0}}
+                                    animate={{opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
+                                        banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                    }`}
+                                ></motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </Card>
+            </motion.div>
+        );
+    })}
+</div>
+
+<div className="grid grid-cols-3 gap-4 justify-items-center mt-4">
+    {mapNames.slice(4).map((mapName, subIndex) => {
+        // Adjust the index to reflect the original array's indexing
+        const index = subIndex + 4;
+        const isPicked = pickedMaps.some((pick) => pick.map === mapName);
+        const isBanned = bannedMaps.some((ban) => ban.map === mapName);
+        const isDisabled = isPicked || isBanned;
+        const isSelected = selectedMapIndex === index;
+
+        const banEntry = bannedMaps.find((ban) => ban.map === mapName);
+        const banTeamColor =
+            banEntry && banEntry.teamName === blueTeamName
+                ? 'blue'
+                : banEntry && banEntry.teamName === redTeamName
+                    ? 'red'
+                    : null;
+
+        const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
+        const pickSide = pickEntry ? pickEntry.side : null;
+        const pickTeamColor = pickEntry
+            ? pickEntry.teamName === redTeamName
+                ? 'red'
+                : 'blue'
+            : null;
+
+        return (
+            <motion.div
+                key={index}
+                layout
+                transition={{
+                    layout: {duration: 0.3},
+                    opacity: {duration: 0.2}
+                }}
+            >
+                <Card
+                    className={`
+                        w-full sm:w-64 p-6 flex flex-col items-center justify-between cursor-pointer transition-all duration-300 relative
+                        overflow-hidden ${
+                        isDisabled && !isPicked
+                            ? 'bg-gray-200'
+                            : isSelected
+                                ? 'bg-gray-800'
+                                : 'bg-white hover:shadow-2xl'
+                    }
+                        h-64
+                    `}
+                    onClick={() => !isDisabled && handleCardClick(index)}
+                >
+                    <Image
+                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
+                        alt={mapName}
+                        draggable={false}
+                        fill
+                        priority={true}
+                        objectFit="cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className={`
+                            absolute inset-0 z-0 border-4 rounded-xl ${
+                            isDisabled && !isPicked ? 'grayscale blur-sm' : ''
+                        } transition-all duration-300
+                            ${isSelected && !isPicked ? 'border-gray-500' : 'border-gray-300'}
+                            ${isPicked ? 'border-green-400' : ''}
+                        `}
+                    />
+                    <div className={`relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md`}>
+                        <span
+                            className={`text-xl font-bold ${
+                                isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
+                            }`}
+                        >
+                            {mapName}
+                        </span>
+                    </div>
+                    <AnimatePresence>
+                        {isPicked && pickEntry && (
+                            <motion.div
+                                className="flex flex-row justify-between overflow-hidden space-x-6"
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: {opacity: 0},
+                                    visible: {
+                                        opacity: 1,
+                                        transition: {staggerChildren: 0.2, delayChildren: 0.3},
+                                    },
+                                }}
+                            >
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="relative flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                        alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
+                                        draggable={false}
+                                        width={80}
+                                        height={80}
+                                        priority={true}
+                                        className={`rounded-full border-4 ${
+                                            pickTeamColor === 'red' ? 'border-red-500' : 'border-blue-500'
+                                        }`}
+                                    />
+                                </motion.div>
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="relative flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                        alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
+                                        draggable={false}
+                                        width={80}
+                                        height={80}
+                                        priority={true}
+                                        className={`rounded-full border-4 ${
+                                            pickTeamColor === 'red' ? 'border-blue-500' : 'border-red-500'
+                                        }`}
+                                    />
+                                </motion.div>
+                            </motion.div>
+                        )}
+
+                        {isBanned && (
+                            <motion.div
+                                className="flex flex-row justify-between overflow-hidden"
+                                initial="hidden"
+                                animate="visible"
+                                variants={{
+                                    hidden: {opacity: 0},
+                                    visible: {
+                                        opacity: 1,
+                                        transition: {staggerChildren: 0.2, delayChildren: 0.3}
+                                    }
+                                }}
+                            >
+                                <motion.div
+                                    initial={{y: 100, opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className="absolute inset-0 flex items-center justify-center"
+                                >
+                                    <div
+                                        className="transform text-white px-4 py-1 font-bold text-xl"
+                                        style={{
+                                            position: 'absolute',
+                                            top: '80%',
+                                            width: '150%',
+                                            height: '150%',
+                                            textAlign: 'center',
+                                            opacity: 0.8,
+                                            backgroundColor: '#000000',
+                                        }}
+                                    >
+                                        BANNED
+                                    </div>
+                                </motion.div>
+                                <motion.div
+                                    initial={{opacity: 0}}
+                                    animate={{opacity: 1}}
+                                    exit={{opacity: 0}}
+                                    transition={{duration: 0.3}}
+                                    className={`absolute inset-0 border-4 rounded-lg animate-pulse ${
+                                        banTeamColor === 'blue' ? 'border-blue-500' : 'border-red-500'
+                                    }`}
+                                ></motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </Card>
+            </motion.div>
+        );
+    })}
+</div>
+{*/}

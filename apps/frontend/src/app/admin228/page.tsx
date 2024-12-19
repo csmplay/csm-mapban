@@ -9,10 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2, LogIn, Users, Eye } from 'lucide-react';
+import {Trash2, LogIn, Users, Eye, Plus} from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox"
 import {Label} from "@/components/ui/label";
-import {motion} from "framer-motion";
+import {AnimatePresence, motion} from "framer-motion";
 
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
@@ -32,9 +32,22 @@ type Lobby = {
 
 const AnimatedCheckbox = motion.create(Checkbox);
 
+const overlayVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+};
+
+const contentVariants = {
+    hidden: { scale: 0.9, opacity: 0 },
+    visible: { scale: 1, opacity: 1 },
+};
+
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
+    const [globalCoinFlip, setGlobalCoinFlip] = useState(true)
+    const localCoinFlip = useRef(true);
+    const [gameType, setGameType] = useState("BO1");
+    const [adminOverlay, setAdminOverlay] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const router = useRouter();
     const { toast } = useToast();
@@ -129,6 +142,17 @@ export default function AdminPage() {
         }
     }
 
+    const handleAdminLobby = () => {
+        if (socketRef.current) {
+            let gameTypeNum = 0;
+            if (gameType === "BO3") gameTypeNum = 1;
+            if (gameType === "BO5") gameTypeNum = 2;
+            const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
+            socketRef.current.emit('createObsLobby', {lobbyId, gameTypeNum, coinFlip: localCoinFlip.current});
+            setAdminOverlay(false);
+        }
+    }
+
     const checkboxVariants = {
         checked: { scale: 1.1 },
         unchecked: { scale: 1 },
@@ -137,37 +161,50 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-gray-100 p-8">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Admin</h1>
-                <Card className="w-full max-w-md mx-auto bg-white shadow-lg mb-8">
-                    <CardContent className="p-6 ml-8 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                <div className="relative max-w-7xl mx-auto mb-8">
+                    <h1 className="text-4xl font-bold text-center text-gray-800">Admin</h1>
+                    <Button onClick={() => setAdminOverlay(true)} variant="outline"
+                            className="absolute top-0 right-0">
+                        <Plus className="w-4 h-4 mr-2"/>
+                        Create OBS Lobby
+                    </Button>
+                </div>
+                <div className="flex justify-center items-center mb-6">
+                    <Card className="w-full max-w-md mx-auto bg-white shadow-lg mb-8">
+                        <CardContent
+                            className="p-6 ml-8 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
                         <AnimatedCheckbox
-                            id="coinFlip"
-                            checked={globalCoinFlip}
-                            onCheckedChange={(checked) => {
-                                handleCoinFlip(checked as boolean);
-                            }}
-                            variants={checkboxVariants}
-                            animate={globalCoinFlip ? "checked" : "unchecked"}
-                            transition={{type: "spring", stiffness: 300, damping: 10}}
-                        />
-                        <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
-                    </CardContent>
-                </Card>
+                                id="coinFlip"
+                                checked={globalCoinFlip}
+                                onCheckedChange={(checked) => {
+                                    handleCoinFlip(checked as boolean);
+                                }}
+                                variants={checkboxVariants}
+                                animate={globalCoinFlip ? "checked" : "unchecked"}
+                                transition={{type: "spring", stiffness: 300, damping: 10}}
+                            />
+                            <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+                        </CardContent>
+                    </Card>
+                </div>
                 {lobbies.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {lobbies.map((lobby) => (
-                            <Card key={lobby.lobbyId} className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <Card key={lobby.lobbyId}
+                                  className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
                                 <CardHeader className="bg-gray-50 border-b">
                                     <CardTitle className="text-xl text-gray-700 flex items-center justify-between">
                                         <span className="truncate">Lobby: {lobby.lobbyId}</span>
                                         <Badge variant="secondary" className="ml-2 flex items-center">
-                                            <Users className="w-4 h-4 mr-1" />
+                                            <Users className="w-4 h-4 mr-1"/>
                                             {lobby.members.length}
                                         </Badge>
-                                        <Button onClick={() => handleStartGame(lobby.lobbyId)} variant="outline"
-                                                className="flex-1" disabled={lobby.teamNames.length !== 2}>
-                                            Start Game
-                                        </Button>
+                                        {lobby.admin && (
+                                            <Button onClick={() => handleStartGame(lobby.lobbyId)} variant="outline"
+                                                    className="flex-1" disabled={lobby.teamNames.length !== 2}>
+                                                Start Game
+                                            </Button>
+                                        )}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
@@ -229,14 +266,17 @@ export default function AdminPage() {
                                         <Eye className="w-4 h-4 mr-2"/>
                                         Copy Obs Link
                                     </Button>
-                                    <Button onClick={() => handleClear(lobby.lobbyId)} variant="outline" className="flex-1">
+                                    <Button onClick={() => handleClear(lobby.lobbyId)} variant="outline"
+                                            className="flex-1">
                                         Clear Obs View
                                     </Button>
-                                    <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline" className="flex-1">
+                                    <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline"
+                                            className="flex-1">
                                         Play Pick Animation
                                     </Button>
-                                    <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive" className="flex-1">
-                                        <Trash2 className="w-4 h-4 mr-2" />
+                                    <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive"
+                                            className="flex-1">
+                                        <Trash2 className="w-4 h-4 mr-2"/>
                                         Delete
                                     </Button>
                                 </CardFooter>
@@ -251,6 +291,64 @@ export default function AdminPage() {
                     </Card>
                 )}
             </div>
+            <AnimatePresence>
+                {adminOverlay && (
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                        variants={overlayVariants}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                    >
+                        <motion.div
+                            variants={contentVariants}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+                        >
+                            <h2 className="text-2xl font-bold mb-4 text-center">Выберите правила игры</h2>
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 text-center">Формат игры</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {["BO1", "BO3", "BO5"].map((type) => (
+                                            <Button
+                                                key={type}
+                                                variant={gameType === type ? "default" : "outline"}
+                                                onClick={() => setGameType(type)}
+                                                className="w-20"
+                                            >
+                                                {type}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="p-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                                        <AnimatedCheckbox
+                                            id="coinFlip"
+                                            checked={localCoinFlip.current}
+                                            onCheckedChange={(checked) => {
+                                                localCoinFlip.current = checked as boolean;
+                                            }}
+                                            variants={checkboxVariants}
+                                            animate={localCoinFlip.current ? "checked" : "unchecked"}
+                                            transition={{type: "spring", stiffness: 300, damping: 10}}
+                                        />
+                                        <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+                                    </div>
+                                </div>
+                                <div className="flex justify-between">
+                                    <Button type="button" onClick={handleAdminLobby}>
+                                        Создать лобби
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={() => setAdminOverlay(false)}>
+                                        Назад
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
