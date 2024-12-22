@@ -50,7 +50,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                                         hidden: {x: -20, opacity: 0},
                                         visible: {x: 0, opacity: 1}
                                     }}
-                                    className={`${teamTextSize} font-bold text-[#8ce1ff] block text-center pt-3`}
+                                    className={`${teamTextSize} font-bold text-[#e2fe49] block text-center pt-3`}
                                 >
                                     {teamName}
                                 </motion.div>
@@ -100,7 +100,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-[#8ce1ff] p-4 rounded-bl-lg rounded-br-lg"
+                            className="absolute bottom-0 left-0 right-0 bg-[#e2fe49] p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
