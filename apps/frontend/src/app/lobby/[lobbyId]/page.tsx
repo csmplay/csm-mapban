@@ -333,7 +333,7 @@ export default function LobbyPage() {
                                     onClick={() => !isDisabled && handleCardClick(index)}
                                 >
                                     <Image
-                                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
+                                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                         alt={mapName}
                                         draggable={false}
                                         fill
@@ -645,7 +645,7 @@ export default function LobbyPage() {
                     onClick={() => !isDisabled && handleCardClick(index)}
                 >
                     <Image
-                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
+                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                         alt={mapName}
                         draggable={false}
                         fill
@@ -826,7 +826,7 @@ export default function LobbyPage() {
                     onClick={() => !isDisabled && handleCardClick(index)}
                 >
                     <Image
-                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.png`}
+                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                         alt={mapName}
                         draggable={false}
                         fill
