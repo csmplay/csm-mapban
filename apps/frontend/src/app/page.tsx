@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
-require('dotenv').config();
 
 export default function HomePage() {
     const [lobbyId, setLobbyId] = useState('');
