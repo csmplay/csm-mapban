@@ -338,7 +338,7 @@ export default function LobbyPage() {
                                         draggable={false}
                                         fill
                                         priority={true}
-                                        objectFit="cover"
+                                        style={{objectFit:"cover"}}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className={`absolute inset-0 z-0 border-4 rounded-xl ${
                                             isDisabled && !isPicked ? 'grayscale blur-sm' : ''
@@ -378,7 +378,7 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                                         draggable={false}
                                                         width={80}
@@ -399,7 +399,7 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                                         draggable={false}
                                                         width={80}
@@ -502,7 +502,7 @@ export default function LobbyPage() {
                             </h2>
                             <div className="flex justify-center space-x-4">
                                 <Image
-                                    src="/ct.png"
+                                    src="/ct.jpg"
                                     alt="CT Icon"
                                     width={100}
                                     height={100}
@@ -510,7 +510,7 @@ export default function LobbyPage() {
                                     onClick={() => handlePromptClick('ct')}
                                 />
                                 <Image
-                                    src="/t.png"
+                                    src="/t.jpg"
                                     alt="T Icon"
                                     width={100}
                                     height={100}
@@ -582,7 +582,7 @@ export default function LobbyPage() {
                                     <h2 className="text-2xl font-bold mb-4 text-center">Подбрасываем монетку...</h2>
                                     <video
                                         src={`/coin_${coinResult}.webm`}
-                                        preload={"auto"}
+                                        preload={"high"}
                                         autoPlay
                                         muted
                                         className={"mx-auto w-full max-w-md -mt-32"}
@@ -650,7 +650,7 @@ export default function LobbyPage() {
                         draggable={false}
                         fill
                         priority={true}
-                        objectFit="cover"
+                        style={{objectFit:"cover"}}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className={`
                             absolute inset-0 z-0 border-4 rounded-xl ${
@@ -691,7 +691,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                         draggable={false}
                                         width={80}
@@ -710,7 +710,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                         draggable={false}
                                         width={80}
@@ -831,7 +831,7 @@ export default function LobbyPage() {
                         draggable={false}
                         fill
                         priority={true}
-                        objectFit="cover"
+                        style={{objectFit:"cover"}}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className={`
                             absolute inset-0 z-0 border-4 rounded-xl ${
@@ -872,7 +872,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.png`}
+                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                         draggable={false}
                                         width={80}
@@ -891,12 +891,13 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.png`}
+                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                         draggable={false}
                                         width={80}
                                         height={80}
                                         priority={true}
+
                                         className={`rounded-full border-4 ${
                                             pickTeamColor === 'red' ? 'border-blue-500' : 'border-red-500'
                                         }`}

@@ -23,12 +23,6 @@
   "devDependencies": {
     "turbo": "^2.3.1"
   },
-  "eslintConfig": {
-    "extends": "react-app",
-    "rules": {
-      "@typescript-eslint/no-unused-vars": "off"
-    }
-  },
   "dependencies": {
     "dotenv-cli": "^7.4.4"
   }
