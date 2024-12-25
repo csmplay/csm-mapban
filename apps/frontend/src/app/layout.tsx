@@ -17,7 +17,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "CSM MAP BAN",
-  description: "x_x",
+  description: "x_x"
 };
 
 export default function RootLayout({
