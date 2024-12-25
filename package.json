@@ -30,6 +30,6 @@
     }
   },
   "dependencies": {
-    "dotenv-cli": "^7.4.4"
+    "dotenv-cli": "^8.0.0"
   }
 }
