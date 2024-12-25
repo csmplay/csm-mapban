@@ -53,7 +53,7 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
                                 alt={mapName}
                                 draggable={false}
                                 fill
-                                objectFit="cover"
+                                style={{objectFit:"cover"}}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 style={{
                                     clipPath: 'polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)'

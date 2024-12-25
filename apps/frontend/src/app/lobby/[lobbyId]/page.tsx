@@ -338,7 +338,7 @@ export default function LobbyPage() {
                                         draggable={false}
                                         fill
                                         priority={true}
-                                        objectFit="cover"
+                                        style={{objectFit:"cover"}}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className={`absolute inset-0 z-0 border-4 rounded-xl ${
                                             isDisabled && !isPicked ? 'grayscale blur-sm' : ''
@@ -650,7 +650,7 @@ export default function LobbyPage() {
                         draggable={false}
                         fill
                         priority={true}
-                        objectFit="cover"
+                        style={{objectFit:"cover"}}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className={`
                             absolute inset-0 z-0 border-4 rounded-xl ${
@@ -831,7 +831,7 @@ export default function LobbyPage() {
                         draggable={false}
                         fill
                         priority={true}
-                        objectFit="cover"
+                        style={{objectFit:"cover"}}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className={`
                             absolute inset-0 z-0 border-4 rounded-xl ${
