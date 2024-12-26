@@ -62,7 +62,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                                     className="pr-6"
                                 >
                                     <Image
-                                        src={`/${side}_white.jpg`}
+                                        src={`/${side}_white.png`}
                                         alt={side}
                                         draggable={false}
                                         width={40}
