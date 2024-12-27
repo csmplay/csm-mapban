@@ -582,7 +582,7 @@ export default function LobbyPage() {
                                     <h2 className="text-2xl font-bold mb-4 text-center">Подбрасываем монетку...</h2>
                                     <video
                                         src={`/coin_${coinResult}.webm`}
-                                        preload={"auto"}
+                                        preload={"high"}
                                         autoPlay
                                         muted
                                         className={"mx-auto w-full max-w-md -mt-32"}
