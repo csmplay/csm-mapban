@@ -10,8 +10,8 @@ interface AnimatedPickCardProps {
     side: string;
 }
 
-export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPickCardProps) {
-    const [isVisible, _] = useState(true)
+export default function AnimatedPickCard({teamName, mapName, gameName, side}: AnimatedPickCardProps) {
+    const [isVisible] = useState(true)
 
     // const replay = () => {
     //     setIsVisible(false)
@@ -88,9 +88,9 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                                 alt={mapName}
                                 draggable={false}
                                 fill
-                                style={{objectFit:"cover"}}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 style={{
+                                    objectFit:"cover",
                                     clipPath: 'polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)'
                                 }}
                             />

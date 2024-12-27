@@ -286,7 +286,7 @@ export default function AdminPage() {
                 ) : (
                     <Card className="w-full max-w-md mx-auto bg-white shadow-lg">
                         <CardContent className="p-6 text-center text-gray-600">
-                            <p className="text-xl">Nothin' here yet...</p>
+                            <p className="text-xl">Nothin&apos; here yet...</p>
                         </CardContent>
                     </Card>
                 )}
