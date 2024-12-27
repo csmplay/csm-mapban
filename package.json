@@ -5,8 +5,7 @@
   "main": "index.js",
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "npm": "use yarn",
-    "pnpm": "use yarn"
+    "npm": "use yarn"
   },
   "scripts": {
     "dev": "dotenv -- turbo run dev --parallel",
