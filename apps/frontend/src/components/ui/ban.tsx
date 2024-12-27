@@ -9,7 +9,7 @@ interface AnimatedBanCardProps {
     mapName: string;
 }
 
-export default function AnimatedPickCard({teamName, mapName, gameName}: AnimatedBanCardProps) {
+export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardProps) {
     const [isVisible] = useState(true)
 
     // const replay = () => {

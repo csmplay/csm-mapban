@@ -121,7 +121,7 @@ io.on('connection', (socket) => {
         console.log(`User ${socket.id} joined lobby ${lobbyId}`);
 
         // Check if the lobby exists
-        let lobby = lobbies.get(lobbyId);
+        const lobby = lobbies.get(lobbyId);
         if (!lobby) {
             io.to(socket.id).emit('lobbyUndefined', lobbyId);
             return;
@@ -146,7 +146,7 @@ io.on('connection', (socket) => {
         console.log(`User ${socket.id} observing lobby ${lobbyId}`);
 
         // Check if the lobby exists
-        let lobby = lobbies.get(lobbyId);
+        const lobby = lobbies.get(lobbyId);
         if (!lobby) {
             io.to(socket.id).emit('lobbyUndefined', lobbyId);
             return;
