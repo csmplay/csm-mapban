@@ -7,6 +7,7 @@ import Image from "next/image";
 interface AnimatedBanCardProps {
     teamName: string;
     mapName: string;
+    gameName: string;
 }
 
 export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardProps) {
@@ -49,7 +50,7 @@ export default function AnimatedPickCard({teamName, mapName}: AnimatedBanCardPro
                             className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
                         >
                             <Image
-                                src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                                src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                 alt={mapName}
                                 draggable={false}
                                 fill

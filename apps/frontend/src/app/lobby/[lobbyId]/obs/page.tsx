@@ -36,6 +36,8 @@ const LobbyObsPage = () => {
     // Keep track of how many actions have been revealed so far
     const [visibleActionsCount, setVisibleActionsCount] = useState(0);
 
+    const [gameName, setGameName] = useState<string>('0');
+
     const port = 4000;
     const backendUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
 
@@ -70,6 +72,10 @@ const LobbyObsPage = () => {
                 newSocket.emit('joinLobbyObs', lobbyId);
                 console.log(`Joined lobby ${lobbyId}`);
             }
+        });
+        
+        newSocket.on('gameName', (gameNameVar: string) => {
+            setGameName(gameNameVar);
         });
 
         newSocket.on('pickedUpdated', (picked: Array<{ map: string; teamName: string; side: string }>) => {
@@ -167,6 +173,7 @@ const LobbyObsPage = () => {
                                 key={index}
                                 teamName={action.teamName}
                                 mapName={action.mapName}
+                                gameName={gameName}
                             />
                         );
                     } else if (action.type === 'pick') {
@@ -175,6 +182,7 @@ const LobbyObsPage = () => {
                                 key={index}
                                 teamName={action.teamName}
                                 mapName={action.mapName}
+                                gameName={gameName}
                                 side={action.side}
                             />
                         );

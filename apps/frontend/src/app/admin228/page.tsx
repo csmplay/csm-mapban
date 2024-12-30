@@ -24,7 +24,9 @@ type Lobby = {
     observers: string[];
     picked: PickedMap[];
     banned: BannedMap[];
+    gameName: number;
     gameType: number;
+    mapNames: Array<string>;
     gameStateList: string[];
     coinFlip: boolean;
     admin: boolean;
@@ -47,6 +49,7 @@ export default function AdminPage() {
     const [globalCoinFlip, setGlobalCoinFlip] = useState(true)
     const localCoinFlip = useRef(true);
     const [gameType, setGameType] = useState("BO1");
+    const [gameName, setGame] = useState("CS2");
     const [adminOverlay, setAdminOverlay] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const router = useRouter();
@@ -144,11 +147,14 @@ export default function AdminPage() {
 
     const handleAdminLobby = () => {
         if (socketRef.current) {
+            let gameNum = 0;
+            if (gameName === "CS2") gameNum = 0;
+            if (gameName === "Valorant") gameNum = 1;
             let gameTypeNum = 0;
             if (gameType === "BO3") gameTypeNum = 1;
             if (gameType === "BO5") gameTypeNum = 2;
             const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-            socketRef.current.emit('createObsLobby', {lobbyId, gameTypeNum, coinFlip: localCoinFlip.current});
+            socketRef.current.emit('createObsLobby', {lobbyId, gameNum, gameTypeNum, coinFlip: localCoinFlip.current});
             setAdminOverlay(false);
         }
     }
@@ -308,6 +314,19 @@ export default function AdminPage() {
                         >
                             <h2 className="text-2xl font-bold mb-4 text-center">Выберите правила игры</h2>
                             <div className="space-y-6">
+                            <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
+                                <div className="flex justify-center space-x-4">
+                                    {["CS2", "Valorant"].map((game) => (
+                                        <Button
+                                            key={game}
+                                            variant={gameName === game ? "default" : "outline"}
+                                            onClick={() => setGame(game)}
+                                            className="w-20"
+                                        >
+                                            {game}
+                                        </Button>
+                                    ))}
+                                </div>
                                 <div>
                                     <h3 className="text-lg font-semibold mb-2 text-center">Формат игры</h3>
                                     <div className="flex justify-center space-x-4">
