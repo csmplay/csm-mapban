@@ -18,15 +18,12 @@ export default function LobbyPage() {
     const {toast} = useToast();
     const [socket, setSocket] = useState<Socket | null>(null);
     const router = useRouter();
-    const mapNames = [
-        "Nuke",
-        "Dust 2",
-        "Ancient",
-        "Inferno",
-        "Anubis",
-        "Vertigo",
-        "Mirage"
-    ];
+
+    // Maps list
+    const [mapNames, setMapNames] = useState<string[]>([]);
+
+    // Game name
+    const [gameName, setGameName] = useState<string>('0');
 
     // Overlay states
     const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
@@ -66,6 +63,12 @@ export default function LobbyPage() {
             }
         });
 
+        newSocket.on('mapNames', (mapNamesArray: string[]) => {
+            setMapNames(mapNamesArray);
+        });
+        newSocket.on('gameName', (gameNameVar: string) => {
+            setGameName(gameNameVar);
+        });
         // Handle 'teamNamesUpdated' event
         newSocket.on('teamNamesUpdated', (teamNamesArray: [string, string][]) => {
             setTeamNames(teamNamesArray);
@@ -333,7 +336,7 @@ export default function LobbyPage() {
                                     onClick={() => !isDisabled && handleCardClick(index)}
                                 >
                                     <Image
-                                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                                        src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                         alt={mapName}
                                         draggable={false}
                                         fill
@@ -378,7 +381,7 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
+                                                        src={`/${gameName}/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                                         draggable={false}
                                                         width={80}
@@ -399,7 +402,7 @@ export default function LobbyPage() {
                                                     className="relative flex items-center justify-center"
                                                 >
                                                     <Image
-                                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
+                                                        src={`/${gameName}/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                                         draggable={false}
                                                         width={80}
@@ -502,7 +505,7 @@ export default function LobbyPage() {
                             </h2>
                             <div className="flex justify-center space-x-4">
                                 <Image
-                                    src="/ct.jpg"
+                                    src={`/${gameName}/ct.jpg`}
                                     alt="CT Icon"
                                     width={100}
                                     height={100}
@@ -510,7 +513,7 @@ export default function LobbyPage() {
                                     onClick={() => handlePromptClick('ct')}
                                 />
                                 <Image
-                                    src="/t.jpg"
+                                    src={`/${gameName}/t.jpg`}
                                     alt="T Icon"
                                     width={100}
                                     height={100}
@@ -645,7 +648,7 @@ export default function LobbyPage() {
                     onClick={() => !isDisabled && handleCardClick(index)}
                 >
                     <Image
-                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                        src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                         alt={mapName}
                         draggable={false}
                         fill
@@ -691,7 +694,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
+                                        src={`/${gameName}/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                         draggable={false}
                                         width={80}
@@ -710,7 +713,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
+                                        src={`/${gameName}/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                         draggable={false}
                                         width={80}
@@ -826,7 +829,7 @@ export default function LobbyPage() {
                     onClick={() => !isDisabled && handleCardClick(index)}
                 >
                     <Image
-                        src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                        src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                         alt={mapName}
                         draggable={false}
                         fill
@@ -872,7 +875,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
+                                        src={`/${gameName}/${pickSide === 'ct' ? 'ct' : 't'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 'ct' : 't'}`}
                                         draggable={false}
                                         width={80}
@@ -891,7 +894,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                 >
                                     <Image
-                                        src={`/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
+                                        src={`/${gameName}/${pickSide === 'ct' ? 't' : 'ct'}.jpg`}
                                         alt={`${pickSide === 'ct' ? 't' : 'ct'}`}
                                         draggable={false}
                                         width={80}

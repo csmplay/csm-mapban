@@ -7,10 +7,11 @@ import Image from "next/image";
 interface AnimatedPickCardProps {
     teamName: string;
     mapName: string;
+    gameName: string;
     side: string;
 }
 
-export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPickCardProps) {
+export default function AnimatedPickCard({teamName, mapName, gameName, side}: AnimatedPickCardProps) {
     const [isVisible] = useState(true)
 
     // const replay = () => {
@@ -62,7 +63,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                                     className="pr-6"
                                 >
                                     <Image
-                                        src={`/${side}_white.png`}
+                                        src={`/${gameName}/${side}_white.png`}
                                         alt={side}
                                         draggable={false}
                                         width={40}
@@ -84,7 +85,7 @@ export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPick
                             className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
                         >
                             <Image
-                                src={`/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                                src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                 alt={mapName}
                                 draggable={false}
                                 fill

@@ -24,6 +24,7 @@ export default function HomePage() {
     // Things for sending lobby settings to server
     const [socket, setSocket] = useState<Socket | null>(null);
     const [gameType, setGameType] = useState("BO1");
+    const [gameName, setGame] = useState("CS2");
 
     const port = 4000;
 
@@ -57,10 +58,13 @@ export default function HomePage() {
 
     const handleCreateLobby = () => {
         if (socket) {
+            let gameNum = 0;
+            if (gameName === "CS2") gameNum = 0;
+            if (gameName === "Valorant") gameNum = 1;
             let gameTypeNum = 0;
             if (gameType === "BO3") gameTypeNum = 1;
             if (gameType === "BO5") gameTypeNum = 2;
-            socket.emit('createLobby', { lobbyId, gameTypeNum});
+            socket.emit('createLobby', { lobbyId, gameNum, gameTypeNum});
             router.push(`/lobby/${lobbyId}`);
         }
     };
@@ -172,6 +176,19 @@ export default function HomePage() {
                             <h2 className="text-2xl font-bold mb-4 text-center">Выберите правила игры</h2>
                             <div className="space-y-6">
                                 <div>
+                                <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {["CS2", "Valorant"].map((game) => (
+                                            <Button
+                                                key={game}
+                                                variant={gameName === game ? "default" : "outline"}
+                                                onClick={() => setGame(game)}
+                                                className="w-20"
+                                            >
+                                                {game}
+                                            </Button>
+                                        ))}
+                                    </div>
                                     <h3 className="text-lg font-semibold mb-2 text-center">Формат игры</h3>
                                     <div className="flex justify-center space-x-4">
                                         {["BO1", "BO3", "BO5"].map((type) => (
