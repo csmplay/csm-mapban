@@ -32,7 +32,9 @@ interface Lobby {
     observers: Set<string>;
     picked: Array<{ map: string; teamName: string; side: string }>;
     banned: Array<{ map: string; teamName: string }>;
+    gameName: number;
     gameType: number;
+    mapNames: Array<string>;
     gameStateList: string[];
     coinFlip: boolean;
     gameStep: number;
@@ -47,6 +49,26 @@ const gameTypeLists = [
     ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'pick'], // 1 Element - BO3
     ['ban', 'ban', 'pick', 'pick', 'pick', 'pick', 'pick'], // 2 Element - BO5
 ]
+const mapNamesList = [
+    [ // CS2
+        "Nuke",
+        "Dust 2",
+        "Ancient",
+        "Inferno",
+        "Anubis",
+        "Vertigo",
+        "Mirage"
+    ],
+    [ // VALORANT
+        "Ascent",
+        "Bind",
+        "Pearl",
+        "Haven",
+        "Abyss",
+        "Sunset",
+        "Split"
+    ]
+];
 
 app.get('/', (_req, res) => {
     res.send('Express + TypeScript Server');
@@ -102,7 +124,9 @@ app.get('/admin/lobbies', (_req, res) => {
         observers: Array.from(lobby.observers),
         picked: lobby.picked,
         banned: lobby.banned,
+        gameName: lobby.gameName,
         gameType: lobby.gameType,
+        mapNames: lobby.mapNames,
         gameStateList: Array.from(lobby.gameStateList),
         coinFlip: lobby.coinFlip,
         admin: lobby.admin,
@@ -126,6 +150,9 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('lobbyUndefined', lobbyId);
             return;
         }
+        
+        io.to(lobbyId).emit('mapNames', lobby.mapNames);
+        io.to(lobbyId).emit('gameName', lobby.gameName);
 
         // Add the socket ID to the lobby's member list
         lobby.members.add(socket.id);
@@ -152,6 +179,9 @@ io.on('connection', (socket) => {
             return;
         }
 
+        io.to(lobbyId).emit('mapNames', lobby.mapNames);
+        io.to(lobbyId).emit('gameName', lobby.gameName);
+
         // Add the socket ID to the lobby's member list
         lobby.observers.add(socket.id);
 
@@ -161,8 +191,8 @@ io.on('connection', (socket) => {
         io.to(socket.id).emit('bannedUpdated', lobby.banned);
     })
 
-    socket.on('createLobby', (data: {lobbyId: string; gameTypeNum: number}) => {
-        const {lobbyId, gameTypeNum} = data;
+    socket.on('createLobby', (data: {lobbyId: string; gameNum: number; gameTypeNum: number}) => {
+        const {lobbyId, gameNum, gameTypeNum} = data;
         console.log('Lobby created with id ' + lobbyId);
 
         // Create a new lobby
@@ -176,7 +206,9 @@ io.on('connection', (socket) => {
                 observers: new Set<string>(),
                 picked: [],
                 banned: [],
+                gameName: gameNum,
                 gameType: gameTypeNum,
+                mapNames: mapNamesList[gameNum],
                 gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: globalCoinFlip,
                 gameStep: 0,
@@ -187,8 +219,8 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('createObsLobby', (data: {lobbyId: string; gameTypeNum: number; coinFlip: boolean}) => {
-        const {lobbyId, gameTypeNum, coinFlip} = data;
+    socket.on('createObsLobby', (data: {lobbyId: string; gameNum: number; gameTypeNum: number; coinFlip: boolean}) => {
+        const {lobbyId, gameNum, gameTypeNum, coinFlip} = data;
         console.log('Admin Lobby created with id ' + lobbyId);
 
         let lobby = lobbies.get(lobbyId);
@@ -201,7 +233,9 @@ io.on('connection', (socket) => {
                 observers: new Set<string>(),
                 picked: [],
                 banned: [],
+                gameName: gameNum,
                 gameType: gameTypeNum,
+                mapNames: mapNamesList[gameNum],
                 gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: coinFlip,
                 gameStep: 0,
