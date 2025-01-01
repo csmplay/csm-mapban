@@ -11,7 +11,7 @@ interface AnimatedPickCardProps {
     side: string;
 }
 
-export default function AnimatedPickCard({teamName, mapName, side}: AnimatedPickCardProps) {
+export default function AnimatedPickCard({teamName, mapName, gameName, side}: AnimatedPickCardProps) {
     const [isVisible] = useState(true)
 
     // const replay = () => {
