@@ -14,8 +14,8 @@
     "start": "dotenv -- turbo run start"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "GooseMooz",
+  "license": "MIT",
   "description": "",
   "workspaces": [
     "apps/*"
