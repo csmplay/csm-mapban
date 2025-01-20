@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,7 +51,6 @@ export default function AdminPage() {
     const [gameName, setGame] = useState("CS2");
     const [adminOverlay, setAdminOverlay] = useState(false);
     const socketRef = useRef<Socket | null>(null);
-    const router = useRouter();
     const { toast } = useToast();
 
     const port = 4000;
@@ -117,7 +115,7 @@ export default function AdminPage() {
     };
 
     const handleConnectToLobby = (lobbyId: string) => {
-        router.push(`/lobby/${lobbyId}`);
+        window.open(`/lobby/${lobbyId}`, '_blank');
     };
 
     const handleClear = (lobbyId: string) => {
@@ -172,7 +170,7 @@ export default function AdminPage() {
                     <Button onClick={() => setAdminOverlay(true)} variant="outline"
                             className="absolute top-0 right-0">
                         <Plus className="w-4 h-4 mr-2"/>
-                        Create OBS Lobby
+                        Создать OBS лобби
                     </Button>
                 </div>
                 <div className="flex justify-center items-center mb-6">
@@ -262,28 +260,25 @@ export default function AdminPage() {
                                     </ScrollArea>
                                 </CardContent>
                                 <CardFooter className="bg-gray-50 border-t p-4 flex flex-wrap gap-2">
-                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline"
-                                            className="flex-1">
+                                    <div className="flex justify-center w-full">
+                                        <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline" className="flex-1">
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            Copy OBS Link
+                                        </Button>
+                                    </div>  
+                                    <Button onClick={() => handleClear(lobby.lobbyId)} variant="outline" className="flex-1">
+                                        Clear overlay
+                                    </Button>
+                                    <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline" className="flex-1">
+                                        Replay animation
+                                    </Button>
+                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline" className="flex-1 bg-blue-500 hover:bg-blue-700 text-white hover:text-white">
                                         <LogIn className="w-4 h-4 mr-2"/>
                                         Connect
                                     </Button>
-                                    <Button onClick={() => handleCopyLink(lobby.lobbyId)} variant="outline"
-                                            className="flex-1">
-                                        <Eye className="w-4 h-4 mr-2"/>
-                                        Copy Obs Link
-                                    </Button>
-                                    <Button onClick={() => handleClear(lobby.lobbyId)} variant="outline"
-                                            className="flex-1">
-                                        Clear Obs View
-                                    </Button>
-                                    <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline"
-                                            className="flex-1">
-                                        Play Pick Animation
-                                    </Button>
-                                    <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive"
-                                            className="flex-1">
-                                        <Trash2 className="w-4 h-4 mr-2"/>
-                                        Delete
+                                    <Button onClick={() => handleDeleteLobby(lobby.lobbyId)} variant="destructive" className="flex-1">
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete lobby
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -292,7 +287,7 @@ export default function AdminPage() {
                 ) : (
                     <Card className="w-full max-w-md mx-auto bg-white shadow-lg">
                         <CardContent className="p-6 text-center text-gray-600">
-                            <p className="text-xl">Nothin&apos; here yet...</p>
+                            <p className="text-xl">Ничего нет...</p>
                         </CardContent>
                     </Card>
                 )}
