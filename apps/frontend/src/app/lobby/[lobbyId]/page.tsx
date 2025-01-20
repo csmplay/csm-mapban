@@ -46,7 +46,7 @@ export default function LobbyPage() {
     const [bannedMaps, setBannedMaps] = useState<Array<{ map: string; teamName: string }>>([]);
     const [pickedMaps, setPickedMaps] = useState<Array<{ map: string; teamName: string; side: string }>>([]);
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
-    const [pickMapName, setPickMapName] = useState<string>("");
+    const [pickMapId, setPickMapId] = useState<number>(0);
 
     const port = 4000;
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
@@ -143,8 +143,9 @@ export default function LobbyPage() {
         });
 
         newSocket.on('startPick', (index: number) => {
-            setPickMapName(mapNames[index]);
+            setPickMapId(index);
             setSelectedMapIndex(index);
+            setIsWaiting(false);
             setShowPrompts(true);
         });
 
@@ -188,7 +189,6 @@ export default function LobbyPage() {
             console.log('Started picking map');
             socket.emit('startPick', {lobbyId, teamName, selectedMapIndex});
             setIsWaiting(true);
-            setShowTeamNameOverlay(true);
             return;
         }
 
@@ -501,7 +501,7 @@ export default function LobbyPage() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <h2 className="text-2xl font-bold mb-4 text-center">
-                                Выберите сторону на карте {pickMapName}
+                                Выберите сторону на карте {mapNames[pickMapId]}
                             </h2>
                             <div className="flex justify-center space-x-4">
                                 <Image

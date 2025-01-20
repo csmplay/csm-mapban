@@ -288,9 +288,12 @@ io.on('connection', (socket) => {
                     break;
                 }
             }
-            io.to(otherSocketId).emit('startPick', selectedMapIndex);
-            io.to(socket.id).emit('canWorkUpdated', false);
-            io.to(socket.id).emit('canPick', false);
+            const targetSocket = lobby.gameType === 0 ? socket.id : otherSocketId;
+            const otherSocket = lobby.gameType === 0 ? otherSocketId : socket.id;
+
+            io.to(targetSocket).emit('startPick', selectedMapIndex);
+            io.to(otherSocket).emit('canWorkUpdated', false);
+            io.to(otherSocket).emit('canPick', false);
         }
     });
 
