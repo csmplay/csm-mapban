@@ -56,7 +56,7 @@ const mapNamesList = [
         "Ancient",
         "Inferno",
         "Anubis",
-        "Vertigo",
+        "Train",
         "Mirage"
     ],
     [ // VALORANT
