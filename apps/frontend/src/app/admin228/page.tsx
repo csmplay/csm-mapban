@@ -356,11 +356,11 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                                 <div className="flex justify-between">
-                                    <Button type="button" onClick={handleAdminLobby}>
-                                        Создать лобби
-                                    </Button>
                                     <Button type="button" variant="outline" onClick={() => setAdminOverlay(false)}>
                                         Назад
+                                    </Button>
+                                    <Button type="button" onClick={handleAdminLobby}>
+                                        Создать лобби
                                     </Button>
                                 </div>
                             </div>

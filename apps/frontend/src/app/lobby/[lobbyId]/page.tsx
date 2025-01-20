@@ -556,18 +556,18 @@ export default function LobbyPage() {
                                             className="w-full"
                                         />
                                         <div className="flex justify-between">
-                                            <Button type="submit"
-                                                    disabled={
-                                                        !teamName.trim() ||
-                                                        teamNames.length === 2}>
-                                                Подтвердить
+                                            <Button type="button" variant="outline" onClick={handleSkipTeamName}>
+                                                Я зритель
                                             </Button>
                                             <Button type="button" variant="outline" onClick={handleCopyCodeClick}>
                                                 <Copy className="h-4 mr-2"/>
                                                 {lobbyId}
                                             </Button>
-                                            <Button type="button" variant="outline" onClick={handleSkipTeamName}>
-                                                Я зритель
+                                            <Button type="submit"
+                                                    disabled={
+                                                        !teamName.trim() ||
+                                                        teamNames.length === 2}>
+                                                Подтвердить
                                             </Button>
                                         </div>
                                     </form>

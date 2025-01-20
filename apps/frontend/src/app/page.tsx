@@ -143,12 +143,12 @@ export default function HomePage() {
                                         </InputOTP>
                                     </div>
                                     <div className="flex justify-between">
-                                        <Button type="submit" disabled={lobbyId.length !== 4}>
-                                            Подтвердить
-                                        </Button>
                                         <Button type="button" variant="outline"
                                                 onClick={() => setShowJoinLobbyOverlay(false)}>
                                             Назад
+                                        </Button>
+                                        <Button type="submit" disabled={lobbyId.length !== 4}>
+                                            Подтвердить
                                         </Button>
                                     </div>
                                 </div>
@@ -204,11 +204,11 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <div className="flex justify-between">
-                                    <Button type="button" onClick={handleCreateLobby}>
-                                        Создать лобби
-                                    </Button>
                                     <Button type="button" variant="outline" onClick={() => setShowSettingsOverlay(false)}>
                                         Назад
+                                    </Button>
+                                    <Button type="button" onClick={handleCreateLobby}>
+                                        Создать лобби
                                     </Button>
                                 </div>
                             </div>
