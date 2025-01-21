@@ -49,26 +49,15 @@ const gameTypeLists = [
     ['ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'pick'], // 1 Element - BO3
     ['ban', 'ban', 'pick', 'pick', 'pick', 'pick', 'pick'], // 2 Element - BO5
 ]
-const mapNamesList = [
-    [ // CS2
-        "Nuke",
-        "Dust 2",
-        "Ancient",
-        "Inferno",
-        "Anubis",
-        "Train",
-        "Mirage"
-    ],
-    [ // VALORANT
-        "Ascent",
-        "Bind",
-        "Pearl",
-        "Haven",
-        "Abyss",
-        "Sunset",
-        "Split"
-    ]
+const mapNamesLists = [
+    [ "Ancient", "Anubis", "Dust 2", "Inferno", "Mirage", "Nuke", "Overpass", "Train", "Vertigo"], // 0 Element - CS2
+    [ "Abyss", "Ascent", "Bind", "Breeze", "District", "Drift", "Fracture", "Glitch", "Haven", "Icebox", "Kasbah", "Lotus", "Pearl", "Piazza", "Split", "Sunset"] // 1 Element - VALORANT  
 ];
+const startMapPool = [
+    [ "Nuke", "Dust 2", "Ancient", "Inferno", "Anubis", "Train", "Mirage"], // 0 Element - CS2
+    [ "Ascent", "Bind", "Pearl", "Haven", "Abyss", "Sunset", "Split"] // 1 Element - VALORANT
+];
+let mapPool = startMapPool;
 
 app.get('/', (_req, res) => {
     res.send('Express + TypeScript Server');
@@ -132,6 +121,10 @@ app.get('/admin/lobbies', (_req, res) => {
         admin: lobby.admin,
     }));
     res.json(lobbyList);
+});
+
+app.get('/mapPool', (req, res) => {
+    res.json({ mapPool, mapNamesLists });
 });
 
 io.on('connection', (socket) => {
@@ -208,7 +201,7 @@ io.on('connection', (socket) => {
                 banned: [],
                 gameName: gameNum,
                 gameType: gameTypeNum,
-                mapNames: mapNamesList[gameNum],
+                mapNames: mapPool[gameNum],
                 gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: globalCoinFlip,
                 gameStep: 0,
@@ -235,7 +228,7 @@ io.on('connection', (socket) => {
                 banned: [],
                 gameName: gameNum,
                 gameType: gameTypeNum,
-                mapNames: mapNamesList[gameNum],
+                mapNames: mapPool[gameNum],
                 gameStateList: gameTypeLists[gameTypeNum],
                 coinFlip: coinFlip,
                 gameStep: 0,
@@ -244,6 +237,14 @@ io.on('connection', (socket) => {
 
             lobbies.set(lobbyId, lobby);
         }
+    });
+
+    socket.on('editMapPool', (newMapPool: string[][]) => {
+        mapPool = newMapPool;
+    });
+
+    socket.on('resetMapPool' , () => {
+        mapPool = startMapPool;
     });
 
     socket.on('coinFlipUpdate', (coinFlip: boolean) => {

@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {Trash2, LogIn, Users, Eye, Plus} from 'lucide-react';
+import {Trash2, LogIn, Users, Eye, Plus, PenBox} from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox"
 import {Label} from "@/components/ui/label";
 import {AnimatePresence, motion} from "framer-motion";
@@ -49,7 +49,11 @@ export default function AdminPage() {
     const localCoinFlip = useRef(true);
     const [gameType, setGameType] = useState("BO1");
     const [gameName, setGame] = useState("CS2");
+    const [allMapsList, setAllMapsList] = useState<string[][]>([]);
+    const [sourceMapPool, setSourceMapPool] = useState<string[][]>([]);
+    const [mapPool, setMapPool] = useState<string[][]>([]);
     const [adminOverlay, setAdminOverlay] = useState(false);
+    const [editMapPool, setEditMapPool] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
 
@@ -70,12 +74,36 @@ export default function AdminPage() {
             }
         };
 
+        const fetchSourceMapPool = async () => {
+            try {
+                const response = await fetch(`${backendUrl}/mapPool`);
+                const data: { mapPool: string[][]; mapNamesLists: string[][] } = await response.json();
+                setSourceMapPool(data.mapPool);
+                setAllMapsList(data.mapNamesLists);
+            } catch (error) {
+                console.error('Error fetching map pool:', error);
+            }
+        };
+        const fetchMapPool = async () => {
+            try {
+                const response = await fetch(`${backendUrl}/mapPool`);
+                const data: { mapPool: string[][]; mapNamesLists: string[][] } = await response.json();
+                setMapPool(data.mapPool);
+                setAllMapsList(data.mapNamesLists);
+            } catch (error) {
+                console.error('Error fetching map pool:', error);
+            }
+        };
+
         (async () => {
             await fetchLobbies();
+            await fetchSourceMapPool();
+            await fetchMapPool();
         })();
 
         // Polling every 5 seconds to update the lobby list
         const interval = setInterval(fetchLobbies, 500);
+        const interval2 = setInterval(fetchSourceMapPool, 500);
 
         if (socketRef.current) {
             socketRef.current.on('lobbyDeleted', (deletedLobbyId: string) => {
@@ -87,6 +115,7 @@ export default function AdminPage() {
 
         return () => {
             clearInterval(interval);
+            clearInterval(interval2);
             socketRef.current?.disconnect();
         };
     }, [backendUrl]);
@@ -157,6 +186,43 @@ export default function AdminPage() {
         }
     }
 
+    const handleMapPoolButton = () => {
+        setMapPool(sourceMapPool);
+        setEditMapPool(true);
+    }
+    const handleSelectChange = (index: number, value: string, gameNum: number) => {
+        const newMapPool = [...mapPool[gameNum]];
+        newMapPool[index] = value;
+        
+        if (gameNum == 0) {
+            setMapPool([newMapPool, mapPool[1]]);
+        } else {
+            setMapPool([mapPool[0], newMapPool]);
+        }
+    };
+
+    const handleEditMapPool = () => {
+        const uniqueValuesZero = new Set(mapPool[0]);
+        const uniqueValuesOne = new Set(mapPool[1]);
+        if (uniqueValuesZero.size !== mapPool[0].length || uniqueValuesOne.size !== mapPool[1].length) {
+            toast({description: "Карты не должны повторяться!"}); 
+        } else {
+            if (socketRef.current) {
+                socketRef.current.emit('editMapPool', mapPool);
+                toast({description: "Маппул сохранен"});
+            }
+        }
+        setEditMapPool(false);
+    }
+
+    const handleResetMapPool = () => {
+        if (socketRef.current) {
+            socketRef.current.emit('resetMapPool');
+            toast({description: "Маппул сброшен"});
+        }
+        setEditMapPool(false);
+    }
+
     const checkboxVariants = {
         checked: { scale: 1.1 },
         unchecked: { scale: 1 },
@@ -176,18 +242,23 @@ export default function AdminPage() {
                 <div className="flex justify-center items-center mb-6">
                     <Card className="w-full max-w-md mx-auto bg-white shadow-lg mb-8">
                         <CardContent
-                            className="p-6 ml-8 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                            className="p-6 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
                         <AnimatedCheckbox
                                 id="coinFlip"
                                 checked={globalCoinFlip}
                                 onCheckedChange={(checked) => {
                                     handleCoinFlip(checked as boolean);
                                 }}
+                                className="ml-8"
                                 variants={checkboxVariants}
                                 animate={globalCoinFlip ? "checked" : "unchecked"}
                                 transition={{type: "spring", stiffness: 300, damping: 10}}
                             />
                             <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+                            <Button onClick={handleMapPoolButton} variant="outline" className="w-full">
+                                <PenBox className="w-4 h-4 mr-2"/>
+                                Редактировать маппул
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -359,6 +430,71 @@ export default function AdminPage() {
                                     </Button>
                                 </div>
                             </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+                {editMapPool && (
+                    <motion.div
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        transition={{duration: 0.3}}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                    >
+                        <motion.div
+                            initial={{scale: 0.9, opacity: 0}}
+                            animate={{scale: 1, opacity: 1}}
+                            exit={{scale: 0.9, opacity: 0}}
+                            transition={{duration: 0.3}}
+                            style={{width: '600px'}}
+                            className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+                        >
+                            <div className="text-center">
+                                <h2 className="text-2xl font-bold mb-4 text-center">CS2</h2>
+                                {mapPool[0].map((value, index) => (
+                                    <select
+                                        key={index}
+                                        value={value}
+                                        onChange={(e) => handleSelectChange(index, e.target.value, 0)}
+                                        className="border border-gray-300 rounded p-2"
+                                    >
+                                        <option value="" disabled>Select a value</option>
+                                        {allMapsList[0].map((refValue, refIndex) => (
+                                            <option key={refIndex} value={refValue}>
+                                                {refValue}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ))}
+                                <h2 className="text-2xl font-bold mb-4 mt-4 text-center">VALORANT</h2>
+                                {mapPool[1].map((value, index) => (
+                                    <select
+                                        key={index}
+                                        value={value}
+                                        onChange={(e) => handleSelectChange(index, e.target.value, 1)}
+                                        className="border border-gray-300 rounded p-2"
+                                    >
+                                        <option value="" disabled>Select a value</option>
+                                        {allMapsList[1].map((refValue, refIndex) => (
+                                            <option key={refIndex} value={refValue}>
+                                                {refValue}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ))}     
+                            </div>                           
+                                <div className="flex justify-between mt-4">
+                                    <Button type="button" variant="outline" onClick={() => setEditMapPool(false)}>
+                                        Назад
+                                    </Button>
+                                    <Button type="button" variant="destructive" onClick={handleResetMapPool}>
+                                        Сбросить
+                                    </Button>
+                                    <Button type="button" onClick={handleEditMapPool}>
+                                        Сохранить
+                                    </Button>
+                                </div>
+                                
                         </motion.div>
                     </motion.div>
                 )}
