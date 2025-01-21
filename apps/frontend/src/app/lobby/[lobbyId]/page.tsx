@@ -344,7 +344,7 @@ export default function LobbyPage() {
                                     onClick={() => !isDisabled && handleCardClick(index)}
                                 >
                                     <Image
-                                        src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                                        src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                         alt={mapName}
                                         draggable={false}
                                         fill

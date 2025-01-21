@@ -85,7 +85,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                             className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
                         >
                             <Image
-                                src={`/${gameName}/maps/de_${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                                src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
                                 alt={mapName}
                                 draggable={false}
                                 fill
