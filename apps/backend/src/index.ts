@@ -5,8 +5,9 @@ import cors from 'cors';
 
 const app = express();
 
-const port = 4000;
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const port = process.env.BACKEND_PORT || 4000;
+const frontendPort = process.env.PORT || 3000;
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:' + frontendPort;
 const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
 
 // Use cors middleware

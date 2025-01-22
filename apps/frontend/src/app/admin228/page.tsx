@@ -57,9 +57,10 @@ export default function AdminPage() {
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
 
-    const port = 4000;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
+    const port = process.env.PORT || 3000;
+    const backendPort = process.env.BACKEND_PORT || 4000;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:' + port;
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + backendPort;
 
     useEffect(() => {
         socketRef.current = io(backendUrl);
