@@ -30,7 +30,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-[#26262a] p-3 overflow-hidden"
+                            className="absolute top-0 left-0 right-0 bg-[#7650c7] p-3 overflow-hidden"
                             style={{
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
@@ -47,7 +47,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
                             style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#26262a] overflow-hidden"
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#151210] overflow-hidden"
                         >
                             <Image
                                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
@@ -66,7 +66,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-[#26262a] p-4 rounded-bl-lg rounded-br-lg"
+                            className="absolute bottom-0 left-0 right-0 bg-[#7650c7] p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
