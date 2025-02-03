@@ -1,5 +1,8 @@
 # CSM Mapban
 
+### Author: [@goosemooz](https://github.com/goosemooz)
+### Maintainers: [@ch4og](https://github.com/ch4og)
+
 Welcome to **CSM Mapban**, a service designed for **CS2**, **Valorant** and other games tournaments. This tool streamlines the process of selecting and banning maps, enhancing experience for both players and organizers.
 
 ## Features
