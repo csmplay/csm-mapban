@@ -57,10 +57,7 @@ export default function AdminPage() {
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
 
-    const port = process.env.PORT || 3000;
-    const backendPort = process.env.BACKEND_PORT || 4000;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:' + port;
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + backendPort;
+    const backendUrl = process.env.BACKEND_URL;
 
     useEffect(() => {
         socketRef.current = io(backendUrl);
@@ -129,7 +126,7 @@ export default function AdminPage() {
     };
 
     const handleCopyLink = (lobbyId: string) => {
-        const lobbyUrl = `${frontendUrl}/lobby/${lobbyId}/obs`;
+        const lobbyUrl = `${window.origin}/lobby/${lobbyId}/obs`;
         navigator.clipboard.writeText(lobbyUrl).then(
             () => {
                 toast({

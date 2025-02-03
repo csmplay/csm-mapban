@@ -26,9 +26,7 @@ export default function HomePage() {
     const [gameType, setGameType] = useState("BO1");
     const [gameName, setGame] = useState("CS2");
 
-    const backendPort = process.env.BACKEND_PORT || 4000;
-
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + backendPort;
+    const backendUrl = process.env.BACKEND_URL;
 
     useEffect(() => {
         const newSocket = io(backendUrl);

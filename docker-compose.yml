@@ -1,0 +1,25 @@
+services:
+  backend:
+    image: ghcr.io/csmplay/csm-mapban-backend:latest  # Primary source
+    build:  # Fallback option
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    pull_policy: always  # Force pull first
+    ports:
+      - 1703:4000
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/csmplay/csm-mapban-frontend:latest  # Primary source
+    build:  # Fallback option
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    pull_policy: always
+    ports:
+      - 1702:3000
+    env_file:
+      - .env
+    depends_on:
+      - backend

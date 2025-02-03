@@ -38,8 +38,7 @@ const LobbyObsPage = () => {
 
     const [gameName, setGameName] = useState<string>('0');
 
-    const backendPort = process.env.BACKEND_PORT || 4000;
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + backendPort;
+    const backendUrl = process.env.BACKEND_URL;
 
     // Fetch pattern (Game Rules) from the lobby data
     // useEffect(() => {

@@ -5,22 +5,20 @@ import cors from 'cors';
 
 const app = express();
 
-const port = process.env.BACKEND_PORT || 4000;
-const frontendPort = process.env.PORT || 3000;
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:' + frontendPort;
-const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + port;
+const port = 4000;
+const frontendUrl = process.env.FRONTEND_URL;
 
 // Use cors middleware
 app.use(
     cors({
-        origin: frontendUrl, // Allow requests from your frontend
+        origin: frontendUrl
     })
 );
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: frontendUrl, // Allow requests from your frontend
+        origin: frontendUrl, 
         methods: ['GET', 'POST'],
     },
 });
@@ -494,5 +492,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(port, () => {
-    console.log(`Server is running at ${backendUrl}`);
+    console.log(`Server is running at localhost:${port}`);
 });

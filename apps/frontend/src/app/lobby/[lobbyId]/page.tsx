@@ -50,8 +50,7 @@ export default function LobbyPage() {
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [pickMapId, setPickMapId] = useState<number>(0);
 
-    const backendPort = process.env.BACKEND_PORT || 4000;
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:' + backendPort;
+    const backendUrl = process.env.BACKEND_URL;
 
     // Socket Calls Handling
     useEffect(() => {
