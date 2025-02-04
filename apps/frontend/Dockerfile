@@ -32,6 +32,6 @@ COPY --from=builder /app/apps/frontend/.env* ./
 
 # Switch to the frontend directory and install only production dependencies.
 WORKDIR /app/apps/frontend
-RUN yarn install --production --frozen-lockfile
+RUN yarn install --production --frozen-lockfile && yarn cache clean
 
 CMD ["yarn", "start"]
