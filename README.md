@@ -1,9 +1,12 @@
 # CSM Mapban
 
-### Author: [@goosemooz](https://github.com/goosemooz)
-### Maintainers: [@ch4og](https://github.com/ch4og)
+#### Author: [@goosemooz](https://github.com/goosemooz)
 
-Welcome to **CSM Mapban**, a service designed for **CS2**, **Valorant** and other games tournaments. This tool streamlines the process of selecting and banning maps, enhancing experience for both players and organizers.
+#### Maintainers: [@ch4og](https://github.com/ch4og)
+
+Welcome to **CSM Mapban**, a service designed for **CS2**, **Valorant** and
+other games tournaments. This tool streamlines the process of selecting and
+banning maps, enhancing experience for both players and organizers.
 
 ## Features
 
@@ -18,11 +21,13 @@ Welcome to **CSM Mapban**, a service designed for **CS2**, **Valorant** and othe
 To set up the CSM Mapban service, follow these simple steps:
 
 1. **Install Dependencies**:
+
    ```bash
    yarn install
    ```
 
 2. **Build the Project**
+
    ```bash
    yarn build
    ```
