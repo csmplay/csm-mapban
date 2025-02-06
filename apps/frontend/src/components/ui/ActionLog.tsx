@@ -35,7 +35,7 @@ export function ActionLog({ entries, blueTeamName, redTeamName }: ActionLogProps
                     {entries.map((entry, index) => (
                         <div
                             key={`${entry}-${index}`}
-                            className={`bg-white p-2 rounded shadow text-gray-700 border-2 ${getEntryStyle(entry)}`}
+                            className={`bg-white p-2 rounded shadow-sm text-gray-700 border-2 ${getEntryStyle(entry)}`}
                         >
                             {entry}
                         </div>
