@@ -50,7 +50,7 @@ export default function LobbyPage() {
     const [selectedMapIndex, setSelectedMapIndex] = useState<number | null>(null);
     const [pickMapId, setPickMapId] = useState<number>(0);
 
-    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL || 'http://localhost:4000/' : '/';
+    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
     // Socket Calls Handling
     useEffect(() => {
@@ -356,7 +356,7 @@ export default function LobbyPage() {
                                         ${isSelected && !isPicked ? 'border-gray-500' : 'border-gray-300'}
                                         ${isPicked ? 'border-green-400' : ''}`}
                                     />
-                                    <div className={`relative z-10 bg-black bg-opacity-50 px-2 py-1 rounded-md`}>
+                                    <div className={`relative z-10 bg-black/50 px-2 py-1 rounded-md`}>
                                         <span
                                             className={`text-xl font-bold ${
                                                 isDisabled && !isPicked ? 'text-gray-400' : 'text-white'
@@ -497,7 +497,7 @@ export default function LobbyPage() {
                         animate={{opacity: 1}}
                         exit={{opacity: 0}}
                         transition={{duration: 0.3}}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
                     >
                         <motion.div
                             initial={{scale: 0.9, opacity: 0}}
@@ -541,7 +541,7 @@ export default function LobbyPage() {
                         animate={{opacity: 1}}
                         exit={{opacity: 0}}
                         transition={{duration: 0.3}}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
                     >
                         <motion.div
                             initial={{scale: 0.9, opacity: 0}}

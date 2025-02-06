@@ -26,7 +26,7 @@ export default function HomePage() {
     const [gameType, setGameType] = useState("BO1");
     const [gameName, setGame] = useState("CS2");
 
-    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL || 'http://localhost:4000/' : '/';
+    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
     useEffect(() => {
         const newSocket = io(backendUrl);
@@ -115,7 +115,7 @@ export default function HomePage() {
                         exit="hidden"
                         variants={overlayVariants}
                         transition={{ duration: 0.3 }}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
                     >
                         <motion.div
                             variants={contentVariants}
@@ -164,7 +164,7 @@ export default function HomePage() {
                         exit="hidden"
                         variants={overlayVariants}
                         transition={{ duration: 0.3 }}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
                     >
                         <motion.div
                             variants={contentVariants}

@@ -57,7 +57,7 @@ export default function AdminPage() {
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
 
-    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL || 'http://localhost:4000/' : '/';
+    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
     useEffect(() => {
         socketRef.current = io(backendUrl);
@@ -369,7 +369,7 @@ export default function AdminPage() {
                         exit="hidden"
                         variants={overlayVariants}
                         transition={{ duration: 0.3 }}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
                     >
                         <motion.div
                             variants={contentVariants}
@@ -437,7 +437,7 @@ export default function AdminPage() {
                         animate={{opacity: 1}}
                         exit={{opacity: 0}}
                         transition={{duration: 0.3}}
-                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
                     >
                         <motion.div
                             initial={{scale: 0.9, opacity: 0}}
