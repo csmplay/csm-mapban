@@ -98,7 +98,7 @@ export default function HomePage() {
                     >
                         Создать лобби
                     </Button>
-                    <Separator className="my-4"/>
+                    <Separator/>
                     <Button
                         className="w-full bg-zinc-800 text-white hover:bg-zinc-700"
                         onClick={() => setShowJoinLobbyOverlay(true)}

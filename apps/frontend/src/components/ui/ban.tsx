@@ -24,7 +24,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
         <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
             <AnimatePresence mode="wait">
                 {isVisible && (
-                    <div className="relative w-80 aspect-[3/4] space-y-1">
+                    <div className="relative w-80 aspect-3/4 space-y-1">
                         {/* Team Name Section */}
                         <motion.div
                             initial={{x: -100, opacity: 0}}

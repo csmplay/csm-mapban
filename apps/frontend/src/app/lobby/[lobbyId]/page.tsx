@@ -351,7 +351,7 @@ export default function LobbyPage() {
                                         style={{objectFit:"cover"}}
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className={`absolute inset-0 z-0 border-4 rounded-xl ${
-                                            isDisabled && !isPicked ? 'grayscale blur-sm' : ''
+                                            isDisabled && !isPicked ? 'grayscale blur-xs' : ''
                                         } transition-all duration-300 
                                         ${isSelected && !isPicked ? 'border-gray-500' : 'border-gray-300'}
                                         ${isPicked ? 'border-green-400' : ''}`}
