@@ -1,5 +1,5 @@
 {
-  "name": "csm-cs-mapban",
+  "name": "csm-mapban",
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
