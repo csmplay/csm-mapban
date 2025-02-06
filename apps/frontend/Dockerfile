@@ -3,7 +3,8 @@ FROM node:lts-alpine AS builder
 WORKDIR /app
 
 # Copy root-level config and lockfile.
-COPY package.json yarn.lock turbo.json .env ./
+COPY package.json yarn.lock turbo.json ./
+COPY .env.example ./.env
 
 # Copy the frontend workspace code.
 COPY apps/frontend ./apps/frontend
