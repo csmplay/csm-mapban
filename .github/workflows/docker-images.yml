@@ -1,9 +1,9 @@
 name: "Build & Push Docker Images"
 
 on:
-  push:
-    branches:
-      - main  # Change as needed (e.g. 'master' or your deployment branch)
+  schedule:
+    - cron: '0 0 * * 1'  # Run every Monday at 00:00 UTC
+  workflow_dispatch:     # Allow manual triggering
 
 # Explicitly set permissions in case of an organization repository.
 permissions:
