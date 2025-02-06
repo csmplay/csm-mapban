@@ -57,14 +57,14 @@ export default function AdminPage() {
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
 
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL || 'http://localhost:4000/' : '/';
 
     useEffect(() => {
         socketRef.current = io(backendUrl);
 
         const fetchLobbies = async () => {
             try {
-                const response = await fetch(`${backendUrl}/admin/lobbies`);
+                const response = await fetch(`${backendUrl}api/lobbies`);
                 const data: Lobby[] = await response.json();
                 setLobbies(data);
             } catch (error) {
@@ -74,7 +74,7 @@ export default function AdminPage() {
 
         const fetchSourceMapPool = async () => {
             try {
-                const response = await fetch(`${backendUrl}/mapPool`);
+                const response = await fetch(`${backendUrl}api/mapPool`);
                 const data: { mapPool: string[][]; mapNamesLists: string[][] } = await response.json();
                 setSourceMapPool(data.mapPool);
                 setAllMapsList(data.mapNamesLists);
@@ -84,7 +84,7 @@ export default function AdminPage() {
         };
         const fetchMapPool = async () => {
             try {
-                const response = await fetch(`${backendUrl}/mapPool`);
+                const response = await fetch(`${backendUrl}api/mapPool`);
                 const data: { mapPool: string[][]; mapNamesLists: string[][] } = await response.json();
                 setMapPool(data.mapPool);
                 setAllMapsList(data.mapNamesLists);

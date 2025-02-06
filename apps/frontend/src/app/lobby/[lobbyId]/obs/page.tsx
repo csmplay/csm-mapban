@@ -38,14 +38,14 @@ const LobbyObsPage = () => {
 
     const [gameName, setGameName] = useState<string>('0');
 
-    const backendUrl = process.env.BACKEND_URL;
+    const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL || 'http://localhost:4000/' : '/';
 
     // Fetch pattern (Game Rules) from the lobby data
     // useEffect(() => {
     //     if (!lobbyId) return;
     //     const fetchPattern = async () => {
     //         try {
-    //             const res = await fetch(`${backendUrl}/admin/lobbies`);
+    //             const res = await fetch(`${backendUrl}api/lobbies`);
     //             const data = await res.json();
     //             // Find the lobby with the matching lobbyId
     //             const currentLobby = data.find((l: any) => l.lobbyId === lobbyId);

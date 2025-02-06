@@ -6,7 +6,7 @@ import cors from 'cors';
 const app = express();
 
 const port = 4000;
-const frontendUrl = process.env.FRONTEND_URL;
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // Use cors middleware
 app.use(
@@ -58,7 +58,7 @@ const startMapPool = [
 ];
 let mapPool = startMapPool;
 
-app.get('/', (_req, res) => {
+app.get('/api', (_req, res) => {
     res.send('Express + TypeScript Server');
 });
 
@@ -104,7 +104,7 @@ const startGame = (lobbyId: string) => {
 }
 
 // Admin endpoint to get the list of lobbies and their members
-app.get('/admin/lobbies', (_req, res) => {
+app.get('/api/lobbies', (_req, res) => {
     const lobbyList = Array.from(lobbies.values()).map((lobby) => ({
         lobbyId: lobby.lobbyId,
         members: Array.from(lobby.members),
@@ -122,7 +122,7 @@ app.get('/admin/lobbies', (_req, res) => {
     res.json(lobbyList);
 });
 
-app.get('/mapPool', (req, res) => {
+app.get('/api/mapPool', (req, res) => {
     res.json({ mapPool, mapNamesLists });
 });
 
