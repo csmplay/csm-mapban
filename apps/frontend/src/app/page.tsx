@@ -40,7 +40,7 @@ export default function HomePage() {
         return () => {
             newSocket.disconnect();
         };
-    }, []);
+    }, [backendUrl]);
 
     const handleJoinLobby = (event: React.FormEvent) => {
         event.preventDefault();

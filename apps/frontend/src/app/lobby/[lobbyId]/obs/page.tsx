@@ -21,9 +21,21 @@ interface PickAction {
 
 type Action = BanAction | PickAction;
 
+// Added a proper type for cardColors based on the structure expected from the backend.
+interface CardColors {
+    ban: {
+        text: string[];
+        bg: string[];
+    };
+    pick: {
+        text: string[];
+        bg: string[];
+    };
+}
+
 const LobbyObsPage = () => {
     const { lobbyId } = useParams();
-    const [socket, setSocket] = useState<Socket | null>(null);
+    const [, setSocket] = useState<Socket | null>(null);
 
     const [pickedEntries, setPickedEntries] = useState<
         { map: string; teamName: string; side: string }[]
@@ -38,8 +50,11 @@ const LobbyObsPage = () => {
 
     const [gameName, setGameName] = useState<string>('0');
 
-    // Start with an empty object; it will be populated after fetch.
-    const [cardColors, setCardColors] = useState<any>({});
+    // Replace the "any" type with our CardColors type; initialize with empty arrays.
+    const [cardColors, setCardColors] = useState<CardColors>({
+        ban: { text: [], bg: [] },
+        pick: { text: [], bg: [] }
+    });
 
     const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
@@ -47,7 +62,7 @@ const LobbyObsPage = () => {
         // Fetch initial card colors from backend
         fetch(`${backendUrl}api/cardColors`)
             .then((res) => res.json())
-            .then((data) => setCardColors(data))
+            .then((data: CardColors) => setCardColors(data))
             .catch((err) => console.error("Error fetching card colors:", err));
     }, [backendUrl]);
 
@@ -55,7 +70,7 @@ const LobbyObsPage = () => {
         const newSocket = io(backendUrl);
         setSocket(newSocket);
 
-        newSocket.on('cardColorsUpdated', (newCardColors) => {
+        newSocket.on('cardColorsUpdated', (newCardColors: CardColors) => {
             setCardColors(newCardColors);
         });
 

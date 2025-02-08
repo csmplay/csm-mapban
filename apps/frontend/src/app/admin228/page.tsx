@@ -15,6 +15,18 @@ import {AnimatePresence, motion} from "framer-motion";
 import AnimatedBanCard from '@/components/ui/ban';
 import AnimatedPickCard from '@/components/ui/pick';
 
+// Define the CardColors interface for both ban and pick cards.
+interface CardColors {
+    ban: {
+        text: string[];
+        bg: string[];
+    };
+    pick: {
+        text: string[];
+        bg: string[];
+    };
+}
+
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
 
@@ -45,8 +57,11 @@ const contentVariants = {
     visible: { scale: 1, opacity: 1 },
 };
 
-// Begin with an empty object—colors will be fetched from the backend.
-const initialCardColors: any = {};
+// Initialize with an empty (but typed) object—colors will be fetched from the backend.
+const initialCardColors: CardColors = {
+    ban: { text: [], bg: [] },
+    pick: { text: [], bg: [] },
+};
 
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
@@ -63,11 +78,11 @@ export default function AdminPage() {
     const { toast } = useToast();
 
     // Global colors fetched from the backend.
-    const [cardColors, setCardColors] = useState(initialCardColors);
+    const [cardColors, setCardColors] = useState<CardColors>(initialCardColors);
     // Controls whether the edit modal is open.
     const [editCardColorsModal, setEditCardColorsModal] = useState(false);
-    // Use a separate state to temporarily edit colors so that you don't immediately update the main state.
-    const [editingCardColors, setEditingCardColors] = useState<any>(null);
+    // Now typed as CardColors or null instead of any.
+    const [editingCardColors, setEditingCardColors] = useState<CardColors | null>(null);
 
     const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
@@ -105,10 +120,10 @@ export default function AdminPage() {
             }
         };
 
-        // Fetch initial card colors from backend
+        // Fetch initial card colors from backend with a typed response.
         fetch(`${backendUrl}api/cardColors`)
             .then((res) => res.json())
-            .then((data) => setCardColors(data))
+            .then((data: CardColors) => setCardColors(data))
             .catch((err) => console.error("Error fetching card colors:", err));
 
         (async () => {
@@ -128,8 +143,8 @@ export default function AdminPage() {
                 );
             });
 
-            // Listen for card colors updates
-            socketRef.current.on('cardColorsUpdated', (newCardColors) => {
+            // Listen for card colors updates with proper type.
+            socketRef.current.on('cardColorsUpdated', (newCardColors: CardColors) => {
                 setCardColors(newCardColors);
             });
         }
