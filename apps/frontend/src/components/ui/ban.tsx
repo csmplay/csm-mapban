@@ -30,13 +30,13 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-[#7650c7] p-3 overflow-hidden"
+                            className="absolute top-0 left-0 right-0 bg-[#282828] p-3 overflow-hidden"
                             style={{
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
                             }}
                         >
-                            <span className={`${teamTextSize} font-bold text-white block text-center`}>{
+                            <span className={`${teamTextSize} font-bold text-[#dfdfdf] block text-center`}>{
                                 teamName
                             }</span>
                         </motion.div>
@@ -47,7 +47,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
                             style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#151210] overflow-hidden"
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#282828] overflow-hidden"
                         >
                             <Image
                                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
@@ -66,7 +66,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-[#7650c7] p-4 rounded-bl-lg rounded-br-lg"
+                            className="absolute bottom-0 left-0 right-0 bg-[#282828] p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
@@ -82,7 +82,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                                         hidden: {y: -20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-4xl font-bold text-white"
+                                    className="text-4xl font-bold text-[#dfdfdf]"
                                 >
                                     BAN
                                 </motion.div>
@@ -92,7 +92,7 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                                         hidden: {y: 20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-3xl font-bold text-white pt-1"
+                                    className="text-3xl font-bold text-[#dfdfdf] pt-1"
                                 >
                                     {mapName}
                                 </motion.div>
