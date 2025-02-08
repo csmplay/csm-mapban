@@ -162,6 +162,11 @@ const LobbyObsPage = () => {
         // If actions.length == visibleActionsCount, do nothing (no changes needed)
     }, [actions, visibleActionsCount]);
 
+    useEffect(() => {
+        document.body.classList.add('obs-page');
+        return () => document.body.classList.remove('obs-page');
+    }, []);
+
     return (
         <div className="bg-transparent p-8 justify-start">
             <div className="flex space-x-4 py-16">
