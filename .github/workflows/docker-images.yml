@@ -2,8 +2,8 @@ name: "Build & Push Docker Images"
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Run every Monday at 00:00 UTC
-  workflow_dispatch:     # Allow manual triggering
+    - cron: "0 0 * * 1" # Run every Monday at 00:00 UTC
+  workflow_dispatch: # Allow manual triggering
 
 # Explicitly set permissions in case of an organization repository.
 permissions:
@@ -45,4 +45,4 @@ jobs:
 
       - name: Push Frontend Image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/csm-mapban-frontend:latest 
+          docker push ghcr.io/${{ github.repository_owner }}/csm-mapban-frontend:latest

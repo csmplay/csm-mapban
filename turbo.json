@@ -12,8 +12,7 @@
     "lint": {
       "outputs": []
     },
-    "start": {
-    }
+    "start": {}
   },
   "globalEnv": ["FRONTEND_URL", "BACKEND_URL"]
 }
