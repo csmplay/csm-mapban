@@ -65,7 +65,7 @@ export default function HomePage() {
       let gameTypeNum = 0;
       if (gameType === "BO3") gameTypeNum = 1;
       if (gameType === "BO5") gameTypeNum = 2;
-      socket.emit("createLobby", { lobbyId, gameNum, gameTypeNum });
+      socket.emit("createLobby", { lobbyId, gameNum, gameTypeNum});
       router.push(`/lobby/${lobbyId}`);
     }
   };

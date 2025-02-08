@@ -39,16 +39,18 @@ type BannedMap = { map: string; teamName: string };
 type Lobby = {
   lobbyId: string;
   members: string[];
-  teamNames: [string, string][]; // [socketId, teamName]
+  teamNames: [string, string][];
   observers: string[];
   picked: PickedMap[];
   banned: BannedMap[];
   gameName: number;
   gameType: number;
-  mapNames: Array<string>;
+  mapNames: string[];
   gameStateList: string[];
   coinFlip: boolean;
   admin: boolean;
+  gameStep: number; // Added current game step
+  knifeDecider: boolean; // New flag indicating knife decider mode
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
@@ -73,6 +75,7 @@ export default function AdminPage() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
   const localCoinFlip = useRef(true);
+  const localKnifeDecider = useRef(false);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
   const [allMapsList, setAllMapsList] = useState<string[][]>([]);
@@ -83,11 +86,8 @@ export default function AdminPage() {
   const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
 
-  // Global colors fetched from the backend.
   const [cardColors, setCardColors] = useState<CardColors>(initialCardColors);
-  // Controls whether the edit modal is open.
   const [editCardColorsModal, setEditCardColorsModal] = useState(false);
-  // Now typed as CardColors or null instead of any.
   const [editingCardColors, setEditingCardColors] = useState<CardColors | null>(
     null,
   );
@@ -160,6 +160,7 @@ export default function AdminPage() {
       socketRef.current.on("cardColorsUpdated", (newCardColors: CardColors) => {
         setCardColors(newCardColors);
       });
+
     }
 
     return () => {
@@ -237,6 +238,7 @@ export default function AdminPage() {
         gameNum,
         gameTypeNum,
         coinFlip: localCoinFlip.current,
+        knifeDecider: localKnifeDecider.current,
       });
       setAdminOverlay(false);
     }
@@ -313,6 +315,13 @@ export default function AdminPage() {
   const checkboxVariants = {
     checked: { scale: 1.1 },
     unchecked: { scale: 1 },
+  };
+
+  // New handler for knife decider choices.
+  const handleKnifeDecider = (lobbyId: string, side: "blue" | "red") => {
+    if (socketRef.current) {
+      socketRef.current.emit("knifeDeciderChoice", { lobbyId, side });
+    }
   };
 
   if (!cardColors) {
@@ -400,7 +409,29 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <ScrollArea className="h-64 pr-4">
-                    <div className="space-y-4">
+                    <div className="space-y-4">                
+                    {lobby.knifeDecider && lobby.gameStep === 6 && (
+                  <div className="flex justify-around p-2 bg-gray-100">
+                  <Button
+                    variant="outline"
+                    className="bg-blue-500 text-white"
+                    onClick={() =>
+                      handleKnifeDecider(lobby.lobbyId, "blue")
+                    }
+                  >
+                    {lobby.teamNames[0][1] || "blue"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="bg-red-500 text-white"
+                    onClick={() =>
+                      handleKnifeDecider(lobby.lobbyId, "red")
+                    }
+                  >
+                    {lobby.teamNames[1][1] || "red"}
+                  </Button>
+                </div>
+                )}
                       <div>
                         <h3 className="font-semibold text-gray-600 mb-2">
                           Teams:
@@ -422,7 +453,6 @@ export default function AdminPage() {
                         </ul>
                       </div>
                       <Separator />
-                      {/* Optional display of new fields */}
                       <div className="space-y-2">
                         <div className="text-sm text-gray-700">
                           Game Type:{" "}
@@ -434,6 +464,12 @@ export default function AdminPage() {
                         </div>
                         <div className="text-sm text-gray-700">
                           Coin Flip: {lobby.coinFlip ? "Yes" : "No"}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          Current Game Step: {lobby.gameStep}/7
+                        </div>                        
+                        <div className="text-sm text-gray-700">
+                          Knife Decider: {lobby.knifeDecider ? "Yes" : "No"}
                         </div>
                       </div>
                       <Separator />
@@ -586,7 +622,25 @@ export default function AdminPage() {
                       Подбросить монетку в начале игры
                     </Label>
                   </div>
+                <div className="pl-6 pb-6 pr-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                    <AnimatedCheckbox
+                      id="knifeDecider"
+                      checked={localKnifeDecider.current}
+                      onCheckedChange={(checked) => {
+                        localKnifeDecider.current = checked as boolean;
+                      }}
+                      variants={checkboxVariants}
+                      animate={localKnifeDecider.current ? "checked" : "unchecked"}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 10,
+                      }}
+                    />
+                    <Label htmlFor="knifeDecider">Десайдер на ножах</Label>
+               
                 </div>
+                </div>                  
                 <div className="flex justify-between">
                   <Button
                     type="button"
@@ -837,7 +891,6 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-      {/* Предпросмотр карточек – слева и справа от экрана */}
       {editCardColorsModal && editingCardColors && (
         <>
           <motion.div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">

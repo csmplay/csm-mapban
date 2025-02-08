@@ -29,6 +29,7 @@ export default function LobbyPage() {
   const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
   const [showPrompts, setShowPrompts] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
+  const [isKnifing, setIsKnifing] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
   const [isUndefined, setIsUndefined] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
@@ -106,11 +107,29 @@ export default function LobbyPage() {
       },
     );
 
+    newSocket.on("wait", () => {
+      setIsWaiting(true);
+      setShowTeamNameOverlay(true);
+    });
+    newSocket.on("nowait", () => {
+      setIsWaiting(false);
+      setIsKnifing(false);
+    });
+    newSocket.on("waitKnifes", () => {
+      setIsKnifing(true);
+      setShowTeamNameOverlay(true);
+    });
+    newSocket.on("nowaitKnifes", () => {
+      setShowTeamNameOverlay(false);
+      setIsKnifing(false);
+    });
+
     // Handle 'lobbyDeleted' event
     newSocket.on("lobbyDeleted", () => {
       console.log("lobbyDeleted");
       setIsWaiting(false);
       setIsAnimated(false);
+      setIsKnifing(false);
       setIsDeleted(true);
     });
 
@@ -119,6 +138,7 @@ export default function LobbyPage() {
       console.log("lobbyUndefined");
       setIsWaiting(false);
       setIsAnimated(false);
+      setIsKnifing(false);
       setIsUndefined(true);
     });
 
@@ -144,6 +164,12 @@ export default function LobbyPage() {
     newSocket.on("canPick", (pickVar: boolean) => {
       console.log("I can pick now");
       setCanPick(() => pickVar);
+    });
+
+    newSocket.on("canPickKnife", (pickVar: boolean) => {
+      console.log("I can pick now (only decider)");
+      setCanPick(() => pickVar);
+      toast({ description: "Пожалуйста, выберите оставшуюся карту!" });
     });
 
     // Handle 'coinFlip' event
@@ -594,7 +620,7 @@ export default function LobbyPage() {
               style={{ width: "600px" }}
               className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
             >
-              {!isWaiting && !isAnimated && !isUndefined && !isDeleted && (
+              {!isWaiting && !isAnimated && !isUndefined && !isDeleted && !isKnifing && (
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-center">
                     Введите имя команды
@@ -638,6 +664,13 @@ export default function LobbyPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-center">
                     Ожидание готовности противника...
+                  </h2>
+                </div>
+              )}
+              {isKnifing && (
+                <div>
+                  <h2 className="text-2xl font-bold text-center">
+                    Ожидание результатов ножевого раунда...
                   </h2>
                 </div>
               )}
