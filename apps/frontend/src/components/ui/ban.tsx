@@ -4,13 +4,17 @@ import React, {useState} from 'react'
 import {motion, AnimatePresence} from 'framer-motion'
 import Image from "next/image";
 
-interface AnimatedBanCardProps {
+export interface AnimatedBanCardProps {
     teamName: string;
     mapName: string;
     gameName: string;
+    cardColors: {
+        text: string[];
+        bg: string[];
+    };
 }
 
-export default function AnimatedPickCard({teamName, mapName, gameName}: AnimatedBanCardProps) {
+export default function AnimatedBanCard({teamName, mapName, gameName, cardColors}: AnimatedBanCardProps) {
     const [isVisible] = useState(true)
 
     // const replay = () => {
@@ -30,13 +34,14 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-[#282828] p-3 overflow-hidden"
                             style={{
+                                backgroundColor: cardColors.bg[0],
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
                             }}
+                            className="absolute top-0 left-0 right-0 p-3 overflow-hidden"
                         >
-                            <span className={`${teamTextSize} font-bold text-[#dfdfdf] block text-center`}>{
+                            <span style={{color: cardColors.text[0]}} className={`${teamTextSize} font-bold block text-center`}>{
                                 teamName
                             }</span>
                         </motion.div>
@@ -46,8 +51,8 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
-                            style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#282828] overflow-hidden"
+                            style={{backgroundColor: cardColors.bg[1], originY: 1}}
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden"
                         >
                             <Image
                                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
@@ -66,7 +71,8 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-[#282828] p-4 rounded-bl-lg rounded-br-lg"
+                            style={{backgroundColor: cardColors.bg[2]}}
+                            className="absolute bottom-0 left-0 right-0 p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
@@ -82,17 +88,19 @@ export default function AnimatedPickCard({teamName, mapName, gameName}: Animated
                                         hidden: {y: -20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-4xl font-bold text-[#dfdfdf]"
+                                    style={{color: cardColors.text[1]}}
+                                    className="text-4xl font-bold"
                                 >
                                     BAN
                                 </motion.div>
-                                <div className="w-48 h-0.5 bg-white"/>
+                                <div style={{backgroundColor: cardColors.bg[3]}} className="w-48 h-0.5"/>
                                 <motion.div
                                     variants={{
                                         hidden: {y: 20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-3xl font-bold text-[#dfdfdf] pt-1"
+                                    style={{color: cardColors.text[2]}}
+                                    className="text-3xl font-bold pt-1"
                                 >
                                     {mapName}
                                 </motion.div>

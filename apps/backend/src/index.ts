@@ -58,8 +58,26 @@ const startMapPool = [
 ];
 let mapPool = startMapPool;
 
+// Updated default configuration: separate settings for ban and pick cards
+const defaultCardColors = {
+    ban: {
+        text: ["#dfdfdf", "#dfdfdf", "#dfdfdf"],
+        bg: ["#282828", "#282828", "#282828", "#dfdfdf"]
+    },
+    pick: {
+        text: ["#dfdfdf", "#dfdfdf", "#dfdfdf"],
+        bg: ["#42527e", "#282828", "#42527e", "#dfdfdf"]
+    }
+}
+let cardColors = defaultCardColors
+
 app.get('/api', (_req, res) => {
     res.send('Express + TypeScript Server');
+});
+
+// New endpoint to fetch current card colors
+app.get('/api/cardColors', (_req, res) => {
+    res.json(cardColors);
 });
 
 const startGame = (lobbyId: string) => {
@@ -453,6 +471,18 @@ io.on('connection', (socket) => {
                 io.to(observer).emit('pickedUpdated', lobby.picked);
             })
         }
+    })
+
+    socket.on('editCardColors', (newCardColors) => {
+        cardColors = newCardColors
+        console.log('Card colors updated:', cardColors)
+        io.emit('cardColorsUpdated', cardColors)
+    })
+
+    socket.on('resetCardColors', () => {
+        cardColors = defaultCardColors
+        console.log('Card colors reset to default')
+        io.emit('cardColorsUpdated', cardColors)
     })
 
     socket.on('disconnect', () => {

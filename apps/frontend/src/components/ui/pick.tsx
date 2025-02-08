@@ -4,14 +4,18 @@ import React, {useState} from 'react'
 import {motion, AnimatePresence} from 'framer-motion'
 import Image from "next/image";
 
-interface AnimatedPickCardProps {
+export interface AnimatedPickCardProps {
     teamName: string;
     mapName: string;
     gameName: string;
     side: string;
+    cardColors: {
+        text: string[]; // [text1, text2, text3]
+        bg: string[];   // [bg1, bg2, bg3, bg4]
+    }
 }
 
-export default function AnimatedPickCard({teamName, mapName, gameName, side}: AnimatedPickCardProps) {
+export default function AnimatedPickCard({teamName, mapName, gameName, side, cardColors}: AnimatedPickCardProps) {
     const [isVisible] = useState(true)
 
     // const replay = () => {
@@ -31,11 +35,12 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                             initial={{x: -100, opacity: 0}}
                             animate={{x: 0, opacity: 1}}
                             transition={{delay: 1}}
-                            className="absolute top-0 left-0 right-0 bg-[#42527e] px-3 overflow-hidden"
                             style={{
+                                backgroundColor: cardColors.bg[0],
                                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0 100%)',
                                 height: '60px'
                             }}
+                            className="absolute top-0 left-0 right-0 px-3 overflow-hidden"
                         >
                             <motion.div
                                 className="flex flex-row justify-between overflow-hidden"
@@ -51,7 +56,8 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                                         hidden: {x: -20, opacity: 0},
                                         visible: {x: 0, opacity: 1}
                                     }}
-                                    className={`${teamTextSize} font-bold text-[#dfdfdf] block text-center pt-3`}
+                                    style={{color: cardColors.text[0]}}
+                                    className={`${teamTextSize} font-bold block text-center pt-3`}
                                 >
                                     {teamName}
                                 </motion.div>
@@ -81,8 +87,8 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
                             transition={{delay: 0.5}}
-                            style={{originY: 1}}
-                            className="absolute top-[60px] bottom-[120px] left-0 right-0 bg-[#282828] overflow-hidden"
+                            style={{backgroundColor: cardColors.bg[1], originY: 1}}
+                            className="absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden"
                         >
                             <Image
                                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
@@ -101,7 +107,8 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                         <motion.div
                             initial={{y: 100, opacity: 0}}
                             animate={{y: 0, opacity: 1}}
-                            className="absolute bottom-0 left-0 right-0 bg-[#42527e] p-4 rounded-bl-lg rounded-br-lg"
+                            style={{backgroundColor: cardColors.bg[2]}}
+                            className="absolute bottom-0 left-0 right-0 p-4 rounded-bl-lg rounded-br-lg"
                         >
                             <motion.div
                                 className="flex flex-col items-center"
@@ -117,17 +124,19 @@ export default function AnimatedPickCard({teamName, mapName, gameName, side}: An
                                         hidden: {y: -20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-4xl font-bold text-[#dfdfdf]"
+                                    style={{color: cardColors.text[1]}}
+                                    className="text-4xl font-bold"
                                 >
                                     PICK
                                 </motion.div>
-                                <div className="w-48 h-0.5 bg-white"/>
+                                <div style={{backgroundColor: cardColors.bg[3]}} className="w-48 h-0.5"/>
                                 <motion.div
                                     variants={{
                                         hidden: {y: 20, opacity: 0},
                                         visible: {y: 0, opacity: 1}
                                     }}
-                                    className="text-3xl font-bold text-[#dfdfdf] pt-1"
+                                    style={{color: cardColors.text[2]}}
+                                    className="text-3xl font-bold pt-1"
                                 >
                                     {mapName}
                                 </motion.div>

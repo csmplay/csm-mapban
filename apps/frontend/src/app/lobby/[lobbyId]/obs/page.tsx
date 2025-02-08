@@ -23,7 +23,7 @@ type Action = BanAction | PickAction;
 
 const LobbyObsPage = () => {
     const { lobbyId } = useParams();
-    const [, setSocket] = useState<Socket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
 
     const [pickedEntries, setPickedEntries] = useState<
         { map: string; teamName: string; side: string }[]
@@ -38,31 +38,26 @@ const LobbyObsPage = () => {
 
     const [gameName, setGameName] = useState<string>('0');
 
+    // Start with an empty object; it will be populated after fetch.
+    const [cardColors, setCardColors] = useState<any>({});
+
     const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
-    // Fetch pattern (Game Rules) from the lobby data
-    // useEffect(() => {
-    //     if (!lobbyId) return;
-    //     const fetchPattern = async () => {
-    //         try {
-    //             const res = await fetch(`${backendUrl}api/lobbies`);
-    //             const data = await res.json();
-    //             // Find the lobby with the matching lobbyId
-    //             const currentLobby = data.find((l: any) => l.lobbyId === lobbyId);
-    //             if (currentLobby && currentLobby.gameStateList) {
-    //                 setPattern(currentLobby.gameStateList);
-    //             }
-    //         } catch (error) {
-    //             console.error('Error fetching pattern:', error);
-    //         }
-    //     };
-    //     (async () => {
-    //         await fetchPattern();
-    //     })();
-    // }, [lobbyId, backendUrl]);
+    useEffect(() => {
+        // Fetch initial card colors from backend
+        fetch(`${backendUrl}api/cardColors`)
+            .then((res) => res.json())
+            .then((data) => setCardColors(data))
+            .catch((err) => console.error("Error fetching card colors:", err));
+    }, [backendUrl]);
 
     useEffect(() => {
         const newSocket = io(backendUrl);
+        setSocket(newSocket);
+
+        newSocket.on('cardColorsUpdated', (newCardColors) => {
+            setCardColors(newCardColors);
+        });
 
         newSocket.on('connect', () => {
             console.log('Connected to Socket.IO server');
@@ -96,8 +91,6 @@ const LobbyObsPage = () => {
             setBannedEntries([]);
             setVisibleActionsCount(0);
         });
-
-        setSocket(newSocket);
 
         return () => {
             newSocket.disconnect();
@@ -178,6 +171,7 @@ const LobbyObsPage = () => {
                                 teamName={action.teamName}
                                 mapName={action.mapName}
                                 gameName={gameName}
+                                cardColors={cardColors.ban}
                             />
                         );
                     } else if (action.type === 'pick') {
@@ -188,6 +182,7 @@ const LobbyObsPage = () => {
                                 mapName={action.mapName}
                                 gameName={gameName}
                                 side={action.side}
+                                cardColors={cardColors.pick}
                             />
                         );
                     } else {

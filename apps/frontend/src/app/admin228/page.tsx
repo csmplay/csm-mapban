@@ -12,6 +12,8 @@ import {Trash2, LogIn, Users, Eye, Plus, PenBox} from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox"
 import {Label} from "@/components/ui/label";
 import {AnimatePresence, motion} from "framer-motion";
+import AnimatedBanCard from '@/components/ui/ban';
+import AnimatedPickCard from '@/components/ui/pick';
 
 type PickedMap = { map: string; teamName: string; side: string };
 type BannedMap = { map: string; teamName: string };
@@ -43,6 +45,9 @@ const contentVariants = {
     visible: { scale: 1, opacity: 1 },
 };
 
+// Begin with an empty object—colors will be fetched from the backend.
+const initialCardColors: any = {};
+
 export default function AdminPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
     const [globalCoinFlip, setGlobalCoinFlip] = useState(true)
@@ -56,6 +61,13 @@ export default function AdminPage() {
     const [editMapPool, setEditMapPool] = useState(false);
     const socketRef = useRef<Socket | null>(null);
     const { toast } = useToast();
+
+    // Global colors fetched from the backend.
+    const [cardColors, setCardColors] = useState(initialCardColors);
+    // Controls whether the edit modal is open.
+    const [editCardColorsModal, setEditCardColorsModal] = useState(false);
+    // Use a separate state to temporarily edit colors so that you don't immediately update the main state.
+    const [editingCardColors, setEditingCardColors] = useState<any>(null);
 
     const backendUrl = process.env.NODE_ENV === 'development' ? process.env.BACKEND_URL + '/'|| 'http://localhost:4000/' : '/';
 
@@ -93,6 +105,12 @@ export default function AdminPage() {
             }
         };
 
+        // Fetch initial card colors from backend
+        fetch(`${backendUrl}api/cardColors`)
+            .then((res) => res.json())
+            .then((data) => setCardColors(data))
+            .catch((err) => console.error("Error fetching card colors:", err));
+
         (async () => {
             await fetchLobbies();
             await fetchSourceMapPool();
@@ -108,6 +126,11 @@ export default function AdminPage() {
                 setLobbies((prevLobbies) =>
                     prevLobbies.filter((lobby) => lobby.lobbyId !== deletedLobbyId)
                 );
+            });
+
+            // Listen for card colors updates
+            socketRef.current.on('cardColorsUpdated', (newCardColors) => {
+                setCardColors(newCardColors);
             });
         }
 
@@ -221,10 +244,38 @@ export default function AdminPage() {
         setEditMapPool(false);
     }
 
+    const handleOpenEditModal = () => {
+        // Create a copy so that editing does not update cardColors immediately.
+        setEditingCardColors({ ...cardColors });
+        setEditCardColorsModal(true);
+    };
+
+    const handleSaveCardColors = () => {
+        if (socketRef.current && editingCardColors) {
+            socketRef.current.emit('editCardColors', editingCardColors);
+            toast({ description: 'Цвета карточек сохранены' });
+        }
+        setEditCardColorsModal(false);
+        setEditingCardColors(null);
+    };
+
+    const handleResetCardColors = () => {
+        if (socketRef.current) {
+            socketRef.current.emit('resetCardColors');
+            toast({ description: 'Цвета карточек сброшены' });
+        }
+        setEditCardColorsModal(false);
+        setEditingCardColors(null);
+    };
+
     const checkboxVariants = {
         checked: { scale: 1.1 },
         unchecked: { scale: 1 },
     };
+
+    if (!cardColors) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 p-8">
@@ -256,6 +307,10 @@ export default function AdminPage() {
                             <Button onClick={handleMapPoolButton} variant="outline" className="w-full">
                                 <PenBox className="w-4 h-4 mr-2"/>
                                 Редактировать маппул
+                            </Button>
+                            <Button onClick={handleOpenEditModal} variant="outline" className="w-full">
+                                <PenBox className="w-4 h-4 mr-2"/>
+                                Редактировать цвета карточек
                             </Button>
                         </CardContent>
                     </Card>
@@ -341,7 +396,7 @@ export default function AdminPage() {
                                     <Button onClick={() => handlePlayAnimation(lobby.lobbyId)} variant="outline" className="flex-1">
                                         Replay animation
                                     </Button>
-                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline" className="flex-1 bg-blue-500 hover:bg-blue-700 text-white hover:text-white">
+                                    <Button onClick={() => handleConnectToLobby(lobby.lobbyId)} variant="outline" className="flex-1 bg-blue-500 hover:bg-blue-700 text-[#dfdfdf] hover:text-white">
                                         <LogIn className="w-4 h-4 mr-2"/>
                                         Connect
                                     </Button>
@@ -496,7 +551,159 @@ export default function AdminPage() {
                         </motion.div>
                     </motion.div>
                 )}
+                {editCardColorsModal && editingCardColors && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+                        >
+                            <h2 className="text-2xl font-bold mb-4 text-center">Редактировать цвета карточек</h2>
+                            <div className="space-y-6">
+                                {/* BAN card colors */}
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 text-center">Цвета текста (BAN)</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {editingCardColors.ban?.text?.map((color: string, index: number) => (
+                                            <input
+                                                key={index}
+                                                type="color"
+                                                value={color}
+                                                onChange={(e) => {
+                                                    const newText = [...editingCardColors.ban.text];
+                                                    newText[index] = e.target.value;
+                                                    setEditingCardColors({
+                                                        ...editingCardColors,
+                                                        ban: { ...editingCardColors.ban, text: newText }
+                                                    });
+                                                }}
+                                                className="w-12 h-12"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 text-center">Цвета фона (BAN)</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {editingCardColors.ban?.bg?.map((color: string, index: number) => (
+                                            <input
+                                                key={index}
+                                                type="color"
+                                                value={color}
+                                                onChange={(e) => {
+                                                    const newBg = [...editingCardColors.ban.bg];
+                                                    newBg[index] = e.target.value;
+                                                    setEditingCardColors({
+                                                        ...editingCardColors,
+                                                        ban: { ...editingCardColors.ban, bg: newBg }
+                                                    });
+                                                }}
+                                                className="w-12 h-12"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                {/* PICK card colors */}
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 text-center">Цвета текста (PICK)</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {editingCardColors.pick?.text?.map((color: string, index: number) => (
+                                            <input
+                                                key={index}
+                                                type="color"
+                                                value={color}
+                                                onChange={(e) => {
+                                                    const newText = [...editingCardColors.pick.text];
+                                                    newText[index] = e.target.value;
+                                                    setEditingCardColors({
+                                                        ...editingCardColors,
+                                                        pick: { ...editingCardColors.pick, text: newText }
+                                                    });
+                                                }}
+                                                className="w-12 h-12"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2 text-center">Цвета фона (PICK)</h3>
+                                    <div className="flex justify-center space-x-4">
+                                        {editingCardColors.pick?.bg?.map((color: string, index: number) => (
+                                            <input
+                                                key={index}
+                                                type="color"
+                                                value={color}
+                                                onChange={(e) => {
+                                                    const newBg = [...editingCardColors.pick.bg];
+                                                    newBg[index] = e.target.value;
+                                                    setEditingCardColors({
+                                                        ...editingCardColors,
+                                                        pick: { ...editingCardColors.pick, bg: newBg }
+                                                    });
+                                                }}
+                                                className="w-12 h-12"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="flex justify-between mt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setEditCardColorsModal(false);
+                                            setEditingCardColors(null);
+                                        }}
+                                    >
+                                        Назад
+                                    </Button>
+                                    <Button type="button" variant="destructive" onClick={handleResetCardColors}>
+                                        Сбросить
+                                    </Button>
+                                    <Button type="button" onClick={handleSaveCardColors}>
+                                        Сохранить
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
             </AnimatePresence>
+
+            {/* Предпросмотр карточек – слева и справа от экрана */}
+            {editCardColorsModal && editingCardColors && (
+                <>
+                    <motion.div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
+                        <div className="scale-75">
+                            <AnimatedBanCard
+                                teamName="BAN Team"
+                                mapName="Dust 2"
+                                gameName="0"
+                                cardColors={editingCardColors.ban}
+                            />
+                        </div>
+                    </motion.div>
+                    <motion.div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
+                        <div className="scale-75">
+                            <AnimatedPickCard
+                                teamName="PICK Team"
+                                mapName="Mirage"
+                                gameName="0"
+                                side="t"
+                                cardColors={editingCardColors.pick}
+                            />
+                        </div>
+                    </motion.div>
+                </>
+            )}
         </div>
     );
 }
