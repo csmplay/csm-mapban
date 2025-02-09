@@ -13,6 +13,7 @@ export interface AnimatedPickCardProps {
     text: string[]; // [text1, text2, text3]
     bg: string[]; // [bg1, bg2, bg3, bg4]
   };
+  decider?: boolean;
 }
 
 export default function AnimatedPickCard({
@@ -21,6 +22,7 @@ export default function AnimatedPickCard({
   gameName,
   side,
   cardColors,
+  decider = false,
 }: AnimatedPickCardProps) {
   const [isVisible] = useState(true);
 
@@ -77,16 +79,18 @@ export default function AnimatedPickCard({
                   }}
                   className="pr-6"
                 >
-                  <Image
-                    src={`/${gameName}/${side}_white.png`}
-                    alt={side}
-                    draggable={false}
-                    width={40}
-                    height={40}
-                    priority={true}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="pt-2.5"
-                  />
+                  {side !== "" && (
+                    <Image
+                      src={`/${gameName}/${side}_white.png`}
+                      alt={side}
+                      draggable={false}
+                      width={40}
+                      height={40}
+                      priority={true}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="pt-2.5"
+                    />
+                  )}
                 </motion.div>
               </motion.div>
             </motion.div>
@@ -140,7 +144,7 @@ export default function AnimatedPickCard({
                   style={{ color: cardColors.text[1] }}
                   className="text-4xl font-bold"
                 >
-                  PICK
+                  {decider ? "DECIDER" : "PICK"}
                 </motion.div>
                 <div
                   style={{ backgroundColor: cardColors.bg[3] }}

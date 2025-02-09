@@ -17,6 +17,7 @@ interface PickAction {
   teamName: string;
   mapName: string;
   side: string;
+  decider?: boolean;
 }
 
 type Action = BanAction | PickAction;
@@ -38,7 +39,7 @@ const LobbyObsPage = () => {
   const [, setSocket] = useState<Socket | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
-    { map: string; teamName: string; side: string }[]
+    { map: string; teamName: string; side: string, decider?: boolean }[]
   >([]);
   const [bannedEntries, setBannedEntries] = useState<
     { map: string; teamName: string }[]
@@ -151,6 +152,17 @@ const LobbyObsPage = () => {
             side: pickEntry.side,
           });
         }
+      } else if (step === "decider") {
+        const pickEntry = pickedCopy.shift();
+        if (pickEntry) {
+          finalActions.push({
+            type: "pick",
+            teamName: pickEntry.teamName,
+            mapName: pickEntry.map,
+            side: pickEntry.side,
+            decider: true,
+          });
+        }
       }
     });
 
@@ -207,6 +219,7 @@ const LobbyObsPage = () => {
                 gameName={gameName}
                 side={action.side}
                 cardColors={cardColors.pick}
+                decider={action.decider}
               />
             );
           } else {

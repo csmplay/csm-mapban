@@ -50,7 +50,7 @@ type Lobby = {
   coinFlip: boolean;
   admin: boolean;
   gameStep: number; // Added current game step
-  knifeDecider: boolean; // New flag indicating knife decider mode
+  knifeDecider: number; // New flag indicating knife decider mode
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
@@ -75,7 +75,7 @@ export default function AdminPage() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
   const localCoinFlip = useRef(true);
-  const localKnifeDecider = useRef(false);
+  const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
   const [allMapsList, setAllMapsList] = useState<string[][]>([]);
@@ -238,7 +238,7 @@ export default function AdminPage() {
         gameNum,
         gameTypeNum,
         coinFlip: localCoinFlip.current,
-        knifeDecider: localKnifeDecider.current,
+        knifeDecider: localKnifeDecider,
       });
       setAdminOverlay(false);
     }
@@ -410,7 +410,7 @@ export default function AdminPage() {
                 <CardContent className="p-6">
                   <ScrollArea className="h-64 pr-4">
                     <div className="space-y-4">                
-                    {lobby.knifeDecider && lobby.gameStep === 6 && (
+                    {lobby.knifeDecider === 1 && lobby.gameStep === 6 && (
                   <div className="flex justify-around p-2 bg-gray-100">
                   <Button
                     variant="outline"
@@ -469,7 +469,7 @@ export default function AdminPage() {
                           Current Game Step: {lobby.gameStep}/7
                         </div>                        
                         <div className="text-sm text-gray-700">
-                          Knife Decider: {lobby.knifeDecider ? "Yes" : "No"}
+                          Knife Decider: {lobby.knifeDecider === 2 ? "Skip" : lobby.knifeDecider === 1 ? "Manual" : "No"}
                         </div>
                       </div>
                       <Separator />
@@ -612,35 +612,36 @@ export default function AdminPage() {
                       }}
                       variants={checkboxVariants}
                       animate={localCoinFlip.current ? "checked" : "unchecked"}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 10,
-                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 10 }}
                     />
                     <Label htmlFor="coinFlip">
                       Подбросить монетку в начале игры
                     </Label>
                   </div>
-                <div className="pl-6 pb-6 pr-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
-                    <AnimatedCheckbox
-                      id="knifeDecider"
-                      checked={localKnifeDecider.current}
-                      onCheckedChange={(checked) => {
-                        localKnifeDecider.current = checked as boolean;
-                      }}
-                      variants={checkboxVariants}
-                      animate={localKnifeDecider.current ? "checked" : "unchecked"}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 10,
-                      }}
-                    />
-                    <Label htmlFor="knifeDecider">Десайдер на ножах</Label>
-               
                 </div>
-                </div>                  
+                <div>
+                  <h3 className="text-lg font-semibold mb-2 text-center">
+                    Десайдер
+                  </h3>
+                  <div className="flex justify-center space-x-4">
+                    {[
+                      { label: "Авто (пропуск)", value: 2 },
+                      { label: "Ножи вручную", value: 1 },
+                      { label: "Рандом", value: 0 },
+                    ].map((option) => (
+                      <Button
+                        key={option.label}
+                        variant={
+                          localKnifeDecider === option.value ? "default" : "outline"
+                        }
+                        onClick={() => setLocalKnifeDecider(option.value)}
+                        className="w-30"
+                      >
+                        {option.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex justify-between">
                   <Button
                     type="button"

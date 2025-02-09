@@ -38,7 +38,7 @@ interface Lobby {
   coinFlip: boolean;
   gameStep: number;
   admin: boolean;
-  knifeDecider: boolean;
+  knifeDecider: number;
 }
 
 // Data structure to store lobbies and their members
@@ -267,7 +267,7 @@ io.on("connection", (socket) => {
           coinFlip: globalCoinFlip,
           gameStep: 0,
           admin: false,
-          knifeDecider: false,
+          knifeDecider: 0,
         };
 
         lobbies.set(lobbyId, lobby);
@@ -282,7 +282,7 @@ io.on("connection", (socket) => {
       gameNum: number;
       gameTypeNum: number;
       coinFlip: boolean;
-      knifeDecider: boolean;
+      knifeDecider: number;
     }) => {
       const { lobbyId, gameNum, gameTypeNum, coinFlip, knifeDecider } = data;
       console.log("Admin Lobby created with id " + lobbyId);
@@ -423,9 +423,26 @@ io.on("connection", (socket) => {
               );
             }, 3000);
           } else if (lobby.gameStateList[lobby.gameStep] === "decider") {
-            if (lobby.knifeDecider) {
+            if (lobby.knifeDecider === 1) {
               io.to(lobbyId).emit("waitKnifes");
-            } else {
+            } else if (lobby.knifeDecider === 2) {
+              io.to(otherSocketId).emit("canWorkUpdated", false);
+              io.to(lobbyId).emit("canWorkUpdated", false);
+              const mapNames = lobby.mapNames;
+              const pickedAndBannedMaps = lobby.picked.map((pickedMap) => pickedMap.map).concat(lobby.banned.map((bannedMap) => bannedMap.map));
+              let notPickedMap = "";
+              for (const mapName of mapNames) {
+                const mapExists = pickedAndBannedMaps.includes(mapName);
+                if (!mapExists) {
+                  notPickedMap = mapName;
+                }
+              }
+              lobby.picked.push({ map: notPickedMap, teamName: "", side: "" });
+              lobby.gameStep++;
+              lobby.observers.forEach((observer) => {
+                io.to(observer).emit("pickedUpdated", lobby.picked);
+              });
+            } else if (lobby.knifeDecider === 0) {
               // io.to(socket.id).emit("wait");
               io.to(otherSocketId).emit("canWorkUpdated", false)
               io.to(socket.id).emit("canWorkUpdated", true)
@@ -483,9 +500,26 @@ io.on("connection", (socket) => {
               otherName + " выбирают карту для пика"
             );
           } else if (lobby.gameStateList[lobby.gameStep] === "decider") {
-            if (lobby.knifeDecider) {
+            if (lobby.knifeDecider === 1) {
               io.to(lobbyId).emit("waitKnifes");
-            } else {
+            } else if (lobby.knifeDecider === 2) {
+              io.to(otherSocketId).emit("canWorkUpdated", false);
+              io.to(lobbyId).emit("canWorkUpdated", false);
+              const mapNames = lobby.mapNames;
+              const pickedAndBannedMaps = lobby.picked.map((pickedMap) => pickedMap.map).concat(lobby.banned.map((bannedMap) => bannedMap.map));
+              let notPickedMap = "";
+              for (const mapName of mapNames) {
+                const mapExists = pickedAndBannedMaps.includes(mapName);
+                if (!mapExists) {
+                  notPickedMap = mapName;
+                }
+              }
+              lobby.picked.push({ map: notPickedMap, teamName: "", side: "" });
+              lobby.gameStep++;
+              lobby.observers.forEach((observer) => {
+                io.to(observer).emit("pickedUpdated", lobby.picked);
+              });
+            } else if (lobby.knifeDecider === 0) {
               // io.to(socket.id).emit("wait");
               io.to(socket.id).emit("canWorkUpdated", false)
               io.to(otherSocketId).emit("canWorkUpdated", true)
@@ -571,7 +605,7 @@ io.on("connection", (socket) => {
     const lobby = lobbies.get(lobbyId);
     if (lobby) {
       if (lobby.gameStateList[lobby.gameStep] === "decider") {
-        if (lobby.knifeDecider) {
+        if (lobby.knifeDecider === 1) {
           const blueSide = Array.from(lobby.teamNames.entries())[0];
           const redSide = Array.from(lobby.teamNames.entries())[1];
           if (side === "blue") {
@@ -585,8 +619,6 @@ io.on("connection", (socket) => {
             io.to(blueSide[0]).emit("canWorkUpdated", true);
             io.to(blueSide[0]).emit("canPickKnife", true);
           }
-        } else {
-          io.to(lobbyId).emit("nowaitKnifes");
         }
       }
     }
