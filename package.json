@@ -14,7 +14,7 @@
     "start": "dotenv -- turbo run start"
   },
   "keywords": [],
-  "author": "Cyber Sport Masters",
+  "author": "CyberSport Masters",
   "license": "MIT",
   "description": "",
   "workspaces": [
