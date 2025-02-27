@@ -69,7 +69,7 @@ export default function HomePage() {
       if (gameType === "BO2") gameTypeNum = 1;
       if (gameType === "BO3") gameTypeNum = 2;
       if (gameType === "BO5") gameTypeNum = 3;
-      let knifeDecider = localKnifeDecider;
+      const knifeDecider = localKnifeDecider;
       socket.emit("createLobby", {
         lobbyId,
         gameNum,

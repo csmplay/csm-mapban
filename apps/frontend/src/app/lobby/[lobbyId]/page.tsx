@@ -205,7 +205,7 @@ export default function LobbyPage() {
     return () => {
       newSocket.disconnect();
     };
-  }, [lobbyId, backendUrl]);
+  }, [lobbyId, backendUrl, toast]);
 
   // Buttons handling
   const handleCardClick = (index: number) => {
