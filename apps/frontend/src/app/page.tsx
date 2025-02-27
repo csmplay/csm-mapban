@@ -9,6 +9,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -20,11 +21,13 @@ export default function HomePage() {
   const [showJoinLobbyOverlay, setShowJoinLobbyOverlay] = useState(false);
   const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   // Things for sending lobby settings to server
   const [socket, setSocket] = useState<Socket | null>(null);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
+  const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
 
   const backendUrl =
     process.env.NODE_ENV === "development"
@@ -63,9 +66,16 @@ export default function HomePage() {
       if (gameName === "CS2") gameNum = 0;
       if (gameName === "Valorant") gameNum = 1;
       let gameTypeNum = 0;
-      if (gameType === "BO3") gameTypeNum = 1;
-      if (gameType === "BO5") gameTypeNum = 2;
-      socket.emit("createLobby", { lobbyId, gameNum, gameTypeNum});
+      if (gameType === "BO2") gameTypeNum = 1;
+      if (gameType === "BO3") gameTypeNum = 2;
+      if (gameType === "BO5") gameTypeNum = 3;
+      let knifeDecider = localKnifeDecider;
+      socket.emit("createLobby", {
+        lobbyId,
+        gameNum,
+        gameTypeNum,
+        knifeDecider,
+      });
       router.push(`/lobby/${lobbyId}`);
     }
   };
@@ -181,37 +191,72 @@ export default function HomePage() {
                 Выберите правила игры
               </h2>
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Игра
-                  </h3>
-                  <div className="flex justify-center space-x-4">
-                    {["CS2", "Valorant"].map((game) => (
-                      <Button
-                        key={game}
-                        variant={gameName === game ? "default" : "outline"}
-                        onClick={() => setGame(game)}
-                        className="w-20"
-                      >
-                        {game}
-                      </Button>
-                    ))}
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Формат игры
-                  </h3>
-                  <div className="flex justify-center space-x-4">
-                    {["BO1", "BO3", "BO5"].map((type) => (
-                      <Button
-                        key={type}
-                        variant={gameType === type ? "default" : "outline"}
-                        onClick={() => setGameType(type)}
-                        className="w-20"
-                      >
-                        {type}
-                      </Button>
-                    ))}
-                  </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
+                <div className="flex justify-center space-x-4">
+                  {["CS2", "Valorant"].map((game) => (
+                    <Button
+                      key={game}
+                      variant={gameName === game ? "default" : "outline"}
+                      onClick={() => setGame(game)}
+                      className="w-20"
+                    >
+                      {game}
+                    </Button>
+                  ))}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Формат игры
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {["BO1", "BO2", "BO3", "BO5"].map((type) => (
+                    <Button
+                      key={type}
+                      variant={gameType === type ? "default" : "outline"}
+                      onClick={() => {
+                        setGameType(type);
+                        if (["BO1", "BO2"].includes(type)) {
+                          setLocalKnifeDecider(0);
+                        }
+                      }}
+                      className="w-20"
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Десайдер
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {[
+                    { label: "Рандом", value: 0 },
+                    { label: "Ножи (пропуск)", value: 2 },
+                  ].map((option) => (
+                    <Button
+                      key={option.label}
+                      variant={
+                        (["BO1", "BO2"].includes(gameType) &&
+                          option.value === 0) ||
+                        localKnifeDecider === option.value
+                          ? "default"
+                          : "outline"
+                      }
+                      onClick={() => {
+                        if (!["BO3", "BO5"].includes(gameType)) {
+                          toast({
+                            title: "Ошибка",
+                            description: `Десайдер не доступен в ${gameType}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setLocalKnifeDecider(option.value);
+                      }}
+                      className={`w-30 ${!["BO3", "BO5"].includes(gameType) ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
                 </div>
                 <div className="flex justify-between">
                   <Button

@@ -160,7 +160,6 @@ export default function AdminPage() {
       socketRef.current.on("cardColorsUpdated", (newCardColors: CardColors) => {
         setCardColors(newCardColors);
       });
-
     }
 
     return () => {
@@ -409,29 +408,29 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <ScrollArea className="h-64 pr-4">
-                    <div className="space-y-4">                
-                    {lobby.knifeDecider === 1 && lobby.gameStep === 6 && (
-                  <div className="flex justify-around p-2 bg-gray-100">
-                  <Button
-                    variant="outline"
-                    className="bg-blue-500 text-white"
-                    onClick={() =>
-                      handleKnifeDecider(lobby.lobbyId, "blue")
-                    }
-                  >
-                    {lobby.teamNames[0][1] || "blue"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-red-500 text-white"
-                    onClick={() =>
-                      handleKnifeDecider(lobby.lobbyId, "red")
-                    }
-                  >
-                    {lobby.teamNames[1][1] || "red"}
-                  </Button>
-                </div>
-                )}
+                    <div className="space-y-4">
+                      {lobby.knifeDecider === 1 && lobby.gameStep === 6 && (
+                        <div className="flex justify-around p-2 bg-gray-100">
+                          <Button
+                            variant="outline"
+                            className="bg-blue-500 text-white"
+                            onClick={() =>
+                              handleKnifeDecider(lobby.lobbyId, "blue")
+                            }
+                          >
+                            {lobby.teamNames[0][1] || "blue"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="bg-red-500 text-white"
+                            onClick={() =>
+                              handleKnifeDecider(lobby.lobbyId, "red")
+                            }
+                          >
+                            {lobby.teamNames[1][1] || "red"}
+                          </Button>
+                        </div>
+                      )}
                       <div>
                         <h3 className="font-semibold text-gray-600 mb-2">
                           Teams:
@@ -467,9 +466,14 @@ export default function AdminPage() {
                         </div>
                         <div className="text-sm text-gray-700">
                           Current Game Step: {lobby.gameStep}/7
-                        </div>                        
+                        </div>
                         <div className="text-sm text-gray-700">
-                          Knife Decider: {lobby.knifeDecider === 2 ? "Skip" : lobby.knifeDecider === 1 ? "Manual" : "No"}
+                          Knife Decider:{" "}
+                          {lobby.knifeDecider === 2
+                            ? "Skip"
+                            : lobby.knifeDecider === 1
+                              ? "Manual"
+                              : "No"}
                         </div>
                       </div>
                       <Separator />
@@ -587,60 +591,75 @@ export default function AdminPage() {
                     </Button>
                   ))}
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Формат игры
-                  </h3>
-                  <div className="flex justify-center space-x-4">
-                    {["BO1", "BO3", "BO5"].map((type) => (
-                      <Button
-                        key={type}
-                        variant={gameType === type ? "default" : "outline"}
-                        onClick={() => setGameType(type)}
-                        className="w-20"
-                      >
-                        {type}
-                      </Button>
-                    ))}
-                  </div>
-                  <div className="p-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
-                    <AnimatedCheckbox
-                      id="coinFlip"
-                      checked={localCoinFlip.current}
-                      onCheckedChange={(checked) => {
-                        localCoinFlip.current = checked as boolean;
-                      }}
-                      variants={checkboxVariants}
-                      animate={localCoinFlip.current ? "checked" : "unchecked"}
-                      transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                    />
-                    <Label htmlFor="coinFlip">
-                      Подбросить монетку в начале игры
-                    </Label>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Десайдер
-                  </h3>
-                  <div className="flex justify-center space-x-4">
-                    {[
-                      { label: "Авто (пропуск)", value: 2 },
-                      { label: "Ножи вручную", value: 1 },
-                      { label: "Рандом", value: 0 },
-                    ].map((option) => (
-                      <Button
-                        key={option.label}
-                        variant={
-                          localKnifeDecider === option.value ? "default" : "outline"
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Формат игры
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {["BO1", "BO2", "BO3", "BO5"].map((type) => (
+                    <Button
+                      key={type}
+                      variant={gameType === type ? "default" : "outline"}
+                      onClick={() => {
+                        setGameType(type);
+                        if (["BO1", "BO2"].includes(type)) {
+                          setLocalKnifeDecider(0);
                         }
-                        onClick={() => setLocalKnifeDecider(option.value)}
-                        className="w-30"
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
-                  </div>
+                      }}
+                      className="w-20"
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Десайдер
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {[
+                    { label: "Рандом", value: 0 },
+                    { label: "Авто (пропуск)", value: 2 },
+                    { label: "Ножи вручную", value: 1 },
+                  ].map((option) => (
+                    <Button
+                      key={option.label}
+                      variant={
+                        (["BO1", "BO2"].includes(gameType) &&
+                          option.value === 0) ||
+                        localKnifeDecider === option.value
+                          ? "default"
+                          : "outline"
+                      }
+                      onClick={() => {
+                        if (!["BO3", "BO5"].includes(gameType)) {
+                          toast({
+                            title: "Ошибка",
+                            description: `Десайдер не доступен в ${gameType}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setLocalKnifeDecider(option.value);
+                      }}
+                      className={`w-30 ${!["BO3", "BO5"].includes(gameType) ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="pt-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                  <AnimatedCheckbox
+                    id="coinFlip"
+                    checked={localCoinFlip.current}
+                    onCheckedChange={(checked) => {
+                      localCoinFlip.current = checked as boolean;
+                    }}
+                    variants={checkboxVariants}
+                    animate={localCoinFlip.current ? "checked" : "unchecked"}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  />
+                  <Label htmlFor="coinFlip">
+                    Подбросить монетку в начале игры
+                  </Label>
                 </div>
                 <div className="flex justify-between">
                   <Button

@@ -620,45 +620,49 @@ export default function LobbyPage() {
               style={{ width: "600px" }}
               className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
             >
-              {!isWaiting && !isAnimated && !isUndefined && !isDeleted && !isKnifing && (
-                <div>
-                  <h2 className="text-2xl font-bold mb-4 text-center">
-                    Введите имя команды
-                  </h2>
-                  <form onSubmit={handleTeamNameSubmit} className="space-y-4">
-                    <Input
-                      type="text"
-                      placeholder="Имя команды..."
-                      value={teamName}
-                      onChange={(e) => setTeamName(e.target.value)}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleSkipTeamName}
-                      >
-                        Я зритель
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCopyCodeClick}
-                      >
-                        <Copy className="h-4 mr-2" />
-                        {lobbyId}
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={!teamName.trim() || teamNames.length === 2}
-                      >
-                        Подтвердить
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
+              {!isWaiting &&
+                !isAnimated &&
+                !isUndefined &&
+                !isDeleted &&
+                !isKnifing && (
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4 text-center">
+                      Введите имя команды
+                    </h2>
+                    <form onSubmit={handleTeamNameSubmit} className="space-y-4">
+                      <Input
+                        type="text"
+                        placeholder="Имя команды..."
+                        value={teamName}
+                        onChange={(e) => setTeamName(e.target.value)}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSkipTeamName}
+                        >
+                          Я зритель
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCopyCodeClick}
+                        >
+                          <Copy className="h-4 mr-2" />
+                          {lobbyId}
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={!teamName.trim() || teamNames.length === 2}
+                        >
+                          Подтвердить
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                )}
 
               {isWaiting && (
                 <div>
