@@ -83,6 +83,7 @@ export default function AdminPage() {
   const [mapPool, setMapPool] = useState<string[][]>([]);
   const [adminOverlay, setAdminOverlay] = useState(false);
   const [editMapPool, setEditMapPool] = useState(false);
+  const [mapPoolSize, setMapPoolSize] = useState<number>(7);
   const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
 
@@ -229,8 +230,9 @@ export default function AdminPage() {
       if (gameName === "CS2") gameNum = 0;
       if (gameName === "Valorant") gameNum = 1;
       let gameTypeNum = 0;
-      if (gameType === "BO3") gameTypeNum = 1;
-      if (gameType === "BO5") gameTypeNum = 2;
+      if (gameType === "BO2") gameTypeNum = 1;
+      if (gameType === "BO3") gameTypeNum = 2;
+      if (gameType === "BO5") gameTypeNum = 3;
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
       socketRef.current.emit("createObsLobby", {
         lobbyId,
@@ -238,6 +240,7 @@ export default function AdminPage() {
         gameTypeNum,
         coinFlip: localCoinFlip.current,
         knifeDecider: localKnifeDecider,
+        mapPoolSize,
       });
       setAdminOverlay(false);
     }
@@ -603,11 +606,42 @@ export default function AdminPage() {
                         setGameType(type);
                         if (["BO1", "BO2"].includes(type)) {
                           setLocalKnifeDecider(0);
+                        } else {
+                          setMapPoolSize(7);
                         }
                       }}
                       className="w-20"
                     >
                       {type}
+                    </Button>
+                  ))}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Размер маппула
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {[4, 7].map((size) => (
+                    <Button
+                      key={size}
+                      variant={mapPoolSize === size ? "default" : "outline"}
+                      onClick={() => {
+                        if (size === 4 && (gameType === "BO5" || gameType === "BO3") ) {
+                          toast({
+                            title: "Ошибка",
+                            description: `4 карты недоступны в ${gameType}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setMapPoolSize(size);
+                      }}
+                      className={`w-20 ${
+                        size === 4 && (gameType === "BO5" || gameType === "BO3") 
+                          ? "opacity-50 cursor-not-allowed" 
+                          : ""
+                      }`}
+                    >
+                      {size} карт
                     </Button>
                   ))}
                 </div>
@@ -648,7 +682,7 @@ export default function AdminPage() {
                 </div>
                 <div className="pt-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
                   <AnimatedCheckbox
-                    id="coinFlip"
+                    id="localCoinFlip"
                     checked={localCoinFlip.current}
                     onCheckedChange={(checked) => {
                       localCoinFlip.current = checked as boolean;
@@ -657,7 +691,7 @@ export default function AdminPage() {
                     animate={localCoinFlip.current ? "checked" : "unchecked"}
                     transition={{ type: "spring", stiffness: 300, damping: 10 }}
                   />
-                  <Label htmlFor="coinFlip">
+                  <Label htmlFor="localCoinFlip">
                     Подбросить монетку в начале игры
                   </Label>
                 </div>

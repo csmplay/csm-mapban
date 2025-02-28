@@ -39,6 +39,7 @@ interface Lobby {
   gameStep: number;
   admin: boolean;
   knifeDecider: number;
+  mapPoolSize: number;
 }
 
 // Data structure to store lobbies and their members
@@ -82,7 +83,7 @@ const mapNamesLists = [
   ], // 1 Element - VALORANT
 ];
 const startMapPool = [
-  ["Nuke", "Dust 2", "Ancient", "Inferno", "Anubis", "Train", "Mirage"], // 0 Element - CS2
+  ["Dust 2", "Mirage", "Inferno", "Nuke", "Ancient", "Anubis", "Train"], // 0 Element - CS2
   ["Ascent", "Bind", "Pearl", "Haven", "Abyss", "Sunset", "Split"], // 1 Element - VALORANT
 ];
 let mapPool = startMapPool;
@@ -176,6 +177,7 @@ app.get("/api/lobbies", (_req, res) => {
     admin: lobby.admin,
     gameStep: lobby.gameStep,
     knifeDecider: lobby.knifeDecider,
+    mapPoolSize: lobby.mapPoolSize,
   }));
   res.json(lobbyList);
 });
@@ -246,14 +248,24 @@ io.on("connection", (socket) => {
 
   socket.on(
     "createLobby",
-    (data: { lobbyId: string; gameNum: number; gameTypeNum: number }) => {
-      const { lobbyId, gameNum, gameTypeNum } = data;
+    (data: { 
+      lobbyId: string; 
+      gameNum: number; 
+      gameTypeNum: number;
+      knifeDecider: number;
+      mapPoolSize: number; 
+    }) => {
+      const { lobbyId, gameNum, gameTypeNum, knifeDecider, mapPoolSize } = data;
       console.log("Lobby created with id " + lobbyId);
 
-      // Create a new lobby
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
         // Create a new lobby
+        const fullMapPool = mapPool[gameNum];
+        const selectedMapPool = mapPoolSize === 4 
+          ? fullMapPool.slice(0, 4) 
+          : fullMapPool;
+
         lobby = {
           lobbyId,
           members: new Set<string>(),
@@ -263,12 +275,13 @@ io.on("connection", (socket) => {
           banned: [],
           gameName: gameNum,
           gameType: gameTypeNum,
-          mapNames: mapPool[gameNum],
+          mapNames: selectedMapPool,
           gameStateList: gameTypeLists[gameTypeNum],
           coinFlip: globalCoinFlip,
-          gameStep: 0,
+          gameStep: 7 - mapPoolSize,
           admin: false,
-          knifeDecider: 0,
+          knifeDecider: knifeDecider,
+          mapPoolSize: mapPoolSize
         };
 
         lobbies.set(lobbyId, lobby);
@@ -284,13 +297,18 @@ io.on("connection", (socket) => {
       gameTypeNum: number;
       coinFlip: boolean;
       knifeDecider: number;
+      mapPoolSize: number;
     }) => {
-      const { lobbyId, gameNum, gameTypeNum, coinFlip, knifeDecider } = data;
+      const { lobbyId, gameNum, gameTypeNum, coinFlip, knifeDecider, mapPoolSize } = data;
       console.log("Admin Lobby created with id " + lobbyId);
 
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
-        // Create a new ADMIN lobby
+        // Create a new ADMIN lobby     
+        const fullMapPool = mapPool[gameNum];
+        const selectedMapPool = mapPoolSize === 4 
+          ? fullMapPool.slice(0, 4) 
+          : fullMapPool;
         lobby = {
           lobbyId,
           members: new Set<string>(),
@@ -300,12 +318,13 @@ io.on("connection", (socket) => {
           banned: [],
           gameName: gameNum,
           gameType: gameTypeNum,
-          mapNames: mapPool[gameNum],
+          mapNames: selectedMapPool,
           gameStateList: gameTypeLists[gameTypeNum],
           coinFlip: coinFlip,
-          gameStep: 0,
+          gameStep: 7 - mapPoolSize,
           admin: true,
           knifeDecider: knifeDecider,
+          mapPoolSize: mapPoolSize,
         };
 
         lobbies.set(lobbyId, lobby);

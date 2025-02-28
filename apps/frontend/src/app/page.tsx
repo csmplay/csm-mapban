@@ -28,6 +28,7 @@ export default function HomePage() {
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
   const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
+  const [mapPoolSize, setMapPoolSize] = useState<number>(7);
 
   const backendUrl =
     process.env.NODE_ENV === "development"
@@ -75,6 +76,7 @@ export default function HomePage() {
         gameNum,
         gameTypeNum,
         knifeDecider,
+        mapPoolSize,
       });
       router.push(`/lobby/${lobbyId}`);
     }
@@ -216,11 +218,42 @@ export default function HomePage() {
                         setGameType(type);
                         if (["BO1", "BO2"].includes(type)) {
                           setLocalKnifeDecider(0);
+                        } else {
+                          setMapPoolSize(7);
                         }
                       }}
                       className="w-20"
                     >
                       {type}
+                    </Button>
+                  ))}
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                  Размер маппула
+                </h3>
+                <div className="flex justify-center space-x-4">
+                  {[4, 7].map((size) => (
+                    <Button
+                      key={size}
+                      variant={mapPoolSize === size ? "default" : "outline"}
+                      onClick={() => {
+                        if (size === 4 && (gameType === "BO5" || gameType === "BO3") ) {
+                          toast({
+                            title: "Ошибка",
+                            description: `4 карты недоступны в ${gameType}`,
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setMapPoolSize(size);
+                      }}
+                      className={`w-20 ${
+                        size === 4 && (gameType === "BO5" || gameType === "BO3") 
+                          ? "opacity-50 cursor-not-allowed" 
+                          : ""
+                      }`}
+                    >
+                      {size} карт
                     </Button>
                   ))}
                 </div>
