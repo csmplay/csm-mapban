@@ -258,6 +258,17 @@ io.on("connection", (socket) => {
       const { lobbyId, gameNum, gameTypeNum, knifeDecider, mapPoolSize } = data;
       console.log("Lobby created with id " + lobbyId);
 
+      // Проверка валидности правил
+      if ((gameTypeNum === 2 || gameTypeNum === 3) && mapPoolSize !== 7) {
+        io.to(socket.id).emit("lobbyCreationError", "Для BO3/BO5 размер маппула должен быть 7");
+        return;
+      }
+
+      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0) {
+        io.to(socket.id).emit("lobbyCreationError", "В BO1/BO2 нет десайдера'");
+        return;
+      }
+
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
         // Create a new lobby
@@ -301,6 +312,17 @@ io.on("connection", (socket) => {
     }) => {
       const { lobbyId, gameNum, gameTypeNum, coinFlip, knifeDecider, mapPoolSize } = data;
       console.log("Admin Lobby created with id " + lobbyId);
+
+      // Проверка валидности правил
+      if ((gameTypeNum === 2 || gameTypeNum === 3) && mapPoolSize !== 7) {
+        io.to(socket.id).emit("lobbyCreationError", "Для BO3/BO5 размер маппула должен быть 7");
+        return;
+      }
+
+      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0 && knifeDecider !== 2) {
+        io.to(socket.id).emit("lobbyCreationError", "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'");
+        return;
+      }
 
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
@@ -713,15 +735,6 @@ io.on("connection", (socket) => {
           "teamNamesUpdated",
           Array.from(lobby.teamNames.entries()),
         );
-
-        // Code for deleting the lobby after 5 minutes of inactivity
-        // if (lobby.teamNames.size === 0) {
-        //     // Set the timer for 5 minutes to delete the lobby
-        //     setTimeout(() => {
-        //         lobbies.delete(lobbyId);
-        //         console.log(`Lobby ${lobbyId} deleted as it has no more members`);
-        //     }, 300000);
-        // }
 
         // If the lobby is empty, delete it
         if (lobby.members.size === 0) {

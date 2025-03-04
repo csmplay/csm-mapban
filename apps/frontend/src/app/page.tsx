@@ -42,12 +42,22 @@ export default function HomePage() {
       console.log("Connected to Socket.IO server");
     });
 
+    newSocket.on("lobbyCreationError", (errorMessage: string) => {
+      toast({
+        title: "Ошибка создания лобби",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      // Возвращаемся на главную страницу
+      router.push("/");
+    });
+
     setSocket(newSocket);
 
     return () => {
       newSocket.disconnect();
     };
-  }, [backendUrl]);
+  }, [backendUrl, router, toast]);
 
   const handleJoinLobby = (event: React.FormEvent) => {
     event.preventDefault();
@@ -228,69 +238,47 @@ export default function HomePage() {
                     </Button>
                   ))}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Размер маппула
-                </h3>
-                <div className="flex justify-center space-x-4">
-                  {[4, 7].map((size) => (
-                    <Button
-                      key={size}
-                      variant={mapPoolSize === size ? "default" : "outline"}
-                      onClick={() => {
-                        if (size === 4 && (gameType === "BO5" || gameType === "BO3") ) {
-                          toast({
-                            title: "Ошибка",
-                            description: `4 карты недоступны в ${gameType}`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        setMapPoolSize(size);
-                      }}
-                      className={`w-20 ${
-                        size === 4 && (gameType === "BO5" || gameType === "BO3") 
-                          ? "opacity-50 cursor-not-allowed" 
-                          : ""
-                      }`}
-                    >
-                      {size} карт
-                    </Button>
-                  ))}
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Десайдер
-                </h3>
-                <div className="flex justify-center space-x-4">
-                  {[
-                    { label: "Рандом", value: 0 },
-                    { label: "Ножи (пропуск)", value: 2 },
-                  ].map((option) => (
-                    <Button
-                      key={option.label}
-                      variant={
-                        (["BO1", "BO2"].includes(gameType) &&
-                          option.value === 0) ||
-                        localKnifeDecider === option.value
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => {
-                        if (!["BO3", "BO5"].includes(gameType)) {
-                          toast({
-                            title: "Ошибка",
-                            description: `Десайдер не доступен в ${gameType}`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        setLocalKnifeDecider(option.value);
-                      }}
-                      className={`w-30 ${!["BO3", "BO5"].includes(gameType) ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
+                {["BO1", "BO2"].includes(gameType) && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Размер маппула
+                    </h3>
+                    <div className="flex justify-center space-x-4">
+                      {[4, 7].map((size) => (
+                        <Button
+                          key={size}
+                          variant={mapPoolSize === size ? "default" : "outline"}
+                          onClick={() => setMapPoolSize(size)}
+                          className="w-20"
+                        >
+                          {size} карт
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {["BO3", "BO5"].includes(gameType) && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Десайдер
+                    </h3>
+                    <div className="flex justify-center space-x-4">
+                      {[
+                        { label: "Рандом", value: 0 },
+                        { label: "Ножи (пропуск)", value: 2 },
+                      ].map((option) => (
+                        <Button
+                          key={option.label}
+                          variant={localKnifeDecider === option.value ? "default" : "outline"}
+                          onClick={() => setLocalKnifeDecider(option.value)}
+                          className="w-30"
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between">
                   <Button
                     type="button"

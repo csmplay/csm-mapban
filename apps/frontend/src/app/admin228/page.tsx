@@ -51,6 +51,7 @@ type Lobby = {
   admin: boolean;
   gameStep: number; // Added current game step
   knifeDecider: number; // New flag indicating knife decider mode
+  mapPoolSize: number;
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
@@ -161,6 +162,14 @@ export default function AdminPage() {
       socketRef.current.on("cardColorsUpdated", (newCardColors: CardColors) => {
         setCardColors(newCardColors);
       });
+
+      socketRef.current.on("lobbyCreationError", (errorMessage: string) => {
+        toast({
+          title: "Ошибка создания лобби",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      });
     }
 
     return () => {
@@ -168,7 +177,7 @@ export default function AdminPage() {
       clearInterval(interval2);
       socketRef.current?.disconnect();
     };
-  }, [backendUrl]);
+  }, [backendUrl, toast]);
 
   const handleDeleteLobby = (lobbyId: string) => {
     if (socketRef.current) {
@@ -468,7 +477,7 @@ export default function AdminPage() {
                           Coin Flip: {lobby.coinFlip ? "Yes" : "No"}
                         </div>
                         <div className="text-sm text-foreground">
-                          Current Game Step: {lobby.gameStep}/7
+                          Current Game Step: {lobby.mapPoolSize == 4 ? lobby.gameStep - 3 : lobby.gameStep}/{lobby.mapPoolSize}
                         </div>
                         <div className="text-sm text-foreground">
                           Knife Decider:{" "}
@@ -616,70 +625,50 @@ export default function AdminPage() {
                     </Button>
                   ))}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Размер маппула
-                </h3>
-                <div className="flex justify-center space-x-4">
-                  {[4, 7].map((size) => (
-                    <Button
-                      key={size}
-                      variant={mapPoolSize === size ? "default" : "outline"}
-                      onClick={() => {
-                        if (size === 4 && (gameType === "BO5" || gameType === "BO3") ) {
-                          toast({
-                            title: "Ошибка",
-                            description: `4 карты недоступны в ${gameType}`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        setMapPoolSize(size);
-                      }}
-                      className={`w-20 ${
-                        size === 4 && (gameType === "BO5" || gameType === "BO3") 
-                          ? "opacity-50 cursor-not-allowed" 
-                          : ""
-                      }`}
-                    >
-                      {size} карт
-                    </Button>
-                  ))}
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Десайдер
-                </h3>
-                <div className="flex justify-center space-x-4">
-                  {[
-                    { label: "Рандом", value: 0 },
-                    { label: "Авто (пропуск)", value: 2 },
-                    { label: "Ножи вручную", value: 1 },
-                  ].map((option) => (
-                    <Button
-                      key={option.label}
-                      variant={
-                        (["BO1", "BO2"].includes(gameType) &&
-                          option.value === 0) ||
-                        localKnifeDecider === option.value
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => {
-                        if (!["BO3", "BO5"].includes(gameType)) {
-                          toast({
-                            title: "Ошибка",
-                            description: `Десайдер не доступен в ${gameType}`,
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        setLocalKnifeDecider(option.value);
-                      }}
-                      className={`w-30 ${!["BO3", "BO5"].includes(gameType) ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
+                {/* Отображаем размер маппула только для BO1 и BO2 */}
+                {["BO1", "BO2"].includes(gameType) && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Размер маппула
+                    </h3>
+                    <div className="flex justify-center space-x-4">
+                      {[4, 7].map((size) => (
+                        <Button
+                          key={size}
+                          variant={mapPoolSize === size ? "default" : "outline"}
+                          onClick={() => setMapPoolSize(size)}
+                          className="w-20"
+                        >
+                          {size} карт
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {/* Отображаем десайдер только для BO3 и BO5 */}
+                {["BO3", "BO5"].includes(gameType) && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Десайдер
+                    </h3>
+                    <div className="flex justify-center space-x-4">
+                      {[
+                        { label: "Рандом", value: 0 },
+                        { label: "Авто (пропуск)", value: 2 },
+                        { label: "Ножи вручную", value: 1 },
+                      ].map((option) => (
+                        <Button
+                          key={option.label}
+                          variant={localKnifeDecider === option.value ? "default" : "outline"}
+                          onClick={() => setLocalKnifeDecider(option.value)}
+                          className="w-30"
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div className="pt-6 ml-10 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
                   <AnimatedCheckbox
                     id="localCoinFlip"
