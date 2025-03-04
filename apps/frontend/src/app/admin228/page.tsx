@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
 import AnimatedBanCard from "@/components/ui/ban";
 import AnimatedPickCard from "@/components/ui/pick";
+import Image from "next/image";
 
 // Define the CardColors interface for both ban and pick cards.
 interface CardColors {
@@ -94,10 +95,14 @@ export default function AdminPage() {
     null,
   );
 
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
   const backendUrl =
     process.env.NODE_ENV === "development"
       ? process.env.BACKEND_URL + "/" || "http://localhost:4000/"
       : "/";
+
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     socketRef.current = io(backendUrl);
@@ -256,8 +261,12 @@ export default function AdminPage() {
   };
 
   const handleMapPoolButton = () => {
-    setMapPool(sourceMapPool);
-    setEditMapPool(true);
+    setShowSettingsModal(false);
+    
+    setTimeout(() => {
+      setMapPool(sourceMapPool);
+      setEditMapPool(true);
+    }, 300);
   };
   const handleSelectChange = (
     index: number,
@@ -289,6 +298,11 @@ export default function AdminPage() {
       }
     }
     setEditMapPool(false);
+    setActiveTab(0);
+    
+    setTimeout(() => {
+      setShowSettingsModal(true);
+    }, 300);
   };
 
   const handleResetMapPool = () => {
@@ -297,12 +311,21 @@ export default function AdminPage() {
       toast({ description: "Маппул сброшен" });
     }
     setEditMapPool(false);
+    setActiveTab(0);
+    
+    setTimeout(() => {
+      setShowSettingsModal(true);
+    }, 300);
   };
 
   const handleOpenEditModal = () => {
-    // Create a copy so that editing does not update cardColors immediately.
-    setEditingCardColors({ ...cardColors });
-    setEditCardColorsModal(true);
+    setShowSettingsModal(false);
+    
+    setTimeout(() => {
+      // Create a copy so that editing does not update cardColors immediately.
+      setEditingCardColors({ ...cardColors });
+      setEditCardColorsModal(true);
+    }, 300);
   };
 
   const handleSaveCardColors = () => {
@@ -312,6 +335,10 @@ export default function AdminPage() {
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
+    
+    setTimeout(() => {
+      setShowSettingsModal(true);
+    }, 300);
   };
 
   const handleResetCardColors = () => {
@@ -321,6 +348,10 @@ export default function AdminPage() {
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
+    
+    setTimeout(() => {
+      setShowSettingsModal(true);
+    }, 300);
   };
 
   const checkboxVariants = {
@@ -356,43 +387,14 @@ export default function AdminPage() {
           </Button>
         </div>
         <div className="flex justify-center items-center mb-6">
-          <Card className="w-full max-w-md mx-auto bg-card shadow-lg mb-8">
-            <CardContent className="p-6 text-center text-foreground">
-              <div className="flex items-center justify-center mb-4">
-                <AnimatedCheckbox
-                  id="coinFlip"
-                  checked={globalCoinFlip}
-                  onCheckedChange={(checked) => {
-                    handleCoinFlip(checked as boolean);
-                  }}
-                  variants={checkboxVariants}
-                  animate={globalCoinFlip ? "checked" : "unchecked"}
-                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                  className="mr-2"
-                />
-                <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
-              </div>
-              
-              <div className="flex flex-col items-center justify-center gap-4">
-                <Button
-                  onClick={handleMapPoolButton}
-                  variant="outline"
-                  className="w-full max-w-xs"
-                >
-                  <PenBox className="w-4 h-4 mr-2" />
-                  Редактировать маппул
-                </Button>
-                <Button
-                  onClick={handleOpenEditModal}
-                  variant="outline"
-                  className="w-full max-w-xs"
-                >
-                  <PenBox className="w-4 h-4 mr-2" />
-                  Редактировать цвета карточек
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <Button 
+            onClick={() => setShowSettingsModal(true)}
+            variant="outline"
+            className="w-full max-w-md mx-auto bg-card shadow-lg mb-8 py-6"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings mr-2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            Настройки игры
+          </Button>
         </div>
         {lobbies.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -706,69 +708,125 @@ export default function AdminPage() {
         )}
         {editMapPool && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={overlayVariants}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              variants={contentVariants}
               transition={{ duration: 0.3 }}
-              style={{ width: "600px" }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
+              className="bg-card p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto text-card-foreground"
             >
-              <div className="text-center">
-                <h2 className="text-2xl font-bold mb-4 text-center">CS2</h2>
-                {mapPool[0].map((value, index) => (
-                  <select
-                    key={index}
-                    value={value}
-                    onChange={(e) =>
-                      handleSelectChange(index, e.target.value, 0)
-                    }
-                    className="border border-foreground rounded p-2"
-                  >
-                    <option value="" disabled>
-                      Select a value
-                    </option>
-                    {allMapsList[0].map((refValue, refIndex) => (
-                      <option key={refIndex} value={refValue}>
-                        {refValue}
-                      </option>
-                    ))}
-                  </select>
-                ))}
-                <h2 className="text-2xl font-bold mb-4 mt-4 text-center">
+              <h2 className="text-3xl font-bold mb-6 text-center">Редактирование маппула</h2>
+              
+              {/* Tabs */}
+              <div className="flex border-b mb-6">
+                <button
+                  onClick={() => setActiveTab(0)}
+                  className={`px-4 py-2 text-lg font-medium ${
+                    activeTab === 0
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-muted-foreground hover:text-foreground transition-colors"
+                  }`}
+                >
+                  CS2
+                </button>
+                <button
+                  onClick={() => setActiveTab(1)}
+                  className={`px-4 py-2 text-lg font-medium ${
+                    activeTab === 1
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-muted-foreground hover:text-foreground transition-colors"
+                  }`}
+                >
                   VALORANT
-                </h2>
-                {mapPool[1].map((value, index) => (
-                  <select
-                    key={index}
-                    value={value}
-                    onChange={(e) =>
-                      handleSelectChange(index, e.target.value, 1)
-                    }
-                    className="border border-foreground rounded p-2"
-                  >
-                    <option value="" disabled>
-                      Select a value
-                    </option>
-                    {allMapsList[1].map((refValue, refIndex) => (
-                      <option key={refIndex} value={refValue}>
-                        {refValue}
-                      </option>
-                    ))}
-                  </select>
-                ))}
+                </button>
               </div>
-              <div className="flex justify-between mt-4">
+              
+              {/* CS2 Maps Tab */}
+              {activeTab === 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {mapPool[0].map((value, index) => (
+                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                      <div className="relative w-full pt-[75%]">
+                        <Image 
+                          src={`/0/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          alt={value}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="p-3">
+                        <select
+                          value={value}
+                          onChange={(e) => handleSelectChange(index, e.target.value, 0)}
+                          className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="" disabled>Выберите карту</option>
+                          {allMapsList[0].map((refValue, refIndex) => (
+                            <option key={refIndex} value={refValue}>{refValue}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* VALORANT Maps Tab */}
+              {activeTab === 1 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {mapPool[1].map((value, index) => (
+                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                      <div className="relative w-full pt-[75%]">
+                        <Image 
+                          src={`/1/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          alt={value}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className="object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                          }}
+                        />
+                      </div>
+                      <div className="p-3">
+                        <select
+                          value={value}
+                          onChange={(e) => handleSelectChange(index, e.target.value, 1)}
+                          className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="" disabled>Выберите карту</option>
+                          {allMapsList[1].map((refValue, refIndex) => (
+                            <option key={refIndex} value={refValue}>{refValue}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex justify-between mt-8">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setEditMapPool(false)}
+                  onClick={() => {
+                    setEditMapPool(false);
+                    setActiveTab(0);
+                    
+                    setTimeout(() => {
+                      setShowSettingsModal(true);
+                    }, 300);
+                  }}
+                  className="px-6 border-white text-white hover:bg-white/10"
                 >
                   Назад
                 </Button>
@@ -776,10 +834,15 @@ export default function AdminPage() {
                   type="button"
                   variant="destructive"
                   onClick={handleResetMapPool}
+                  className="px-6"
                 >
                   Сбросить
                 </Button>
-                <Button type="button" onClick={handleEditMapPool}>
+                <Button 
+                  type="button" 
+                  onClick={handleEditMapPool}
+                  className="px-6"
+                >
                   Сохранить
                 </Button>
               </div>
@@ -788,18 +851,17 @@ export default function AdminPage() {
         )}
         {editCardColorsModal && editingCardColors && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={overlayVariants}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              variants={contentVariants}
               transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-5xl w-full overflow-y-auto text-card-foreground"
             >
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Редактировать цвета карточек
@@ -917,6 +979,10 @@ export default function AdminPage() {
                     onClick={() => {
                       setEditCardColorsModal(false);
                       setEditingCardColors(null);
+                      
+                      setTimeout(() => {
+                        setShowSettingsModal(true);
+                      }, 300);
                     }}
                   >
                     Назад
@@ -936,12 +1002,78 @@ export default function AdminPage() {
             </motion.div>
           </motion.div>
         )}
+        {showSettingsModal && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={overlayVariants}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              variants={contentVariants}
+              transition={{ duration: 0.3 }}
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
+            >
+              <h2 className="text-2xl font-bold mb-4 text-center">
+                Настройки игры
+              </h2>
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 justify-center p-4 bg-muted rounded-lg">
+                  <AnimatedCheckbox
+                    id="coinFlip"
+                    checked={globalCoinFlip}
+                    onCheckedChange={(checked) => {
+                      handleCoinFlip(checked as boolean);
+                    }}
+                    variants={checkboxVariants}
+                    animate={globalCoinFlip ? "checked" : "unchecked"}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  />
+                  <Label htmlFor="coinFlip" className="text-foreground">
+                    Подбросить монетку в начале игры
+                  </Label>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <Button
+                    onClick={handleMapPoolButton}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <PenBox className="w-4 h-4 mr-2" />
+                    Редактировать маппул
+                  </Button>
+                  
+                  <Button
+                    onClick={handleOpenEditModal}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <PenBox className="w-4 h-4 mr-2" />
+                    Редактировать цвета карточек
+                  </Button>
+                </div>
+                
+                <div className="pt-4 flex justify-end">
+                  <Button
+                    onClick={() => setShowSettingsModal(false)}
+                    variant="outline"
+                  >
+                    Закрыть
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {editCardColorsModal && editingCardColors && (
         <>
           <motion.div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
-            <div className="scale-75">
+            <div className="scale-75 bg-[#00FF00]">
               <AnimatedBanCard
                 teamName="BAN Team"
                 mapName="Dust 2"
@@ -951,12 +1083,12 @@ export default function AdminPage() {
             </div>
           </motion.div>
           <motion.div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
-            <div className="scale-75">
+            <div className="scale-75 bg-[#00FF00]">
               <AnimatedPickCard
                 teamName="PICK Team"
                 mapName="Mirage"
-                gameName="0"
                 side="t"
+                gameName="0"
                 cardColors={editingCardColors.pick}
               />
             </div>
