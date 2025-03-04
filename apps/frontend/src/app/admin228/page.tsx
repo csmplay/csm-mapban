@@ -331,10 +331,10 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         <div className="relative max-w-7xl mx-auto mb-8">
-          <h1 className="text-4xl font-bold text-center text-gray-800">
+          <h1 className="text-4xl font-bold text-center text-foreground">
             Admin
           </h1>
           <Button
@@ -347,8 +347,8 @@ export default function AdminPage() {
           </Button>
         </div>
         <div className="flex justify-center items-center mb-6">
-          <Card className="w-full max-w-md mx-auto bg-white shadow-lg mb-8">
-            <CardContent className="p-6 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+          <Card className="w-full max-w-md mx-auto bg-card shadow-lg mb-8">
+            <CardContent className="p-6 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
               <AnimatedCheckbox
                 id="coinFlip"
                 checked={globalCoinFlip}
@@ -385,10 +385,10 @@ export default function AdminPage() {
             {lobbies.map((lobby) => (
               <Card
                 key={lobby.lobbyId}
-                className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300"
+                className="w-full bg-card shadow-lg hover:shadow-xl transition-shadow duration-300"
               >
-                <CardHeader className="bg-gray-50 border-b">
-                  <CardTitle className="text-xl text-gray-700 flex items-center justify-between">
+                <CardHeader className="bg-card border-b">
+                  <CardTitle className="text-xl text-foreground flex items-center justify-between">
                     <span className="truncate">Lobby: {lobby.lobbyId}</span>
                     <Badge
                       variant="secondary"
@@ -413,10 +413,10 @@ export default function AdminPage() {
                   <ScrollArea className="h-64 pr-4">
                     <div className="space-y-4">
                       {lobby.knifeDecider === 1 && lobby.gameStep === 6 && (
-                        <div className="flex justify-around p-2 bg-gray-100">
+                        <div className="flex justify-around p-2 bg-card">
                           <Button
                             variant="outline"
-                            className="bg-blue-500 text-white"
+                            className="bg-primary text-primary-foreground"
                             onClick={() =>
                               handleKnifeDecider(lobby.lobbyId, "blue")
                             }
@@ -425,7 +425,7 @@ export default function AdminPage() {
                           </Button>
                           <Button
                             variant="outline"
-                            className="bg-red-500 text-white"
+                            className="bg-destructive text-destructive-foreground"
                             onClick={() =>
                               handleKnifeDecider(lobby.lobbyId, "red")
                             }
@@ -435,7 +435,7 @@ export default function AdminPage() {
                         </div>
                       )}
                       <div>
-                        <h3 className="font-semibold text-gray-600 mb-2">
+                        <h3 className="font-semibold text-foreground mb-2">
                           Teams:
                         </h3>
                         <ul className="space-y-1">
@@ -447,7 +447,7 @@ export default function AdminPage() {
                               <Badge variant="outline" className="mr-2">
                                 {teamName}
                               </Badge>
-                              <span className="text-gray-500 truncate">
+                              <span className="text-foreground truncate">
                                 {socketId}
                               </span>
                             </li>
@@ -456,7 +456,7 @@ export default function AdminPage() {
                       </div>
                       <Separator />
                       <div className="space-y-2">
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-foreground">
                           Game Type:{" "}
                           {lobby.gameType === 0
                             ? "BO1"
@@ -464,13 +464,13 @@ export default function AdminPage() {
                               ? "BO3"
                               : "BO5"}
                         </div>
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-foreground">
                           Coin Flip: {lobby.coinFlip ? "Yes" : "No"}
                         </div>
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-foreground">
                           Current Game Step: {lobby.gameStep}/7
                         </div>
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-foreground">
                           Knife Decider:{" "}
                           {lobby.knifeDecider === 2
                             ? "Skip"
@@ -481,7 +481,7 @@ export default function AdminPage() {
                       </div>
                       <Separator />
                       <div>
-                        <h3 className="font-semibold text-gray-600 mb-2">
+                        <h3 className="font-semibold text-foreground mb-2">
                           Picked:
                         </h3>
                         <div className="flex flex-wrap gap-2">
@@ -495,7 +495,7 @@ export default function AdminPage() {
                       </div>
                       <Separator />
                       <div>
-                        <h3 className="font-semibold text-gray-600 mb-2">
+                        <h3 className="font-semibold text-foreground mb-2">
                           Banned:
                         </h3>
                         <div className="flex flex-wrap gap-2">
@@ -509,7 +509,7 @@ export default function AdminPage() {
                     </div>
                   </ScrollArea>
                 </CardContent>
-                <CardFooter className="bg-gray-50 border-t p-4 flex flex-wrap gap-2">
+                <CardFooter className="bg-card border-t p-4 flex flex-wrap gap-2">
                   <div className="flex justify-center w-full">
                     <Button
                       onClick={() => handleCopyLink(lobby.lobbyId)}
@@ -537,7 +537,7 @@ export default function AdminPage() {
                   <Button
                     onClick={() => handleConnectToLobby(lobby.lobbyId)}
                     variant="outline"
-                    className="flex-1 bg-blue-500 hover:bg-blue-700 text-[#dfdfdf] hover:text-white"
+                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
                     Connect
@@ -555,8 +555,8 @@ export default function AdminPage() {
             ))}
           </div>
         ) : (
-          <Card className="w-full max-w-md mx-auto bg-white shadow-lg">
-            <CardContent className="p-6 text-center text-gray-600">
+          <Card className="w-full max-w-md mx-auto bg-card">
+            <CardContent className="p-6 text-center text-foreground">
               <p className="text-xl">Ничего нет...</p>
             </CardContent>
           </Card>
@@ -575,7 +575,7 @@ export default function AdminPage() {
             <motion.div
               variants={contentVariants}
               transition={{ duration: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
             >
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Выберите правила игры
@@ -680,7 +680,7 @@ export default function AdminPage() {
                     </Button>
                   ))}
                 </div>
-                <div className="pt-6 ml-10 text-center text-gray-600 space-x-4 flex flex-wrap items-center gap-4">
+                <div className="pt-6 ml-10 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
                   <AnimatedCheckbox
                     id="localCoinFlip"
                     checked={localCoinFlip.current}
@@ -725,7 +725,7 @@ export default function AdminPage() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
               style={{ width: "600px" }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
             >
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-4 text-center">CS2</h2>
@@ -736,7 +736,7 @@ export default function AdminPage() {
                     onChange={(e) =>
                       handleSelectChange(index, e.target.value, 0)
                     }
-                    className="border border-gray-300 rounded p-2"
+                    className="border border-foreground rounded p-2"
                   >
                     <option value="" disabled>
                       Select a value
@@ -758,7 +758,7 @@ export default function AdminPage() {
                     onChange={(e) =>
                       handleSelectChange(index, e.target.value, 1)
                     }
-                    className="border border-gray-300 rounded p-2"
+                    className="border border-foreground rounded p-2"
                   >
                     <option value="" disabled>
                       Select a value
@@ -806,7 +806,7 @@ export default function AdminPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
             >
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Редактировать цвета карточек

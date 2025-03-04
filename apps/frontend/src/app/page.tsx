@@ -93,11 +93,11 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white shadow-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-card shadow-md">
         <div className="text-center py-3">
           <Image
-            src="/CSM Original.svg"
+            src="/CSM White.svg"
             alt="Map Image"
             priority={true}
             draggable={false}
@@ -108,14 +108,14 @@ export default function HomePage() {
         </div>
         <CardContent className="space-y-6">
           <Button
-            className="w-full bg-gray-800 text-white hover:bg-gray-700"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleChooseRules}
           >
             Создать лобби
           </Button>
           <Separator />
           <Button
-            className="w-full bg-zinc-800 text-white hover:bg-zinc-700"
+            className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
             onClick={() => setShowJoinLobbyOverlay(true)}
           >
             Зайти в лобби
@@ -135,7 +135,7 @@ export default function HomePage() {
             <motion.div
               variants={contentVariants}
               transition={{ duration: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full justify-center"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground justify-center"
             >
               <form onSubmit={handleJoinLobby}>
                 <h2 className="text-2xl font-bold mb-4">Введите код лобби</h2>
@@ -187,7 +187,7 @@ export default function HomePage() {
             <motion.div
               variants={contentVariants}
               transition={{ duration: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
             >
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Выберите правила игры
