@@ -256,9 +256,10 @@ io.on("connection", (socket) => {
       gameNum: number; 
       gameTypeNum: number;
       knifeDecider: number;
-      mapPoolSize: number; 
+      mapPoolSize: number;
+      customMapPool: string[][] | null;
     }) => {
-      const { lobbyId, gameNum, gameTypeNum, knifeDecider, mapPoolSize } = data;
+      const { lobbyId, gameNum, gameTypeNum, knifeDecider, mapPoolSize, customMapPool } = data;
       console.log("Lobby created with id " + lobbyId);
 
       // Проверка валидности правил
@@ -267,19 +268,20 @@ io.on("connection", (socket) => {
         return;
       }
 
-      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0) {
-        io.to(socket.id).emit("lobbyCreationError", "В BO1/BO2 нет десайдера'");
+      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0 && knifeDecider !== 2) {
+        io.to(socket.id).emit("lobbyCreationError", "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'");
         return;
       }
 
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
-        // Create a new lobby
-        const fullMapPool = mapPool[gameNum];
+        // Выбираем маппул
+        const sourceMapPool = customMapPool ? customMapPool[gameNum] : mapPool[gameNum];
         const selectedMapPool = mapPoolSize === 4 
-          ? fullMapPool.slice(0, 4) 
-          : fullMapPool;
+          ? sourceMapPool.slice(0, 4) 
+          : sourceMapPool;
 
+        // Create a new lobby
         lobby = {
           lobbyId,
           members: new Set<string>(),
