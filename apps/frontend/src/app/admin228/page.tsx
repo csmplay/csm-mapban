@@ -33,7 +33,7 @@ interface CardColors {
   };
 }
 
-type PickedMap = { map: string; teamName: string; side: string };
+type PickedMap = { map: string; teamName: string; side: string; sideTeamName: string };
 type BannedMap = { map: string; teamName: string };
 
 type Lobby = {
@@ -357,35 +357,40 @@ export default function AdminPage() {
         </div>
         <div className="flex justify-center items-center mb-6">
           <Card className="w-full max-w-md mx-auto bg-card shadow-lg mb-8">
-            <CardContent className="p-6 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
-              <AnimatedCheckbox
-                id="coinFlip"
-                checked={globalCoinFlip}
-                onCheckedChange={(checked) => {
-                  handleCoinFlip(checked as boolean);
-                }}
-                className="ml-8"
-                variants={checkboxVariants}
-                animate={globalCoinFlip ? "checked" : "unchecked"}
-                transition={{ type: "spring", stiffness: 300, damping: 10 }}
-              />
-              <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
-              <Button
-                onClick={handleMapPoolButton}
-                variant="outline"
-                className="w-full"
-              >
-                <PenBox className="w-4 h-4 mr-2" />
-                Редактировать маппул
-              </Button>
-              <Button
-                onClick={handleOpenEditModal}
-                variant="outline"
-                className="w-full"
-              >
-                <PenBox className="w-4 h-4 mr-2" />
-                Редактировать цвета карточек
-              </Button>
+            <CardContent className="p-6 text-center text-foreground">
+              <div className="flex items-center justify-center mb-4">
+                <AnimatedCheckbox
+                  id="coinFlip"
+                  checked={globalCoinFlip}
+                  onCheckedChange={(checked) => {
+                    handleCoinFlip(checked as boolean);
+                  }}
+                  variants={checkboxVariants}
+                  animate={globalCoinFlip ? "checked" : "unchecked"}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  className="mr-2"
+                />
+                <Label htmlFor="coinFlip">Подбросить монетку в начале игры</Label>
+              </div>
+              
+              <div className="flex flex-col items-center justify-center gap-4">
+                <Button
+                  onClick={handleMapPoolButton}
+                  variant="outline"
+                  className="w-full max-w-xs"
+                >
+                  <PenBox className="w-4 h-4 mr-2" />
+                  Редактировать маппул
+                </Button>
+                <Button
+                  onClick={handleOpenEditModal}
+                  variant="outline"
+                  className="w-full max-w-xs"
+                >
+                  <PenBox className="w-4 h-4 mr-2" />
+                  Редактировать цвета карточек
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -496,8 +501,7 @@ export default function AdminPage() {
                         <div className="flex flex-wrap gap-2">
                           {lobby.picked.map((item, index) => (
                             <Badge key={index} variant="secondary">
-                              {item.map} ({item.teamName}, Side:{" "}
-                              {item.side.toUpperCase()})
+                              {`${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`}
                             </Badge>
                           ))}
                         </div>

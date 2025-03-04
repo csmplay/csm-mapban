@@ -17,6 +17,7 @@ interface PickAction {
   teamName: string;
   mapName: string;
   side: string;
+  sideTeamName: string;
   decider?: boolean;
 }
 
@@ -39,7 +40,7 @@ const LobbyObsPage = () => {
   const [, setSocket] = useState<Socket | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
-    { map: string; teamName: string; side: string; decider?: boolean }[]
+    { map: string; teamName: string; side: string; sideTeamName: string; decider?: boolean }[]
   >([]);
   const [bannedEntries, setBannedEntries] = useState<
     { map: string; teamName: string }[]
@@ -93,7 +94,7 @@ const LobbyObsPage = () => {
 
     newSocket.on(
       "pickedUpdated",
-      (picked: Array<{ map: string; teamName: string; side: string }>) => {
+      (picked: Array<{ map: string; teamName: string; side: string; sideTeamName: string }>) => {
         setPickedEntries(picked);
       },
     );
@@ -150,6 +151,7 @@ const LobbyObsPage = () => {
             teamName: pickEntry.teamName,
             mapName: pickEntry.map,
             side: pickEntry.side,
+            sideTeamName: pickEntry.sideTeamName,
           });
         }
       } else if (step === "decider") {
@@ -160,6 +162,7 @@ const LobbyObsPage = () => {
             teamName: pickEntry.teamName,
             mapName: pickEntry.map,
             side: pickEntry.side,
+            sideTeamName: pickEntry.sideTeamName,
             decider: true,
           });
         }
@@ -214,7 +217,7 @@ const LobbyObsPage = () => {
             return (
               <AnimatedPickCard
                 key={index}
-                teamName={action.teamName}
+                teamName={action.sideTeamName}
                 mapName={action.mapName}
                 gameName={gameName}
                 side={action.side}

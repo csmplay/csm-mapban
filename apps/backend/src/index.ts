@@ -29,7 +29,7 @@ interface Lobby {
   members: Set<string>;
   teamNames: Map<string, string>;
   observers: Set<string>;
-  picked: Array<{ map: string; teamName: string; side: string }>;
+  picked: Array<{ map: string; teamName: string; side: string; sideTeamName: string }>;
   banned: Array<{ map: string; teamName: string }>;
   gameName: number;
   gameType: number;
@@ -244,6 +244,9 @@ io.on("connection", (socket) => {
     socket.data.lobbies.add(lobbyId);
     io.to(socket.id).emit("pickedUpdated", lobby.picked);
     io.to(socket.id).emit("bannedUpdated", lobby.banned);
+
+    // Добавляем логирование данных
+    console.log("Observer joined, sending picked data:", lobby.picked);
   });
 
   socket.on(
@@ -412,6 +415,11 @@ io.on("connection", (socket) => {
             break;
           }
         }
+        
+        // При выборе карты, сохраняем её в временный выбор для дальнейшего использования
+        const mapName = lobby.mapNames[selectedMapIndex];
+        socket.data.pickedMap = { map: mapName, teamName };
+        
         const targetSocket = lobby.gameType === 0 ? socket.id : otherSocketId;
         const otherSocket = lobby.gameType === 0 ? otherSocketId : socket.id;
 
@@ -430,25 +438,51 @@ io.on("connection", (socket) => {
       teamName: string;
       side: string;
     }) => {
-      console.log(data);
       const { lobbyId, map, teamName, side } = data;
       const lobby = lobbies.get(lobbyId);
       if (lobby) {
-        lobby.picked.push({ map, teamName, side });
+        let sideTeamName = teamName;
+        let mapTeamName = teamName;
+        
+        // Для BO3 или BO5 определяем, кто выбрал карту и кто выбрал сторону
+        if (lobby.gameType === 2 || lobby.gameType === 3) {
+          // Найдем имя другой команды - она выбрала карту
+          for (const [, otherName] of lobby.teamNames.entries()) {
+            if (otherName !== teamName) {
+              mapTeamName = otherName;
+              break;
+            }
+          }
+          
+          // Текущая команда выбирает сторону
+          
+          // Добавляем информацию о выбранной карте и стороне
+          lobby.picked.push({ map, teamName: mapTeamName, side, sideTeamName });
+        } else {
+          // Для BO1/BO2 - обычный выбор, но теперь с sideTeamName
+          lobby.picked.push({ map, teamName, side, sideTeamName });
+        }
+        
         lobby.gameStep++;
 
-        io.to(lobbyId).emit(
-          "gameStateUpdated",
-          teamName +
-            " выбрали " +
-            (side === "t"
-              ? "атакующих"
-              : side === "ct"
-                ? "обороняющих"
-                : side.toUpperCase()) +
-            " на карте " +
-            map,
-        );
+        // Отображаем информативное сообщение
+        let stateMessage = "";
+        if (sideTeamName) {
+          stateMessage = `${mapTeamName} выбрали карту ${map}, ${sideTeamName} выбрали ${
+            side === "t" ? "атакующих" : side === "ct" ? "обороняющих" : side.toUpperCase()
+          }`;
+        } else {
+          stateMessage = `${teamName} выбрали ${
+            side === "t" ? "атакующих" : side === "ct" ? "обороняющих" : side.toUpperCase()
+          } на карте ${map}`;
+        }
+        
+        io.to(lobbyId).emit("gameStateUpdated", stateMessage);
+
+        // Очищаем временные данные
+        if (socket.data.pickedMap) {
+          delete socket.data.pickedMap;
+        }
 
         let otherSocketId = "";
         for (const [
@@ -489,7 +523,7 @@ io.on("connection", (socket) => {
                   notPickedMap = mapName;
                 }
               }
-              lobby.picked.push({ map: notPickedMap, teamName: "", side: "" });
+              lobby.picked.push({ map: notPickedMap, teamName: "", side: "", sideTeamName: "" });
               lobby.gameStep++;
               lobby.observers.forEach((observer) => {
                 io.to(observer).emit("pickedUpdated", lobby.picked);
@@ -518,6 +552,8 @@ io.on("connection", (socket) => {
         } else {
           io.to(lobbyId).emit("canWorkUpdated", false);
         }
+        // После обновления picked entries, добавляем лог
+        console.log("Picked entries updated:", lobby.picked);
         io.to(lobbyId).emit("pickedUpdated", lobby.picked);
       }
     },
@@ -572,7 +608,7 @@ io.on("connection", (socket) => {
                   notPickedMap = mapName;
                 }
               }
-              lobby.picked.push({ map: notPickedMap, teamName: "", side: "" });
+              lobby.picked.push({ map: notPickedMap, teamName: "", side: "", sideTeamName: "" });
               lobby.gameStep++;
               lobby.observers.forEach((observer) => {
                 io.to(observer).emit("pickedUpdated", lobby.picked);
@@ -646,9 +682,10 @@ io.on("connection", (socket) => {
             io.to(lobbyId).emit("bannedReplay", banEntry);
           }, accumulatedDelay);
         }
-      } else if (step === "pick") {
+      } else if (step === "pick" || step === "decider") {
         const pickEntry = lobby.picked[pickedIndex++];
         if (pickEntry) {
+          console.log("Sending pick entry to obs:", pickEntry); // Добавляем лог
           setTimeout(() => {
             // Emit this picked map to all members
             io.to(lobbyId).emit("pickedReplay", pickEntry);

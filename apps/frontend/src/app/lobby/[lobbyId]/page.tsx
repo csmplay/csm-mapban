@@ -229,10 +229,8 @@ export default function LobbyPage() {
     const teamName = team ? team[1] : "Spectator";
 
     if (canBan) {
-      console.log("Banning map");
       socket.emit("ban", { lobbyId, map: mapName, teamName });
     } else if (canPick) {
-      console.log("Started picking map");
       socket.emit("startPick", { lobbyId, teamName, selectedMapIndex });
       setIsWaiting(true);
       return;
