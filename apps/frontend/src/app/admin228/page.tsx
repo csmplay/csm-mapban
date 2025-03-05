@@ -34,7 +34,12 @@ interface CardColors {
   };
 }
 
-type PickedMap = { map: string; teamName: string; side: string; sideTeamName: string };
+type PickedMap = {
+  map: string;
+  teamName: string;
+  side: string;
+  sideTeamName: string;
+};
 type BannedMap = { map: string; teamName: string };
 
 type Lobby = {
@@ -172,7 +177,7 @@ export default function AdminPage() {
         toast({
           title: "Ошибка создания лобби",
           description: errorMessage,
-          variant: "destructive"
+          variant: "destructive",
         });
       });
     }
@@ -262,7 +267,7 @@ export default function AdminPage() {
 
   const handleMapPoolButton = () => {
     setShowSettingsModal(false);
-    
+
     setTimeout(() => {
       setMapPool(sourceMapPool);
       setEditMapPool(true);
@@ -299,7 +304,7 @@ export default function AdminPage() {
     }
     setEditMapPool(false);
     setActiveTab(0);
-    
+
     setTimeout(() => {
       setShowSettingsModal(true);
     }, 300);
@@ -312,7 +317,7 @@ export default function AdminPage() {
     }
     setEditMapPool(false);
     setActiveTab(0);
-    
+
     setTimeout(() => {
       setShowSettingsModal(true);
     }, 300);
@@ -320,7 +325,7 @@ export default function AdminPage() {
 
   const handleOpenEditModal = () => {
     setShowSettingsModal(false);
-    
+
     setTimeout(() => {
       // Create a copy so that editing does not update cardColors immediately.
       setEditingCardColors({ ...cardColors });
@@ -335,7 +340,7 @@ export default function AdminPage() {
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
-    
+
     setTimeout(() => {
       setShowSettingsModal(true);
     }, 300);
@@ -348,7 +353,7 @@ export default function AdminPage() {
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
-    
+
     setTimeout(() => {
       setShowSettingsModal(true);
     }, 300);
@@ -387,12 +392,26 @@ export default function AdminPage() {
           </Button>
         </div>
         <div className="flex justify-center items-center mb-6">
-          <Button 
+          <Button
             onClick={() => setShowSettingsModal(true)}
             variant="outline"
             className="w-full max-w-md mx-auto bg-card shadow-lg mb-8 py-6"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings mr-2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-settings mr-2"
+            >
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
             Настройки игры
           </Button>
         </div>
@@ -484,7 +503,11 @@ export default function AdminPage() {
                           Coin Flip: {lobby.coinFlip ? "Yes" : "No"}
                         </div>
                         <div className="text-sm text-foreground">
-                          Current Game Step: {lobby.mapPoolSize == 4 ? lobby.gameStep - 3 : lobby.gameStep}/{lobby.mapPoolSize}
+                          Current Game Step:{" "}
+                          {lobby.mapPoolSize == 4
+                            ? lobby.gameStep - 3
+                            : lobby.gameStep}
+                          /{lobby.mapPoolSize}
                         </div>
                         <div className="text-sm text-foreground">
                           Knife Decider:{" "}
@@ -665,7 +688,11 @@ export default function AdminPage() {
                       ].map((option) => (
                         <Button
                           key={option.label}
-                          variant={localKnifeDecider === option.value ? "default" : "outline"}
+                          variant={
+                            localKnifeDecider === option.value
+                              ? "default"
+                              : "outline"
+                          }
                           onClick={() => setLocalKnifeDecider(option.value)}
                           className="w-30"
                         >
@@ -720,8 +747,10 @@ export default function AdminPage() {
               transition={{ duration: 0.3 }}
               className="bg-card p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto text-card-foreground"
             >
-              <h2 className="text-3xl font-bold mb-6 text-center">Редактирование маппула</h2>
-              
+              <h2 className="text-3xl font-bold mb-6 text-center">
+                Редактирование маппула
+              </h2>
+
               {/* Tabs */}
               <div className="flex border-b mb-6">
                 <button
@@ -745,33 +774,43 @@ export default function AdminPage() {
                   VALORANT
                 </button>
               </div>
-              
+
               {/* CS2 Maps Tab */}
               {activeTab === 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {mapPool[0].map((value, index) => (
-                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <div
+                      key={index}
+                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
                       <div className="relative w-full pt-[75%]">
-                        <Image 
+                        <Image
                           src={`/0/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-3">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, 0)}
+                          onChange={(e) =>
+                            handleSelectChange(index, e.target.value, 0)
+                          }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                          <option value="" disabled>Выберите карту</option>
+                          <option value="" disabled>
+                            Выберите карту
+                          </option>
                           {allMapsList[0].map((refValue, refIndex) => (
-                            <option key={refIndex} value={refValue}>{refValue}</option>
+                            <option key={refIndex} value={refValue}>
+                              {refValue}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -779,33 +818,43 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
-              
+
               {/* VALORANT Maps Tab */}
               {activeTab === 1 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {mapPool[1].map((value, index) => (
-                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <div
+                      key={index}
+                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
                       <div className="relative w-full pt-[75%]">
-                        <Image 
+                        <Image
                           src={`/1/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-3">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, 1)}
+                          onChange={(e) =>
+                            handleSelectChange(index, e.target.value, 1)
+                          }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                          <option value="" disabled>Выберите карту</option>
+                          <option value="" disabled>
+                            Выберите карту
+                          </option>
                           {allMapsList[1].map((refValue, refIndex) => (
-                            <option key={refIndex} value={refValue}>{refValue}</option>
+                            <option key={refIndex} value={refValue}>
+                              {refValue}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -813,7 +862,7 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
-              
+
               <div className="flex justify-between mt-8">
                 <Button
                   type="button"
@@ -821,7 +870,7 @@ export default function AdminPage() {
                   onClick={() => {
                     setEditMapPool(false);
                     setActiveTab(0);
-                    
+
                     setTimeout(() => {
                       setShowSettingsModal(true);
                     }, 300);
@@ -838,8 +887,8 @@ export default function AdminPage() {
                 >
                   Сбросить
                 </Button>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   onClick={handleEditMapPool}
                   className="px-6"
                 >
@@ -979,7 +1028,7 @@ export default function AdminPage() {
                     onClick={() => {
                       setEditCardColorsModal(false);
                       setEditingCardColors(null);
-                      
+
                       setTimeout(() => {
                         setShowSettingsModal(true);
                       }, 300);
@@ -1035,7 +1084,7 @@ export default function AdminPage() {
                     Подбросить монетку в начале игры
                   </Label>
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-4">
                   <Button
                     onClick={handleMapPoolButton}
@@ -1045,7 +1094,7 @@ export default function AdminPage() {
                     <PenBox className="w-4 h-4 mr-2" />
                     Редактировать маппул
                   </Button>
-                  
+
                   <Button
                     onClick={handleOpenEditModal}
                     variant="outline"
@@ -1055,7 +1104,7 @@ export default function AdminPage() {
                     Редактировать цвета карточек
                   </Button>
                 </div>
-                
+
                 <div className="pt-4 flex justify-end">
                   <Button
                     onClick={() => setShowSettingsModal(false)}

@@ -17,17 +17,21 @@
 }
 
 /* Переопределение для кнопок */
-.bg-gray-800, .bg-zinc-800 {
+.bg-gray-800,
+.bg-zinc-800 {
   background-color: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 
-.hover\:bg-gray-700:hover, .hover\:bg-zinc-700:hover {
+.hover\:bg-gray-700:hover,
+.hover\:bg-zinc-700:hover {
   background-color: hsl(var(--primary) / 0.9);
 }
 
 /* Переопределение для инпутов */
-input, select, textarea {
+input,
+select,
+textarea {
   background-color: hsl(var(--input));
   color: hsl(var(--foreground));
   border-color: hsl(var(--border));
@@ -36,4 +40,4 @@ input, select, textarea {
 /* Переопределение для модальных окон */
 .fixed.inset-0.bg-black\/50 {
   background-color: rgba(0, 0, 0, 0.7);
-} 
+}

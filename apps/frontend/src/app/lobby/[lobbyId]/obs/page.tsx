@@ -40,7 +40,13 @@ const LobbyObsPage = () => {
   const [, setSocket] = useState<Socket | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
-    { map: string; teamName: string; side: string; sideTeamName: string; decider?: boolean }[]
+    {
+      map: string;
+      teamName: string;
+      side: string;
+      sideTeamName: string;
+      decider?: boolean;
+    }[]
   >([]);
   const [bannedEntries, setBannedEntries] = useState<
     { map: string; teamName: string }[]
@@ -94,7 +100,14 @@ const LobbyObsPage = () => {
 
     newSocket.on(
       "pickedUpdated",
-      (picked: Array<{ map: string; teamName: string; side: string; sideTeamName: string }>) => {
+      (
+        picked: Array<{
+          map: string;
+          teamName: string;
+          side: string;
+          sideTeamName: string;
+        }>,
+      ) => {
         setPickedEntries(picked);
       },
     );

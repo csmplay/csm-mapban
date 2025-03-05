@@ -29,7 +29,12 @@ interface Lobby {
   members: Set<string>;
   teamNames: Map<string, string>;
   observers: Set<string>;
-  picked: Array<{ map: string; teamName: string; side: string; sideTeamName: string }>;
+  picked: Array<{
+    map: string;
+    teamName: string;
+    side: string;
+    sideTeamName: string;
+  }>;
   banned: Array<{ map: string; teamName: string }>;
   gameName: number;
   gameType: number;
@@ -251,35 +256,53 @@ io.on("connection", (socket) => {
 
   socket.on(
     "createLobby",
-    (data: { 
-      lobbyId: string; 
-      gameNum: number; 
+    (data: {
+      lobbyId: string;
+      gameNum: number;
       gameTypeNum: number;
       knifeDecider: number;
       mapPoolSize: number;
       customMapPool: string[][] | null;
     }) => {
-      const { lobbyId, gameNum, gameTypeNum, knifeDecider, mapPoolSize, customMapPool } = data;
+      const {
+        lobbyId,
+        gameNum,
+        gameTypeNum,
+        knifeDecider,
+        mapPoolSize,
+        customMapPool,
+      } = data;
       console.log("Lobby created with id " + lobbyId);
 
       // Проверка валидности правил
       if ((gameTypeNum === 2 || gameTypeNum === 3) && mapPoolSize !== 7) {
-        io.to(socket.id).emit("lobbyCreationError", "Для BO3/BO5 размер маппула должен быть 7");
+        io.to(socket.id).emit(
+          "lobbyCreationError",
+          "Для BO3/BO5 размер маппула должен быть 7",
+        );
         return;
       }
 
-      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0 && knifeDecider !== 2) {
-        io.to(socket.id).emit("lobbyCreationError", "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'");
+      if (
+        (gameTypeNum === 0 || gameTypeNum === 1) &&
+        knifeDecider !== 0 &&
+        knifeDecider !== 2
+      ) {
+        io.to(socket.id).emit(
+          "lobbyCreationError",
+          "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'",
+        );
         return;
       }
 
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
         // Выбираем маппул
-        const sourceMapPool = customMapPool ? customMapPool[gameNum] : mapPool[gameNum];
-        const selectedMapPool = mapPoolSize === 4 
-          ? sourceMapPool.slice(0, 4) 
-          : sourceMapPool;
+        const sourceMapPool = customMapPool
+          ? customMapPool[gameNum]
+          : mapPool[gameNum];
+        const selectedMapPool =
+          mapPoolSize === 4 ? sourceMapPool.slice(0, 4) : sourceMapPool;
 
         // Create a new lobby
         lobby = {
@@ -297,7 +320,7 @@ io.on("connection", (socket) => {
           gameStep: 7 - mapPoolSize,
           admin: false,
           knifeDecider: knifeDecider,
-          mapPoolSize: mapPoolSize
+          mapPoolSize: mapPoolSize,
         };
 
         lobbies.set(lobbyId, lobby);
@@ -315,27 +338,43 @@ io.on("connection", (socket) => {
       knifeDecider: number;
       mapPoolSize: number;
     }) => {
-      const { lobbyId, gameNum, gameTypeNum, coinFlip, knifeDecider, mapPoolSize } = data;
+      const {
+        lobbyId,
+        gameNum,
+        gameTypeNum,
+        coinFlip,
+        knifeDecider,
+        mapPoolSize,
+      } = data;
       console.log("Admin Lobby created with id " + lobbyId);
 
       // Проверка валидности правил
       if ((gameTypeNum === 2 || gameTypeNum === 3) && mapPoolSize !== 7) {
-        io.to(socket.id).emit("lobbyCreationError", "Для BO3/BO5 размер маппула должен быть 7");
+        io.to(socket.id).emit(
+          "lobbyCreationError",
+          "Для BO3/BO5 размер маппула должен быть 7",
+        );
         return;
       }
 
-      if ((gameTypeNum === 0 || gameTypeNum === 1) && knifeDecider !== 0 && knifeDecider !== 2) {
-        io.to(socket.id).emit("lobbyCreationError", "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'");
+      if (
+        (gameTypeNum === 0 || gameTypeNum === 1) &&
+        knifeDecider !== 0 &&
+        knifeDecider !== 2
+      ) {
+        io.to(socket.id).emit(
+          "lobbyCreationError",
+          "Для BO1/BO2 десайдер должен быть 'Рандом' или 'Ножи (пропуск)'",
+        );
         return;
       }
 
       let lobby = lobbies.get(lobbyId);
       if (!lobby) {
-        // Create a new ADMIN lobby     
+        // Create a new ADMIN lobby
         const fullMapPool = mapPool[gameNum];
-        const selectedMapPool = mapPoolSize === 4 
-          ? fullMapPool.slice(0, 4) 
-          : fullMapPool;
+        const selectedMapPool =
+          mapPoolSize === 4 ? fullMapPool.slice(0, 4) : fullMapPool;
         lobby = {
           lobbyId,
           members: new Set<string>(),
@@ -417,11 +456,11 @@ io.on("connection", (socket) => {
             break;
           }
         }
-        
+
         // При выборе карты, сохраняем её в временный выбор для дальнейшего использования
         const mapName = lobby.mapNames[selectedMapIndex];
         socket.data.pickedMap = { map: mapName, teamName };
-        
+
         const targetSocket = lobby.gameType === 0 ? socket.id : otherSocketId;
         const otherSocket = lobby.gameType === 0 ? otherSocketId : socket.id;
 
@@ -443,9 +482,9 @@ io.on("connection", (socket) => {
       const { lobbyId, map, teamName, side } = data;
       const lobby = lobbies.get(lobbyId);
       if (lobby) {
-        let sideTeamName = teamName;
+        const sideTeamName = teamName;
         let mapTeamName = teamName;
-        
+
         // Для BO3 или BO5 определяем, кто выбрал карту и кто выбрал сторону
         if (lobby.gameType === 2 || lobby.gameType === 3) {
           // Найдем имя другой команды - она выбрала карту
@@ -455,30 +494,38 @@ io.on("connection", (socket) => {
               break;
             }
           }
-          
+
           // Текущая команда выбирает сторону
-          
+
           // Добавляем информацию о выбранной карте и стороне
           lobby.picked.push({ map, teamName: mapTeamName, side, sideTeamName });
         } else {
           // Для BO1/BO2 - обычный выбор, но теперь с sideTeamName
           lobby.picked.push({ map, teamName, side, sideTeamName });
         }
-        
+
         lobby.gameStep++;
 
         // Отображаем информативное сообщение
         let stateMessage = "";
         if (sideTeamName) {
           stateMessage = `${mapTeamName} выбрали карту ${map}, ${sideTeamName} выбрали ${
-            side === "t" ? "атакующих" : side === "ct" ? "обороняющих" : side.toUpperCase()
+            side === "t"
+              ? "атакующих"
+              : side === "ct"
+                ? "обороняющих"
+                : side.toUpperCase()
           }`;
         } else {
           stateMessage = `${teamName} выбрали ${
-            side === "t" ? "атакующих" : side === "ct" ? "обороняющих" : side.toUpperCase()
+            side === "t"
+              ? "атакующих"
+              : side === "ct"
+                ? "обороняющих"
+                : side.toUpperCase()
           } на карте ${map}`;
         }
-        
+
         io.to(lobbyId).emit("gameStateUpdated", stateMessage);
 
         // Очищаем временные данные
@@ -525,7 +572,12 @@ io.on("connection", (socket) => {
                   notPickedMap = mapName;
                 }
               }
-              lobby.picked.push({ map: notPickedMap, teamName: "", side: "", sideTeamName: "" });
+              lobby.picked.push({
+                map: notPickedMap,
+                teamName: "",
+                side: "",
+                sideTeamName: "",
+              });
               lobby.gameStep++;
               lobby.observers.forEach((observer) => {
                 io.to(observer).emit("pickedUpdated", lobby.picked);
@@ -610,7 +662,12 @@ io.on("connection", (socket) => {
                   notPickedMap = mapName;
                 }
               }
-              lobby.picked.push({ map: notPickedMap, teamName: "", side: "", sideTeamName: "" });
+              lobby.picked.push({
+                map: notPickedMap,
+                teamName: "",
+                side: "",
+                sideTeamName: "",
+              });
               lobby.gameStep++;
               lobby.observers.forEach((observer) => {
                 io.to(observer).emit("pickedUpdated", lobby.picked);

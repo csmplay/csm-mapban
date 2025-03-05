@@ -29,7 +29,6 @@ const contentVariants = {
 
 export default function HomePage() {
   const [lobbyId, setLobbyId] = useState("");
-  const [showJoinLobbyOverlay, setShowJoinLobbyOverlay] = useState(false);
   const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
   const [showMapPoolOverlay, setShowMapPoolOverlay] = useState(false);
   const router = useRouter();
@@ -41,7 +40,7 @@ export default function HomePage() {
   const [gameName, setGame] = useState("CS2");
   const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
-  
+
   // Map pool related states
   const [activeTab, setActiveTab] = useState(0);
   const [allMapsList, setAllMapsList] = useState<string[][]>([]);
@@ -65,7 +64,7 @@ export default function HomePage() {
       toast({
         title: "Ошибка создания лобби",
         description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
       });
       // Возвращаемся на главную страницу
       router.push("/");
@@ -114,7 +113,7 @@ export default function HomePage() {
       if (gameType === "BO2") gameTypeNum = 1;
       if (gameType === "BO3") gameTypeNum = 2;
       if (gameType === "BO5") gameTypeNum = 3;
-      
+
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
       socket.emit("createLobby", {
         lobbyId,
@@ -122,7 +121,7 @@ export default function HomePage() {
         gameTypeNum,
         knifeDecider: localKnifeDecider,
         mapPoolSize,
-        customMapPool: useCustomMapPool ? mapPool : null
+        customMapPool: useCustomMapPool ? mapPool : null,
       });
 
       setShowSettingsOverlay(false);
@@ -147,7 +146,7 @@ export default function HomePage() {
         setMapPool([...defaultMapPool]);
       }
     }
-    
+
     setShowSettingsOverlay(false);
     setTimeout(() => {
       setShowMapPoolOverlay(true);
@@ -168,7 +167,7 @@ export default function HomePage() {
     } else {
       setMapPool([mapPool[0], newMapPool]);
     }
-    
+
     // Установка флага использования пользовательского маппула
     setUseCustomMapPool(true);
   };
@@ -179,11 +178,11 @@ export default function HomePage() {
     setUseCustomMapPool(false);
     setShowMapPoolOverlay(false);
     setActiveTab(0); // Сбрасываем вкладку на CS2
-    
+
     setTimeout(() => {
       setShowSettingsOverlay(true);
     }, 300);
-    
+
     toast({
       description: "Маппул сброшен к значению по умолчанию",
     });
@@ -194,24 +193,29 @@ export default function HomePage() {
     // Проверка на дубликаты в маппуле
     const uniqueValuesZero = new Set(mapPool[0]);
     const uniqueValuesOne = new Set(mapPool[1]);
-    
-    if (uniqueValuesZero.size !== mapPool[0].length || uniqueValuesOne.size !== mapPool[1].length) {
+
+    if (
+      uniqueValuesZero.size !== mapPool[0].length ||
+      uniqueValuesOne.size !== mapPool[1].length
+    ) {
       toast({
         description: "Карты не должны повторяться!",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     setShowMapPoolOverlay(false);
     setActiveTab(0); // Сбрасываем вкладку на CS2
-    
+
     setTimeout(() => {
       setShowSettingsOverlay(true);
     }, 300);
-    
+
     toast({
-      description: useCustomMapPool ? "Изменения маппула сохранены" : "Используется стандартный маппул",
+      description: useCustomMapPool
+        ? "Изменения маппула сохранены"
+        : "Используется стандартный маппул",
     });
   };
 
@@ -249,10 +253,7 @@ export default function HomePage() {
                   </InputOTPGroup>
                 </InputOTP>
               </div>
-              <Button
-                onClick={handleJoinLobby}
-                disabled={lobbyId.length !== 4}
-              >
+              <Button onClick={handleJoinLobby} disabled={lobbyId.length !== 4}>
                 Присоединиться к лобби
               </Button>
             </div>
@@ -388,7 +389,9 @@ export default function HomePage() {
                     variant={useCustomMapPool ? "default" : "outline"}
                     className="w-full"
                   >
-                    {useCustomMapPool ? "Маппул изменен ✓" : "Редактировать маппул"}
+                    {useCustomMapPool
+                      ? "Маппул изменен ✓"
+                      : "Редактировать маппул"}
                   </Button>
                 </div>
 
@@ -429,8 +432,10 @@ export default function HomePage() {
               transition={{ duration: 0.3 }}
               className="bg-background p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto text-foreground"
             >
-              <h2 className="text-3xl font-bold mb-6 text-center">Редактирование маппула</h2>
-              
+              <h2 className="text-3xl font-bold mb-6 text-center">
+                Редактирование маппула
+              </h2>
+
               {/* Вкладки */}
               <div className="flex border-b mb-6">
                 <button
@@ -454,33 +459,43 @@ export default function HomePage() {
                   VALORANT
                 </button>
               </div>
-              
+
               {/* CS2 Maps Tab */}
               {activeTab === 0 && mapPool[0] && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {mapPool[0].map((value, index) => (
-                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <div
+                      key={index}
+                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
                       <div className="relative w-full pt-[75%]">
-                        <Image 
+                        <Image
                           src={`/0/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-3">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, 0)}
+                          onChange={(e) =>
+                            handleSelectChange(index, e.target.value, 0)
+                          }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                          <option value="" disabled>Выберите карту</option>
+                          <option value="" disabled>
+                            Выберите карту
+                          </option>
                           {allMapsList[0]?.map((mapName, mapIndex) => (
-                            <option key={mapIndex} value={mapName}>{mapName}</option>
+                            <option key={mapIndex} value={mapName}>
+                              {mapName}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -488,33 +503,43 @@ export default function HomePage() {
                   ))}
                 </div>
               )}
-              
+
               {/* VALORANT Maps Tab */}
               {activeTab === 1 && mapPool[1] && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {mapPool[1].map((value, index) => (
-                    <div key={index} className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <div
+                      key={index}
+                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    >
                       <div className="relative w-full pt-[75%]">
-                        <Image 
+                        <Image
                           src={`/1/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-3">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, 1)}
+                          onChange={(e) =>
+                            handleSelectChange(index, e.target.value, 1)
+                          }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                          <option value="" disabled>Выберите карту</option>
+                          <option value="" disabled>
+                            Выберите карту
+                          </option>
                           {allMapsList[1]?.map((mapName, mapIndex) => (
-                            <option key={mapIndex} value={mapName}>{mapName}</option>
+                            <option key={mapIndex} value={mapName}>
+                              {mapName}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -522,7 +547,7 @@ export default function HomePage() {
                   ))}
                 </div>
               )}
-              
+
               <div className="flex justify-between mt-8">
                 <Button
                   type="button"
@@ -546,8 +571,8 @@ export default function HomePage() {
                 >
                   Сбросить
                 </Button>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   onClick={handleSaveMapPool}
                   className="px-6"
                 >
