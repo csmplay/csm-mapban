@@ -486,7 +486,7 @@ io.on("connection", (socket) => {
         let mapTeamName = teamName;
 
         // Для BO3 или BO5 определяем, кто выбрал карту и кто выбрал сторону
-        if (lobby.gameType === 2 || lobby.gameType === 3) {
+        if (lobby.gameType !== 0) {
           // Найдем имя другой команды - она выбрала карту
           for (const [, otherName] of lobby.teamNames.entries()) {
             if (otherName !== teamName) {
