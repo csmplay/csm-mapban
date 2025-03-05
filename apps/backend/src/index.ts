@@ -197,6 +197,20 @@ io.on("connection", (socket) => {
   // Initialize the set of lobbies the socket is in
   socket.data.lobbies = new Set<string>();
 
+  socket.on("joinLobbyTest", (lobbyId: string) => {
+    socket.join(lobbyId);
+    console.log(`User ${socket.id} joined lobby ${lobbyId}`);
+
+    // Check if the lobby exists
+    const lobby = lobbies.get(lobbyId);
+    if (!lobby) {
+      io.to(socket.id).emit("lobbyUndefined", lobbyId);
+      return;
+    } else {
+      io.to(socket.id).emit("lobbyExists", lobbyId);
+      return;
+    }
+  });
   socket.on("joinLobby", (lobbyId: string) => {
     socket.join(lobbyId);
     console.log(`User ${socket.id} joined lobby ${lobbyId}`);
@@ -832,8 +846,8 @@ io.on("connection", (socket) => {
           Array.from(lobby.teamNames.entries()),
         );
 
-        // If the lobby is empty, delete it
-        if (lobby.members.size === 0) {
+        // Only delete non-admin lobbies when they're empty
+        if (lobby.members.size === 0 && !lobby.admin) {
           lobbies.delete(lobbyId);
           console.log(`Lobby ${lobbyId} deleted as it has no more members`);
         } else {

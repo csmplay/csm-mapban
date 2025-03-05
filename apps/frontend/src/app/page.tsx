@@ -93,9 +93,55 @@ export default function HomePage() {
     };
   }, [backendUrl, router, toast]);
 
-  const handleJoinLobby = () => {
+  const handleJoinLobby = async () => {
     if (lobbyId && lobbyId.length === 4) {
-      router.push(`/lobby/${lobbyId}`);
+      try {
+        // First check if socket is connected
+        if (!socket?.connected) {
+          toast({
+            description: "Ошибка подключения к серверу",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Create a Promise to wait for the server response
+        const checkLobbyExists = new Promise((resolve, reject) => {
+          socket.emit("joinLobbyTest", lobbyId);
+          
+          const timeoutId = setTimeout(() => {
+            reject(new Error("Timeout waiting for server response"));
+          }, 5000); // 5 second timeout
+
+          const handleLobbyUndefined = () => {
+            clearTimeout(timeoutId);
+            reject(new Error("Lobby does not exist"));
+          };
+
+          const handleSuccess = () => {
+            clearTimeout(timeoutId);
+            resolve(true);
+          };
+
+          socket.once("lobbyUndefined", handleLobbyUndefined);
+          socket.once("lobbyExists", handleSuccess); // This event is emitted when successfully joining a lobby
+
+          // Cleanup listeners
+          setTimeout(() => {
+            socket.off("lobbyUndefined", handleLobbyUndefined);
+            socket.off("mapNames", handleSuccess);
+          }, 5000);
+        });
+
+        await checkLobbyExists;
+        router.push(`/lobby/${lobbyId}`);
+        
+      } catch {
+        toast({
+          description: "Лобби не существует",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         description: "Введите корректный код лобби",
@@ -323,6 +369,8 @@ export default function HomePage() {
                         setGameType(type);
                         if (["BO1", "BO2"].includes(type)) {
                           setLocalKnifeDecider(0);
+                        } else if (["BO3", "BO5"].includes(type)) {
+                          setMapPoolSize(7);
                         }
                       }}
                       className="w-20"
