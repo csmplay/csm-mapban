@@ -751,6 +751,15 @@ export default function AdminPage() {
                 Редактирование маппула
               </h2>
 
+              {/* Информация о маппуле */}
+              {(
+                <div className="mb-4 p-3 bg-muted rounded-md text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Внимание! При выборе пула из 4 карт используются только первые 4 карты в списке.
+                  </p>
+                </div>
+              )}
+
               {/* Tabs */}
               <div className="flex border-b mb-6">
                 <button
