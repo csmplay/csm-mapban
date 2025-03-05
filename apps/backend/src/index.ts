@@ -8,12 +8,38 @@ const app = express();
 const port = 4000;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
+// Referrer check middleware
+const checkReferrer = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const referrer = req.get('referer');
+  
+  if (!referrer || !referrer.startsWith(frontendUrl)) {
+    res.status(403).send("Unauthorized request");
+    return;
+  }
+  
+  next();
+};
+
+// Apply the referrer check middleware to all API routes
+app.use('/api', checkReferrer);
+
 // Use cors middleware
 app.use(
   cors({
     origin: frontendUrl,
   }),
 );
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -190,6 +216,14 @@ app.get("/api/lobbies", (_req, res) => {
 app.get("/api/mapPool", (req, res) => {
   res.json({ mapPool, mapNamesLists });
 });
+
+// Simple sanitization function
+const sanitizeInput = (input: string): string => {
+  return input
+    .trim()
+    .slice(0, 32) // Reasonable length limit
+    .replace(/[<>]/g, ''); // Remove potential HTML tags
+};
 
 io.on("connection", (socket) => {
   console.log("a user connected", socket.id);
@@ -431,17 +465,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("teamName", (data: { lobbyId: string; teamName: string }) => {
-    const { lobbyId, teamName } = data;
+    const { lobbyId } = data;
+    const teamName = sanitizeInput(data.teamName);
     const lobby = lobbies.get(lobbyId);
     if (lobby) {
-      // Update the teamNames Map
       lobby.teamNames.set(socket.id, teamName);
-
-      // Broadcast the updated team names to all lobby members
-      io.to(lobbyId).emit(
-        "teamNamesUpdated",
-        Array.from(lobby.teamNames.entries()),
-      );
+      io.to(lobbyId).emit("teamNamesUpdated", Array.from(lobby.teamNames.entries()));
       if (!lobby.admin) {
         startGame(lobbyId);
       }
