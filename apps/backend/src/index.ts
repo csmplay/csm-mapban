@@ -199,8 +199,6 @@ io.on("connection", (socket) => {
 
   socket.on("joinLobbyTest", (lobbyId: string) => {
     socket.join(lobbyId);
-    console.log(`User ${socket.id} joined lobby ${lobbyId}`);
-
     // Check if the lobby exists
     const lobby = lobbies.get(lobbyId);
     if (!lobby) {

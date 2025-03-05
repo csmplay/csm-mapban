@@ -299,7 +299,19 @@ export default function HomePage() {
                   </InputOTPGroup>
                 </InputOTP>
               </div>
-              <Button onClick={handleJoinLobby} disabled={lobbyId.length !== 4}>
+              <Button 
+                onClick={() => {
+                  if (lobbyId.length !== 4) {
+                    toast({
+                      description: "Введите код лобби",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  handleJoinLobby();
+                }} 
+                className={`w-full ${lobbyId.length !== 4 ? "opacity-50" : ""}`}
+              >
                 Присоединиться к лобби
               </Button>
             </div>
