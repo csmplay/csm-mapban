@@ -107,24 +107,6 @@ export default function LobbyPage() {
       },
     );
 
-    newSocket.on("wait", () => {
-      setIsWaiting(true);
-      setShowTeamNameOverlay(true);
-    });
-    newSocket.on("nowait", () => {
-      setIsWaiting(false);
-      setIsKnifing(false);
-    });
-    newSocket.on("waitKnifes", () => {
-      setIsKnifing(true);
-      setShowTeamNameOverlay(true);
-    });
-    newSocket.on("nowaitKnifes", () => {
-      setShowTeamNameOverlay(false);
-      setIsKnifing(false);
-    });
-
-    // Handle 'lobbyDeleted' event
     newSocket.on("lobbyDeleted", () => {
       console.log("lobbyDeleted");
       setIsWaiting(false);
@@ -164,12 +146,6 @@ export default function LobbyPage() {
     newSocket.on("canPick", (pickVar: boolean) => {
       console.log("I can pick now");
       setCanPick(() => pickVar);
-    });
-
-    newSocket.on("canPickKnife", (pickVar: boolean) => {
-      console.log("I can pick now (only decider)");
-      setCanPick(() => pickVar);
-      toast({ description: "Пожалуйста, выберите оставшуюся карту!" });
     });
 
     // Handle 'coinFlip' event
@@ -430,51 +406,80 @@ export default function LobbyPage() {
                           },
                         }}
                       >
-                        {/* Left Image (picked side) */}
+                        {pickEntry.side === "DECIDER" && (
                         <motion.div
                           initial={{ y: 100, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="relative flex items-center justify-center"
+                          className="absolute inset-0 flex items-center justify-center"
                         >
-                          <Image
-                            src={`/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
-                            alt={`${pickSide === "ct" ? "ct" : "t"}`}
-                            draggable={false}
-                            width={80}
-                            height={80}
-                            priority={true}
-                            className={`rounded-full border-4 ${
-                              pickTeamColor === "red"
-                                ? "border-red-500"
-                                : "border-blue-500"
-                            }`}
-                          />
+                          <div
+                            className={`transform text-white
+                                                        px-4 py-1 font-bold text-xl`}
+                            style={{
+                              position: "absolute",
+                              top: "80%",
+                              width: "150%",
+                              height: "150%",
+                              textAlign: "center",
+                              opacity: 0.8,
+                              backgroundColor: "#000000",
+                            }}
+                          >
+                            DECIDER
+                          </div>
                         </motion.div>
+                        )}
+                        {pickEntry.side !== "DECIDER" && (
+                          <>
+                            {/* Left Image (picked side) */}
+                            <motion.div
+                              initial={{ y: 100, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="relative flex items-center justify-center"
+                            >
+                              <Image
+                                src={`/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
+                                alt={`${pickSide === "ct" ? "ct" : "t"}`}
+                                draggable={false}
+                                width={80}
+                                height={80}
+                                priority={true}
+                                className={`rounded-full border-4 ${
+                                  pickTeamColor === "red"
+                                    ? "border-red-500"
+                                    : "border-blue-500"
+                                }`}
+                              />
+                            </motion.div>
 
-                        {/* Right Image (opposite side) */}
-                        <motion.div
-                          initial={{ y: 100, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="relative flex items-center justify-center"
-                        >
-                          <Image
-                            src={`/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
-                            alt={`${pickSide === "ct" ? "t" : "ct"}`}
-                            draggable={false}
-                            width={80}
-                            height={80}
-                            priority={true}
-                            className={`rounded-full border-4 ${
-                              pickTeamColor === "red"
-                                ? "border-blue-500"
-                                : "border-red-500"
-                            }`}
-                          />
-                        </motion.div>
+                            {/* Right Image (opposite side) */}
+                            <motion.div
+                              initial={{ y: 100, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="relative flex items-center justify-center"
+                            >
+                              <Image
+                                src={`/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
+                                alt={`${pickSide === "ct" ? "t" : "ct"}`}
+                                draggable={false}
+                                width={80}
+                                height={80}
+                                priority={true}
+                                className={`rounded-full border-4 ${
+                                  pickTeamColor === "red"
+                                    ? "border-blue-500"
+                                    : "border-red-500"
+                                }`}
+                              />
+                            </motion.div>
+                          </>
+                        )}
                       </motion.div>
                     )}
 

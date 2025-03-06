@@ -79,7 +79,7 @@ export default function AnimatedPickCard({
                   }}
                   className="pr-6"
                 >
-                  {side !== "" && (
+                  {!decider && (
                     <Image
                       src={`/${gameName}/${side}_white.png`}
                       alt={side}

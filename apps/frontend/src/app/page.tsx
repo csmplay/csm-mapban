@@ -38,14 +38,14 @@ export default function HomePage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
-  const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
+  const [localKnifeDecider, setLocalKnifeDecider] = useState(false);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
 
   // Map pool related states
   const [activeTab, setActiveTab] = useState(0);
-  const [allMapsList, setAllMapsList] = useState<string[][]>([]);
-  const [mapPool, setMapPool] = useState<string[][]>([]);
-  const [defaultMapPool, setDefaultMapPool] = useState<string[][]>([]);
+  const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
+  const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
+  const [defaultMapPool, setDefaultMapPool] = useState<Record<string, string[]>>({});
   const [useCustomMapPool, setUseCustomMapPool] = useState(false);
 
   const backendUrl =
@@ -76,7 +76,7 @@ export default function HomePage() {
     const fetchMapPool = async () => {
       try {
         const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: string[][]; mapNamesLists: string[][] } =
+        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
           await response.json();
         setMapPool(data.mapPool);
         setDefaultMapPool(data.mapPool);
@@ -152,19 +152,11 @@ export default function HomePage() {
 
   const handleCreateLobby = () => {
     if (socket) {
-      let gameNum = 0;
-      if (gameName === "CS2") gameNum = 0;
-      if (gameName === "Valorant") gameNum = 1;
-      let gameTypeNum = 0;
-      if (gameType === "BO2") gameTypeNum = 1;
-      if (gameType === "BO3") gameTypeNum = 2;
-      if (gameType === "BO5") gameTypeNum = 3;
-
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
       socket.emit("createLobby", {
         lobbyId,
-        gameNum,
-        gameTypeNum,
+        gameName: gameName.toLowerCase(),
+        gameType: gameType.toLowerCase(),
         knifeDecider: localKnifeDecider,
         mapPoolSize,
         customMapPool: useCustomMapPool ? mapPool : null,
@@ -181,7 +173,7 @@ export default function HomePage() {
     if (!useCustomMapPool) {
       try {
         const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: string[][]; mapNamesLists: string[][] } =
+        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
           await response.json();
         setMapPool(data.mapPool);
         setDefaultMapPool(data.mapPool);
@@ -189,7 +181,7 @@ export default function HomePage() {
       } catch (error) {
         console.error("Error fetching map pool:", error);
         // В случае ошибки используем последний известный дефолтный маппул
-        setMapPool([...defaultMapPool]);
+        setMapPool({ ...defaultMapPool });
       }
     }
 
@@ -203,15 +195,15 @@ export default function HomePage() {
   const handleSelectChange = (
     index: number,
     value: string,
-    gameNum: number,
+    gameName: string,
   ) => {
-    const newMapPool = [...mapPool[gameNum]];
+    const newMapPool = [...mapPool[gameName]];
     newMapPool[index] = value;
 
-    if (gameNum === 0) {
-      setMapPool([newMapPool, mapPool[1]]);
+    if (gameName === "cs2") {
+      setMapPool({ cs2: newMapPool, valorant: mapPool["valorant"] });
     } else {
-      setMapPool([mapPool[0], newMapPool]);
+      setMapPool({ cs2: mapPool["cs2"], valorant: newMapPool });
     }
 
     // Установка флага использования пользовательского маппула
@@ -220,7 +212,7 @@ export default function HomePage() {
 
   // Сброс маппула к первоначальному состоянию
   const handleResetMapPool = () => {
-    setMapPool([...defaultMapPool]);
+    setMapPool({ ...defaultMapPool });
     setUseCustomMapPool(false);
     setShowMapPoolOverlay(false);
     setActiveTab(0); // Сбрасываем вкладку на CS2
@@ -237,12 +229,12 @@ export default function HomePage() {
   // Сохранение изменений маппула
   const handleSaveMapPool = () => {
     // Проверка на дубликаты в маппуле
-    const uniqueValuesZero = new Set(mapPool[0]);
-    const uniqueValuesOne = new Set(mapPool[1]);
+    const uniqueValuesZero = new Set(mapPool["cs2"]);
+    const uniqueValuesOne = new Set(mapPool["valorant"]);
 
     if (
-      uniqueValuesZero.size !== mapPool[0].length ||
-      uniqueValuesOne.size !== mapPool[1].length
+      uniqueValuesZero.size !== mapPool["cs2"].length ||
+      uniqueValuesOne.size !== mapPool["valorant"].length
     ) {
       toast({
         description: "Карты не должны повторяться!",
@@ -380,7 +372,7 @@ export default function HomePage() {
                       onClick={() => {
                         setGameType(type);
                         if (["BO1", "BO2"].includes(type)) {
-                          setLocalKnifeDecider(0);
+                          setLocalKnifeDecider(false);
                         } else if (["BO3", "BO5"].includes(type)) {
                           setMapPoolSize(7);
                         }
@@ -421,9 +413,8 @@ export default function HomePage() {
                     </h3>
                     <div className="flex justify-center space-x-4">
                       {[
-                        { label: "Рандом", value: 0 },
-                        { label: "Авто (пропуск)", value: 2 },
-                        { label: "Ножи вручную", value: 1 },
+                        { label: "Рандом", value: false },
+                        { label: "Авто (пропуск)", value: true },
                       ].map((option) => (
                         <Button
                           key={option.label}
@@ -530,16 +521,16 @@ export default function HomePage() {
               </div>
 
               {/* CS2 Maps Tab */}
-              {activeTab === 0 && mapPool[0] && (
+              {activeTab === 0 && mapPool["cs2"] && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool[0].map((value, index) => (
+                  {mapPool["cs2"].map((value, index) => (
                     <div
                       key={index}
                       className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/0/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -554,14 +545,14 @@ export default function HomePage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, 0)
+                            handleSelectChange(index, e.target.value, "cs2")
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value="" disabled>
                             Выберите карту
                           </option>
-                          {allMapsList[0]?.map((mapName, mapIndex) => (
+                          {allMapsList["cs2"]?.map((mapName, mapIndex) => (
                             <option key={mapIndex} value={mapName}>
                               {mapName}
                             </option>
@@ -574,16 +565,16 @@ export default function HomePage() {
               )}
 
               {/* VALORANT Maps Tab */}
-              {activeTab === 1 && mapPool[1] && (
+              {activeTab === 1 && mapPool["valorant"] && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool[1].map((value, index) => (
+                  {mapPool["valorant"].map((value, index) => (
                     <div
                       key={index}
                       className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/1/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -598,14 +589,14 @@ export default function HomePage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, 1)
+                            handleSelectChange(index, e.target.value, "valorant")
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value="" disabled>
                             Выберите карту
                           </option>
-                          {allMapsList[1]?.map((mapName, mapIndex) => (
+                          {allMapsList["valorant"]?.map((mapName, mapIndex) => (
                             <option key={mapIndex} value={mapName}>
                               {mapName}
                             </option>

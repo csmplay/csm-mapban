@@ -49,15 +49,17 @@ type Lobby = {
   observers: string[];
   picked: PickedMap[];
   banned: BannedMap[];
-  gameName: number;
-  gameType: number;
-  mapNames: string[];
-  gameStateList: string[];
-  coinFlip: boolean;
-  admin: boolean;
-  gameStep: number; // Added current game step
-  knifeDecider: number; // New flag indicating knife decider mode
-  mapPoolSize: number;
+  rules: {
+    gameName: string;
+    gameType: string;
+    mapNames: string[];
+    gameStateList: string[];
+    coinFlip: boolean;
+    admin: boolean;
+    knifeDecider: boolean;
+    mapPoolSize: number;
+  };
+  gameStep: number;
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
@@ -82,12 +84,12 @@ export default function AdminPage() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
   const localCoinFlip = useRef(true);
-  const [localKnifeDecider, setLocalKnifeDecider] = useState<number>(0);
+  const [localKnifeDecider, setLocalKnifeDecider] = useState(false);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
-  const [allMapsList, setAllMapsList] = useState<string[][]>([]);
-  const [sourceMapPool, setSourceMapPool] = useState<string[][]>([]);
-  const [mapPool, setMapPool] = useState<string[][]>([]);
+  const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
+  const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
+  const [sourceMapPool, setSourceMapPool] = useState<Record<string, string[]>>({});
   const [adminOverlay, setAdminOverlay] = useState(false);
   const [editMapPool, setEditMapPool] = useState(false);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
@@ -125,7 +127,7 @@ export default function AdminPage() {
     const fetchSourceMapPool = async () => {
       try {
         const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: string[][]; mapNamesLists: string[][] } =
+        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
           await response.json();
         setSourceMapPool(data.mapPool);
         setAllMapsList(data.mapNamesLists);
@@ -136,7 +138,7 @@ export default function AdminPage() {
     const fetchMapPool = async () => {
       try {
         const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: string[][]; mapNamesLists: string[][] } =
+        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
           await response.json();
         setMapPool(data.mapPool);
         setAllMapsList(data.mapNamesLists);
@@ -245,18 +247,11 @@ export default function AdminPage() {
 
   const handleAdminLobby = () => {
     if (socketRef.current) {
-      let gameNum = 0;
-      if (gameName === "CS2") gameNum = 0;
-      if (gameName === "Valorant") gameNum = 1;
-      let gameTypeNum = 0;
-      if (gameType === "BO2") gameTypeNum = 1;
-      if (gameType === "BO3") gameTypeNum = 2;
-      if (gameType === "BO5") gameTypeNum = 3;
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
       socketRef.current.emit("createObsLobby", {
         lobbyId,
-        gameNum,
-        gameTypeNum,
+        gameName: gameName.toLowerCase(),
+        gameType: gameType.toLowerCase(),
         coinFlip: localCoinFlip.current,
         knifeDecider: localKnifeDecider,
         mapPoolSize,
@@ -276,24 +271,24 @@ export default function AdminPage() {
   const handleSelectChange = (
     index: number,
     value: string,
-    gameNum: number,
+    gameName: string,
   ) => {
-    const newMapPool = [...mapPool[gameNum]];
+    const newMapPool = [...mapPool[gameName]];
     newMapPool[index] = value;
 
-    if (gameNum == 0) {
-      setMapPool([newMapPool, mapPool[1]]);
+    if (gameName == "cs2") {
+      setMapPool({ cs2: newMapPool, valorant: mapPool["valorant"] });
     } else {
-      setMapPool([mapPool[0], newMapPool]);
+      setMapPool({ cs2: mapPool["cs2"], valorant: newMapPool });
     }
   };
 
   const handleEditMapPool = () => {
-    const uniqueValuesZero = new Set(mapPool[0]);
-    const uniqueValuesOne = new Set(mapPool[1]);
+    const uniqueValuesZero = new Set(mapPool["cs2"]);
+    const uniqueValuesOne = new Set(mapPool["valorant"]);
     if (
-      uniqueValuesZero.size !== mapPool[0].length ||
-      uniqueValuesOne.size !== mapPool[1].length
+      uniqueValuesZero.size !== mapPool["cs2"].length ||
+      uniqueValuesOne.size !== mapPool["valorant"].length
     ) {
       toast({ description: "Карты не должны повторяться!" });
     } else {
@@ -364,13 +359,6 @@ export default function AdminPage() {
     unchecked: { scale: 1 },
   };
 
-  // New handler for knife decider choices.
-  const handleKnifeDecider = (lobbyId: string, side: "blue" | "red") => {
-    if (socketRef.current) {
-      socketRef.current.emit("knifeDeciderChoice", { lobbyId, side });
-    }
-  };
-
   if (!cardColors) {
     return <div>Loading...</div>;
   }
@@ -432,7 +420,7 @@ export default function AdminPage() {
                       <Users className="w-4 h-4 mr-1" />
                       {lobby.members.length}
                     </Badge>
-                    {lobby.admin && (
+                    {lobby.rules.admin && (
                       <Button
                         onClick={() => handleStartGame(lobby.lobbyId)}
                         variant="outline"
@@ -447,28 +435,6 @@ export default function AdminPage() {
                 <CardContent className="p-6">
                   <ScrollArea className="h-64 pr-4">
                     <div className="space-y-4">
-                      {lobby.knifeDecider === 1 && lobby.gameStep === 6 && (
-                        <div className="flex justify-around p-2 bg-card">
-                          <Button
-                            variant="outline"
-                            className="bg-primary text-primary-foreground"
-                            onClick={() =>
-                              handleKnifeDecider(lobby.lobbyId, "blue")
-                            }
-                          >
-                            {lobby.teamNames[0][1] || "blue"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="bg-destructive text-destructive-foreground"
-                            onClick={() =>
-                              handleKnifeDecider(lobby.lobbyId, "red")
-                            }
-                          >
-                            {lobby.teamNames[1][1] || "red"}
-                          </Button>
-                        </div>
-                      )}
                       <div>
                         <h3 className="font-semibold text-foreground mb-2">
                           Teams:
@@ -493,29 +459,25 @@ export default function AdminPage() {
                       <div className="space-y-2">
                         <div className="text-sm text-foreground">
                           Game Type:{" "}
-                          {lobby.gameType === 0
+                          {lobby.rules.gameType === "BO1"
                             ? "BO1"
-                            : lobby.gameType === 1
+                            : lobby.rules.gameType === "BO3"
                               ? "BO3"
                               : "BO5"}
                         </div>
                         <div className="text-sm text-foreground">
-                          Coin Flip: {lobby.coinFlip ? "Yes" : "No"}
+                          Coin Flip: {lobby.rules.coinFlip ? "Yes" : "No"}
                         </div>
                         <div className="text-sm text-foreground">
                           Current Game Step:{" "}
-                          {lobby.mapPoolSize == 4
+                          {lobby.rules.mapPoolSize == 4
                             ? lobby.gameStep - 3
                             : lobby.gameStep}
-                          /{lobby.mapPoolSize}
+                          /{lobby.rules.mapPoolSize}
                         </div>
                         <div className="text-sm text-foreground">
                           Knife Decider:{" "}
-                          {lobby.knifeDecider === 2
-                            ? "Skip"
-                            : lobby.knifeDecider === 1
-                              ? "Manual"
-                              : "No"}
+                          {lobby.rules.knifeDecider ? "Skip" : "No"}
                         </div>
                       </div>
                       <Separator />
@@ -525,8 +487,15 @@ export default function AdminPage() {
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {lobby.picked.map((item, index) => (
-                            <Badge key={index} variant="secondary">
-                              {`${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`}
+                            <Badge 
+                              key={index} 
+                              variant="secondary"
+                              className={item.teamName === "DECIDER" ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]" : ""}
+                            >
+                              {item.side === "DECIDER"
+                                ? `${item.map} (DECIDER)`
+                                : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`
+                              }
                             </Badge>
                           ))}
                         </div>
@@ -643,7 +612,7 @@ export default function AdminPage() {
                       onClick={() => {
                         setGameType(type);
                         if (["BO1", "BO2"].includes(type)) {
-                          setLocalKnifeDecider(0);
+                          setLocalKnifeDecider(false);
                         } else {
                           setMapPoolSize(7);
                         }
@@ -682,9 +651,8 @@ export default function AdminPage() {
                     </h3>
                     <div className="flex justify-center space-x-4">
                       {[
-                        { label: "Рандом", value: 0 },
-                        { label: "Авто (пропуск)", value: 2 },
-                        { label: "Ножи вручную", value: 1 },
+                        { label: "Рандом", value: false },
+                        { label: "Авто (пропуск)", value: true },
                       ].map((option) => (
                         <Button
                           key={option.label}
@@ -752,13 +720,14 @@ export default function AdminPage() {
               </h2>
 
               {/* Информация о маппуле */}
-              {(
+              {
                 <div className="mb-4 p-3 bg-muted rounded-md text-center">
                   <p className="text-sm text-muted-foreground">
-                    Внимание! При выборе пула из 4 карт используются только первые 4 карты в списке.
+                    Внимание! При выборе пула из 4 карт используются только
+                    первые 4 карты в списке.
                   </p>
                 </div>
-              )}
+              }
 
               {/* Tabs */}
               <div className="flex border-b mb-6">
@@ -787,14 +756,14 @@ export default function AdminPage() {
               {/* CS2 Maps Tab */}
               {activeTab === 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool[0].map((value, index) => (
+                  {mapPool["cs2"].map((value, index) => (
                     <div
                       key={index}
                       className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/0/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -809,14 +778,14 @@ export default function AdminPage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, 0)
+                            handleSelectChange(index, e.target.value, "cs2")
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value="" disabled>
                             Выберите карту
                           </option>
-                          {allMapsList[0].map((refValue, refIndex) => (
+                          {allMapsList["cs2"].map((refValue, refIndex) => (
                             <option key={refIndex} value={refValue}>
                               {refValue}
                             </option>
@@ -831,14 +800,14 @@ export default function AdminPage() {
               {/* VALORANT Maps Tab */}
               {activeTab === 1 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool[1].map((value, index) => (
+                  {mapPool["valorant"].map((value, index) => (
                     <div
                       key={index}
                       className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/1/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -853,14 +822,14 @@ export default function AdminPage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, 1)
+                            handleSelectChange(index, e.target.value, "valorant")
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                           <option value="" disabled>
                             Выберите карту
                           </option>
-                          {allMapsList[1].map((refValue, refIndex) => (
+                          {allMapsList["valorant"].map((refValue, refIndex) => (
                             <option key={refIndex} value={refValue}>
                               {refValue}
                             </option>
