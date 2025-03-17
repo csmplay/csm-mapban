@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import AnimatedBanCard from "@/components/ui/ban";
 import AnimatedPickCard from "@/components/ui/pick";
 import Image from "next/image";
+import { fetchMapPool } from "@/lib/utils";
 
 // Define the CardColors interface for both ban and pick cards.
 interface CardColors {
@@ -47,13 +48,13 @@ type Lobby = {
   members: string[];
   teamNames: [string, string][];
   observers: string[];
-  picked: PickedMap[];
-  banned: BannedMap[];
+  pickedMaps: PickedMap[];
+  bannedMaps: BannedMap[];
   rules: {
     gameName: string;
     gameType: string;
     mapNames: string[];
-    gameStateList: string[];
+    mapRulesList: string[];
     coinFlip: boolean;
     admin: boolean;
     knifeDecider: boolean;
@@ -89,7 +90,9 @@ export default function AdminPage() {
   const [gameName, setGame] = useState("CS2");
   const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
   const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
-  const [sourceMapPool, setSourceMapPool] = useState<Record<string, string[]>>({});
+  const [sourceMapPool, setSourceMapPool] = useState<Record<string, string[]>>(
+    {},
+  );
   const [adminOverlay, setAdminOverlay] = useState(false);
   const [editMapPool, setEditMapPool] = useState(false);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
@@ -111,39 +114,41 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState(0);
 
+  // Define fetchMapPoolData outside of useEffect so it can be used by other functions
+  const fetchMapPoolData = async () => {
+    try {
+      const result = await fetchMapPool(backendUrl);
+      if (result.success) {
+        setMapPool(result.mapPool);
+        setAllMapsList(result.mapNamesLists);
+      }
+    } catch (error) {
+      console.error("Error in fetchMapPoolData:", error);
+    }
+  };
+
+  const fetchSourceMapPoolData = async () => {
+    try {
+      const result = await fetchMapPool(backendUrl);
+      if (result.success) {
+        setSourceMapPool(result.mapPool);
+        setAllMapsList(result.mapNamesLists);
+      }
+    } catch (error) {
+      console.error("Error in fetchSourceMapPoolData:", error);
+    }
+  };
+
   useEffect(() => {
     socketRef.current = io(backendUrl);
 
     const fetchLobbies = async () => {
       try {
         const response = await fetch(`${backendUrl}api/lobbies`);
-        const data: Lobby[] = await response.json();
+        const data = await response.json();
         setLobbies(data);
       } catch (error) {
         console.error("Error fetching lobbies:", error);
-      }
-    };
-
-    const fetchSourceMapPool = async () => {
-      try {
-        const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
-          await response.json();
-        setSourceMapPool(data.mapPool);
-        setAllMapsList(data.mapNamesLists);
-      } catch (error) {
-        console.error("Error fetching map pool:", error);
-      }
-    };
-    const fetchMapPool = async () => {
-      try {
-        const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
-          await response.json();
-        setMapPool(data.mapPool);
-        setAllMapsList(data.mapNamesLists);
-      } catch (error) {
-        console.error("Error fetching map pool:", error);
       }
     };
 
@@ -155,13 +160,13 @@ export default function AdminPage() {
 
     (async () => {
       await fetchLobbies();
-      await fetchSourceMapPool();
-      await fetchMapPool();
+      await fetchSourceMapPoolData();
+      await fetchMapPoolData();
     })();
 
     // Polling every 5 seconds to update the lobby list
     const interval = setInterval(fetchLobbies, 500);
-    const interval2 = setInterval(fetchSourceMapPool, 500);
+    const interval2 = setInterval(fetchSourceMapPoolData, 500);
 
     if (socketRef.current) {
       socketRef.current.on("lobbyDeleted", (deletedLobbyId: string) => {
@@ -196,7 +201,7 @@ export default function AdminPage() {
       setLobbies((prevLobbies) =>
         prevLobbies.filter((lobby) => lobby.lobbyId !== lobbyId),
       );
-      socketRef.current.emit("delete", lobbyId);
+      socketRef.current.emit("admin.delete", lobbyId);
     }
   };
 
@@ -222,39 +227,40 @@ export default function AdminPage() {
 
   const handleClear = (lobbyId: string) => {
     if (socketRef.current) {
-      socketRef.current.emit("clear", lobbyId);
+      socketRef.current.emit("admin.clear_obs", lobbyId);
     }
   };
 
   const handlePlayAnimation = (lobbyId: string) => {
     if (socketRef.current) {
-      socketRef.current.emit("play", lobbyId);
+      socketRef.current.emit("admin.play_obs", lobbyId);
     }
   };
 
   const handleCoinFlip = (coinFlip: boolean) => {
     if (socketRef.current) {
       setGlobalCoinFlip(coinFlip);
-      socketRef.current.emit("coinFlipUpdate", coinFlip);
+      socketRef.current.emit("admin.coinFlipUpdate", coinFlip);
     }
   };
 
   const handleStartGame = (lobbyId: string) => {
     if (socketRef.current) {
-      socketRef.current.emit("start", lobbyId);
+      socketRef.current.emit("admin.start", lobbyId);
     }
   };
 
   const handleAdminLobby = () => {
     if (socketRef.current) {
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-      socketRef.current.emit("createObsLobby", {
+      socketRef.current.emit("createFPSLobby", {
         lobbyId,
         gameName: gameName.toLowerCase(),
         gameType: gameType.toLowerCase(),
         coinFlip: localCoinFlip.current,
         knifeDecider: localKnifeDecider,
         mapPoolSize,
+        admin: true,
       });
       setAdminOverlay(false);
     }
@@ -293,7 +299,7 @@ export default function AdminPage() {
       toast({ description: "Карты не должны повторяться!" });
     } else {
       if (socketRef.current) {
-        socketRef.current.emit("editMapPool", mapPool);
+        socketRef.current.emit("admin.editFPSMapPool", mapPool);
         toast({ description: "Маппул сохранен" });
       }
     }
@@ -307,7 +313,7 @@ export default function AdminPage() {
 
   const handleResetMapPool = () => {
     if (socketRef.current) {
-      socketRef.current.emit("resetMapPool");
+      socketRef.current.emit("admin.editFPSMapPool");
       toast({ description: "Маппул сброшен" });
     }
     setEditMapPool(false);
@@ -330,7 +336,7 @@ export default function AdminPage() {
 
   const handleSaveCardColors = () => {
     if (socketRef.current && editingCardColors) {
-      socketRef.current.emit("editCardColors", editingCardColors);
+      socketRef.current.emit("admin.editCardColors", editingCardColors);
       toast({ description: "Цвета карточек сохранены" });
     }
     setEditCardColorsModal(false);
@@ -343,7 +349,7 @@ export default function AdminPage() {
 
   const handleResetCardColors = () => {
     if (socketRef.current) {
-      socketRef.current.emit("resetCardColors");
+      socketRef.current.emit("admin.editCardColors");
       toast({ description: "Цвета карточек сброшены" });
     }
     setEditCardColorsModal(false);
@@ -486,16 +492,19 @@ export default function AdminPage() {
                           Picked:
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {lobby.picked.map((item, index) => (
-                            <Badge 
-                              key={index} 
+                          {lobby.pickedMaps.map((item, index) => (
+                            <Badge
+                              key={index}
                               variant="secondary"
-                              className={item.teamName === "DECIDER" ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]" : ""}
+                              className={
+                                item.teamName === "DECIDER"
+                                  ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]"
+                                  : ""
+                              }
                             >
                               {item.side === "DECIDER"
                                 ? `${item.map} (DECIDER)`
-                                : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`
-                              }
+                                : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`}
                             </Badge>
                           ))}
                         </div>
@@ -506,7 +515,7 @@ export default function AdminPage() {
                           Banned:
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {lobby.banned.map((item, index) => (
+                          {lobby.bannedMaps.map((item, index) => (
                             <Badge key={index} variant="destructive">
                               {item.map} ({item.teamName})
                             </Badge>
@@ -822,7 +831,11 @@ export default function AdminPage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, "valorant")
+                            handleSelectChange(
+                              index,
+                              e.target.value,
+                              "valorant",
+                            )
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
@@ -1104,7 +1117,7 @@ export default function AdminPage() {
               <AnimatedBanCard
                 teamName="BAN Team"
                 mapName="Dust 2"
-                gameName="0"
+                gameName="cs2"
                 cardColors={editingCardColors.ban}
               />
             </div>
@@ -1115,7 +1128,7 @@ export default function AdminPage() {
                 teamName="PICK Team"
                 mapName="Mirage"
                 side="t"
-                gameName="0"
+                gameName="cs2"
                 cardColors={editingCardColors.pick}
               />
             </div>

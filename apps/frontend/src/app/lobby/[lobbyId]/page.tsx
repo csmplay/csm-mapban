@@ -67,7 +67,7 @@ export default function LobbyPage() {
     newSocket.on("connect", () => {
       console.log("Connected to Socket.IO server");
       if (lobbyId) {
-        newSocket.emit("joinLobby", lobbyId);
+        newSocket.emit("joinLobby", lobbyId, "member");
         console.log(`Joined lobby ${lobbyId}`);
       }
     });
@@ -164,7 +164,7 @@ export default function LobbyPage() {
       isCoin.current = isCoinVar;
     });
 
-    newSocket.on("startPick", (index: number) => {
+    newSocket.on("backend.startPick", (index: number) => {
       setPickMapId(index);
       setSelectedMapIndex(index);
       setIsWaiting(false);
@@ -205,9 +205,9 @@ export default function LobbyPage() {
     const teamName = team ? team[1] : "Spectator";
 
     if (canBan) {
-      socket.emit("ban", { lobbyId, map: mapName, teamName });
+      socket.emit("lobby.ban", { lobbyId, map: mapName, teamName });
     } else if (canPick) {
-      socket.emit("startPick", { lobbyId, teamName, selectedMapIndex });
+      socket.emit("lobby.startPick", { lobbyId, teamName, selectedMapIndex });
       setIsWaiting(true);
       return;
     }
@@ -223,7 +223,7 @@ export default function LobbyPage() {
       const team = teamNames.find(([socketId]) => socketId === socket.id);
       const teamName = team ? team[1] : "Spectator";
 
-      socket.emit("pick", { lobbyId, map: mapName, teamName, side });
+      socket.emit("lobby.pick", { lobbyId, map: mapName, teamName, side });
       // Reset selected map
       setSelectedMapIndex(null);
     }
@@ -232,7 +232,7 @@ export default function LobbyPage() {
   const handleTeamNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (socket && lobbyId && teamName) {
-      socket.emit("teamName", { lobbyId, teamName });
+      socket.emit("lobby.teamName", { lobbyId, teamName });
     }
 
     setIsWaiting(true);
@@ -407,29 +407,29 @@ export default function LobbyPage() {
                         }}
                       >
                         {pickEntry.side === "DECIDER" && (
-                        <motion.div
-                          initial={{ y: 100, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="absolute inset-0 flex items-center justify-center"
-                        >
-                          <div
-                            className={`transform text-white
-                                                        px-4 py-1 font-bold text-xl`}
-                            style={{
-                              position: "absolute",
-                              top: "80%",
-                              width: "150%",
-                              height: "150%",
-                              textAlign: "center",
-                              opacity: 0.8,
-                              backgroundColor: "#000000",
-                            }}
+                          <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 flex items-center justify-center"
                           >
-                            DECIDER
-                          </div>
-                        </motion.div>
+                            <div
+                              className={`transform text-white
+                                                        px-4 py-1 font-bold text-xl`}
+                              style={{
+                                position: "absolute",
+                                top: "80%",
+                                width: "150%",
+                                height: "150%",
+                                textAlign: "center",
+                                opacity: 0.8,
+                                backgroundColor: "#000000",
+                              }}
+                            >
+                              DECIDER
+                            </div>
+                          </motion.div>
                         )}
                         {pickEntry.side !== "DECIDER" && (
                           <>

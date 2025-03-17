@@ -26,11 +26,6 @@ export default function AnimatedPickCard({
 }: AnimatedPickCardProps) {
   const [isVisible] = useState(true);
 
-  // const replay = () => {
-  //     setIsVisible(false)
-  //     setTimeout(() => setIsVisible(true), 10)
-  // }
-
   const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
 
   return (

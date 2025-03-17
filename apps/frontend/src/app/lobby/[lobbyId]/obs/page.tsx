@@ -88,8 +88,8 @@ const LobbyObsPage = () => {
     newSocket.on("connect", () => {
       console.log("Connected to Socket.IO server");
       if (lobbyId) {
-        newSocket.emit("getPatternList", lobbyId);
-        newSocket.emit("joinLobbyObs", lobbyId);
+        newSocket.emit("obs.getPatternList", lobbyId);
+        newSocket.emit("joinLobby", lobbyId, "observer");
         console.log(`Joined lobby ${lobbyId}`);
       }
     });
@@ -125,7 +125,7 @@ const LobbyObsPage = () => {
 
     // Handle 'clear' event from the server
     // Clear all entries to wait for new pickedUpdated/bannedUpdated
-    newSocket.on("clear", () => {
+    newSocket.on("backend.clear_obs", () => {
       setPickedEntries([]);
       setBannedEntries([]);
       setVisibleActionsCount(0);

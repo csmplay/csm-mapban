@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
+import { fetchMapPool } from "@/lib/utils";
 
 // Анимационные варианты
 const overlayVariants = {
@@ -45,13 +46,36 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
   const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
   const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
-  const [defaultMapPool, setDefaultMapPool] = useState<Record<string, string[]>>({});
+  const [defaultMapPool, setDefaultMapPool] = useState<
+    Record<string, string[]>
+  >({});
   const [useCustomMapPool, setUseCustomMapPool] = useState(false);
 
   const backendUrl =
     process.env.NODE_ENV === "development"
       ? process.env.BACKEND_URL + "/" || "http://localhost:4000/"
       : "/";
+
+  // Fetch map pool data
+  const fetchMapPoolData = async () => {
+    try {
+      const result = await fetchMapPool(backendUrl);
+
+      if (result.success) {
+        setMapPool(result.mapPool);
+        setDefaultMapPool(result.mapPool);
+        setAllMapsList(result.mapNamesLists);
+      } else if (Object.keys(defaultMapPool).length > 0) {
+        // В случае ошибки используем последний известный дефолтный маппул
+        setMapPool({ ...defaultMapPool });
+      }
+    } catch (error) {
+      console.error("Error in fetchMapPoolData:", error);
+      if (Object.keys(defaultMapPool).length > 0) {
+        setMapPool({ ...defaultMapPool });
+      }
+    }
+  };
 
   useEffect(() => {
     const newSocket = io(backendUrl);
@@ -72,21 +96,8 @@ export default function HomePage() {
 
     setSocket(newSocket);
 
-    // Fetch map pool data
-    const fetchMapPool = async () => {
-      try {
-        const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
-          await response.json();
-        setMapPool(data.mapPool);
-        setDefaultMapPool(data.mapPool);
-        setAllMapsList(data.mapNamesLists);
-      } catch (error) {
-        console.error("Error fetching map pool:", error);
-      }
-    };
-
-    fetchMapPool();
+    // Fetch map pool data on initial load
+    fetchMapPoolData();
 
     return () => {
       newSocket.disconnect();
@@ -107,8 +118,8 @@ export default function HomePage() {
 
         // Create a Promise to wait for the server response
         const checkLobbyExists = new Promise((resolve, reject) => {
-          socket.emit("joinLobbyTest", lobbyId);
-          
+          socket.emit("joinLobby", lobbyId, "test");
+
           const timeoutId = setTimeout(() => {
             reject(new Error("Timeout waiting for server response"));
           }, 5000); // 5 second timeout
@@ -135,7 +146,6 @@ export default function HomePage() {
 
         await checkLobbyExists;
         router.push(`/lobby/${lobbyId}`);
-        
       } catch {
         toast({
           description: "Лобби не существует",
@@ -153,7 +163,7 @@ export default function HomePage() {
   const handleCreateLobby = () => {
     if (socket) {
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-      socket.emit("createLobby", {
+      socket.emit("createFPSLobby", {
         lobbyId,
         gameName: gameName.toLowerCase(),
         gameType: gameType.toLowerCase(),
@@ -171,18 +181,7 @@ export default function HomePage() {
   const handleOpenMapPoolEditor = async () => {
     // Если маппул не был изменен пользователем, обновляем его с сервера
     if (!useCustomMapPool) {
-      try {
-        const response = await fetch(`${backendUrl}api/mapPool`);
-        const data: { mapPool: Record<string, string[]>; mapNamesLists: Record<string, string[]> } =
-          await response.json();
-        setMapPool(data.mapPool);
-        setDefaultMapPool(data.mapPool);
-        setAllMapsList(data.mapNamesLists);
-      } catch (error) {
-        console.error("Error fetching map pool:", error);
-        // В случае ошибки используем последний известный дефолтный маппул
-        setMapPool({ ...defaultMapPool });
-      }
+      await fetchMapPoolData();
     }
 
     setShowSettingsOverlay(false);
@@ -291,7 +290,7 @@ export default function HomePage() {
                   </InputOTPGroup>
                 </InputOTP>
               </div>
-              <Button 
+              <Button
                 onClick={() => {
                   if (lobbyId.length !== 4) {
                     toast({
@@ -301,7 +300,7 @@ export default function HomePage() {
                     return;
                   }
                   handleJoinLobby();
-                }} 
+                }}
                 className={`w-full ${lobbyId.length !== 4 ? "opacity-50" : ""}`}
               >
                 Присоединиться к лобби
@@ -488,13 +487,14 @@ export default function HomePage() {
               </h2>
 
               {/* Информация о маппуле */}
-              {(
+              {
                 <div className="mb-4 p-3 bg-muted rounded-md text-center">
                   <p className="text-sm text-muted-foreground">
-                    Внимание! При выборе пула из 4 карт используются только первые 4 карты в списке.
+                    Внимание! При выборе пула из 4 карт используются только
+                    первые 4 карты в списке.
                   </p>
                 </div>
-              )}
+              }
 
               {/* Вкладки */}
               <div className="flex border-b mb-6">
@@ -589,7 +589,11 @@ export default function HomePage() {
                         <select
                           value={value}
                           onChange={(e) =>
-                            handleSelectChange(index, e.target.value, "valorant")
+                            handleSelectChange(
+                              index,
+                              e.target.value,
+                              "valorant",
+                            )
                           }
                           className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
