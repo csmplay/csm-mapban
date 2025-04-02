@@ -14,6 +14,11 @@ export interface AnimatedPickCardProps {
     bg: string[]; // [bg1, bg2, bg3, bg4]
   };
   decider?: boolean;
+  isMode?: boolean;
+  mode?: {
+    mode: string;
+    translatedMode: string;
+  }
 }
 
 export default function AnimatedPickCard({
@@ -23,10 +28,13 @@ export default function AnimatedPickCard({
   side,
   cardColors,
   decider = false,
+  isMode = false,
+  mode,
 }: AnimatedPickCardProps) {
   const [isVisible] = useState(true);
 
   const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
+  const mapNameTextSize = mapName.length > 12 ? "text-2xl" : "text-3xl";
 
   return (
     <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
@@ -74,7 +82,7 @@ export default function AnimatedPickCard({
                   }}
                   className="pr-6"
                 >
-                  {!decider && (
+                  {!decider && !isMode && gameName !== "splatoon" && (
                     <Image
                       src={`/${gameName}/${side}_white.png`}
                       alt={side}
@@ -98,18 +106,34 @@ export default function AnimatedPickCard({
               style={{ backgroundColor: cardColors.bg[1], originY: 1 }}
               className="absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden"
             >
-              <Image
-                src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
-                alt={mapName}
-                draggable={false}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                style={{
-                  objectFit: "cover",
-                  clipPath:
-                    "polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)",
-                }}
-              />
+              {isMode ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Image
+                    src={`/${gameName}/modes/${mode?.mode.toLowerCase()}.png`}
+                    alt={mode?.translatedMode || ""}
+                    draggable={false}
+                    width={220}
+                    height={220}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    style={{
+                      objectFit: "cover"
+                    }}
+                  />
+                </div>
+              ) : (
+                <Image
+                  src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
+                  alt={mapName}
+                  draggable={false}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  style={{
+                    objectFit: "cover",
+                    clipPath:
+                      "polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)",
+                  }}
+                />
+              )}
             </motion.div>
 
             {/* Bottom Info Section */}
@@ -139,7 +163,7 @@ export default function AnimatedPickCard({
                   style={{ color: cardColors.text[1] }}
                   className="text-4xl font-bold"
                 >
-                  {decider ? "DECIDER" : "PICK"}
+                  {decider ? "DECIDER" : isMode ? "MODE" : "PICK"}
                 </motion.div>
                 <div
                   style={{ backgroundColor: cardColors.bg[3] }}
@@ -151,9 +175,9 @@ export default function AnimatedPickCard({
                     visible: { y: 0, opacity: 1 },
                   }}
                   style={{ color: cardColors.text[2] }}
-                  className="text-3xl font-bold pt-1"
+                  className={`${mapNameTextSize} font-bold pt-1`}
                 >
-                  {mapName}
+                  {isMode ? mode?.translatedMode : mapName}
                 </motion.div>
               </motion.div>
             </motion.div>

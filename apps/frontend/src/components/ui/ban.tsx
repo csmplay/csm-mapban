@@ -23,6 +23,7 @@ export default function AnimatedBanCard({
   const [isVisible] = useState(true);
 
   const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
+  const mapNameTextSize = mapName.length > 12 ? "text-2xl" : "text-3xl";
 
   return (
     <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
@@ -58,7 +59,7 @@ export default function AnimatedBanCard({
               className="absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden"
             >
               <Image
-                src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
                 alt={mapName}
                 draggable={false}
                 fill
@@ -110,7 +111,7 @@ export default function AnimatedBanCard({
                     visible: { y: 0, opacity: 1 },
                   }}
                   style={{ color: cardColors.text[2] }}
-                  className="text-3xl font-bold pt-1"
+                  className={`${mapNameTextSize} font-bold pt-1`}
                 >
                   {mapName}
                 </motion.div>
