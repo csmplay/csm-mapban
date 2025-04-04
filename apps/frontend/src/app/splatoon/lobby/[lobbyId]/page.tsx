@@ -1102,7 +1102,7 @@ export default function SplatoonLobbyPage() {
 
       {/* Winner Confirmation Overlay */}
       <AnimatePresence>
-        {showWinnerConfirmOverlay && pendingWinner && reportingTeam && (
+        {showWinnerConfirmOverlay && pendingWinner && reportingTeam && reportingTeam !== teamName && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
