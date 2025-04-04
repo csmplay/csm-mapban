@@ -104,6 +104,13 @@ export default function HomePage() {
     };
   }, [backendUrl, router, toast]);
 
+  // Update game type when game changes
+  useEffect(() => {
+    if (gameName === "Splatoon") {
+      setGameType("BO3");
+    }
+  }, [gameName]);
+
   const handleJoinLobby = async () => {
     if (lobbyId && lobbyId.length === 4) {
       try {
@@ -118,13 +125,13 @@ export default function HomePage() {
 
         // Create a Promise to wait for the server response
         const checkLobbyExists = new Promise((resolve, reject) => {
-          socket.emit("joinLobby", lobbyId, "test");
+          socket.emit("getLobbyGameCategory", lobbyId);
 
           const timeoutId = setTimeout(() => {
             reject(new Error("Timeout waiting for server response"));
           }, 5000); // 5 second timeout
 
-          const handleLobbyUndefined = () => {
+          const handleLobbyNotFound = () => {
             clearTimeout(timeoutId);
             reject(new Error("Lobby does not exist"));
           };
@@ -134,13 +141,13 @@ export default function HomePage() {
             resolve(true);
           };
 
-          socket.once("lobbyUndefined", handleLobbyUndefined);
-          socket.once("lobbyExists", handleSuccess); // This event is emitted when successfully joining a lobby
+          socket.once("lobbyNotFound", handleLobbyNotFound);
+          socket.once("lobbyGameCategory", handleSuccess);
 
           // Cleanup listeners
           setTimeout(() => {
-            socket.off("lobbyUndefined", handleLobbyUndefined);
-            socket.off("mapNames", handleSuccess);
+            socket.off("lobbyNotFound", handleLobbyNotFound);
+            socket.off("lobbyGameCategory", handleSuccess);
           }, 5000);
         });
 
@@ -162,18 +169,38 @@ export default function HomePage() {
 
   const handleCreateLobby = () => {
     if (socket) {
-      const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-      socket.emit("createFPSLobby", {
-        lobbyId,
-        gameName: gameName.toLowerCase(),
-        gameType: gameType.toLowerCase(),
-        knifeDecider: localKnifeDecider,
-        mapPoolSize,
-        customMapPool: useCustomMapPool ? mapPool : null,
-      });
+      const lobbyId = Math.floor(1000 + Math.random() * 9000).toString();
 
-      setShowSettingsOverlay(false);
-      router.push(`/lobby/${lobbyId}`);
+      if (gameName === "Splatoon") {
+        // Create Splatoon lobby
+        socket.emit("createSplatoonLobby", {
+          lobbyId,
+          gameType: gameType.toLowerCase(),
+          admin: false,
+        });
+
+        // Wait for lobby creation confirmation before redirecting
+        socket.once("lobbyCreated", () => {
+          setShowSettingsOverlay(false);
+          router.push(`/lobby/${lobbyId}`);
+        });
+      } else {
+        // Create FPS lobby (CS2 or Valorant)
+        socket.emit("createFPSLobby", {
+          lobbyId,
+          gameName: gameName.toLowerCase(),
+          gameType: gameType.toLowerCase(),
+          knifeDecider: localKnifeDecider,
+          mapPoolSize,
+          customMapPool: useCustomMapPool ? mapPool : null,
+        });
+
+        // Wait for lobby creation confirmation before redirecting
+        socket.once("lobbyCreated", () => {
+          setShowSettingsOverlay(false);
+          router.push(`/fps/lobby/${lobbyId}`);
+        });
+      }
     }
   };
 
@@ -349,22 +376,24 @@ export default function HomePage() {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
                 <div className="flex justify-center space-x-4">
-                  {["CS2", "Valorant"].map((game) => (
+                  {["CS2", "Valorant", "Splatoon"].map((game) => (
                     <Button
                       key={game}
                       variant={gameName === game ? "default" : "outline"}
                       onClick={() => setGame(game)}
-                      className="w-20"
+                      className={game === "Splatoon" ? "w-24" : "w-20"}
                     >
                       {game}
                     </Button>
                   ))}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Формат игры
-                </h3>
+                {gameName !== "Splatoon" && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Формат игры
+                    </h3>
                 <div className="flex justify-center space-x-4">
-                  {["BO1", "BO2", "BO3", "BO5"].map((type) => (
+                  {(["BO1", "BO2", "BO3", "BO5"]).map((type) => (
                     <Button
                       key={type}
                       variant={gameType === type ? "default" : "outline"}
@@ -379,71 +408,79 @@ export default function HomePage() {
                       className="w-20"
                     >
                       {type}
-                    </Button>
-                  ))}
-                </div>
+                      </Button>
+                    ))}
+                  </div>
+                </>
+                )}
 
                 {/* Отображаем размер маппула только для BO1 и BO2 */}
-                {["BO1", "BO2"].includes(gameType) && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-2 text-center">
-                      Размер маппула
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      {[4, 7].map((size) => (
-                        <Button
-                          key={size}
-                          variant={mapPoolSize === size ? "default" : "outline"}
-                          onClick={() => setMapPoolSize(size)}
-                          className="w-20"
-                        >
-                          {size} карт
-                        </Button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                {["BO1", "BO2"].includes(gameType) &&
+                  gameName !== "Splatoon" && (
+                    <>
+                      <h3 className="text-lg font-semibold mb-2 text-center">
+                        Размер маппула
+                      </h3>
+                      <div className="flex justify-center space-x-4">
+                        {[4, 7].map((size) => (
+                          <Button
+                            key={size}
+                            variant={
+                              mapPoolSize === size ? "default" : "outline"
+                            }
+                            onClick={() => setMapPoolSize(size)}
+                            className="w-20"
+                          >
+                            {size} карт
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
                 {/* Отображаем десайдер только для BO3 и BO5 */}
-                {["BO3", "BO5"].includes(gameType) && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-2 text-center">
-                      Десайдер
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      {[
-                        { label: "Рандом", value: false },
-                        { label: "Авто (пропуск)", value: true },
-                      ].map((option) => (
-                        <Button
-                          key={option.label}
-                          variant={
-                            localKnifeDecider === option.value
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() => setLocalKnifeDecider(option.value)}
-                          className="w-30"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                {["BO3", "BO5"].includes(gameType) &&
+                  gameName !== "Splatoon" && (
+                    <>
+                      <h3 className="text-lg font-semibold mb-2 text-center">
+                        Десайдер
+                      </h3>
+                      <div className="flex justify-center space-x-4">
+                        {[
+                          { label: "Рандом", value: false },
+                          { label: "Авто (пропуск)", value: true },
+                        ].map((option) => (
+                          <Button
+                            key={option.label}
+                            variant={
+                              localKnifeDecider === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() => setLocalKnifeDecider(option.value)}
+                            className="w-30"
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
 
-                {/* Кнопка редактирования маппула */}
-                <div className="flex justify-center mt-4">
-                  <Button
-                    onClick={handleOpenMapPoolEditor}
-                    variant={useCustomMapPool ? "default" : "outline"}
-                    className="w-full"
-                  >
-                    {useCustomMapPool
-                      ? "Маппул изменен ✓"
-                      : "Редактировать маппул"}
-                  </Button>
-                </div>
+                {/* Кнопка редактирования маппула - только для FPS */}
+                {gameName !== "Splatoon" && (
+                  <div className="flex justify-center mt-4">
+                    <Button
+                      onClick={handleOpenMapPoolEditor}
+                      variant={useCustomMapPool ? "default" : "outline"}
+                      className="w-full"
+                    >
+                      {useCustomMapPool
+                        ? "Маппул изменен ✓"
+                        : "Редактировать маппул"}
+                    </Button>
+                  </div>
+                )}
 
                 <div className="flex justify-between mt-8">
                   <Button

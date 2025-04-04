@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import {
   Card,
@@ -59,8 +59,15 @@ type Lobby = {
     admin: boolean;
     knifeDecider: boolean;
     mapPoolSize: number;
+    roundNumber?: number;
   };
   gameStep: number;
+  pickedMode?: { mode: string; teamName: string };
+  roundHistory?: {
+    roundNumber: number;
+    pickedMaps: PickedMap[];
+    pickedMode?: { mode: string; teamName: string };
+  }[];
 };
 
 const AnimatedCheckbox = motion.create(Checkbox);
@@ -114,8 +121,15 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  // Define fetchMapPoolData outside of useEffect so it can be used by other functions
-  const fetchMapPoolData = async () => {
+  // Update game type when game changes
+  useEffect(() => {
+    if (gameName === "Splatoon") {
+      setGameType("BO3");
+    }
+  }, [gameName]);
+
+  // Define fetchMapPoolData using useCallback to avoid recreating it on every render
+  const fetchMapPoolData = useCallback(async () => {
     try {
       const result = await fetchMapPool(backendUrl);
       if (result.success) {
@@ -125,9 +139,9 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Error in fetchMapPoolData:", error);
     }
-  };
+  }, [backendUrl]);
 
-  const fetchSourceMapPoolData = async () => {
+  const fetchSourceMapPoolData = useCallback(async () => {
     try {
       const result = await fetchMapPool(backendUrl);
       if (result.success) {
@@ -137,7 +151,7 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Error in fetchSourceMapPoolData:", error);
     }
-  };
+  }, [backendUrl]);
 
   useEffect(() => {
     socketRef.current = io(backendUrl);
@@ -169,35 +183,60 @@ export default function AdminPage() {
     const interval2 = setInterval(fetchSourceMapPoolData, 500);
 
     if (socketRef.current) {
-      socketRef.current.on("lobbyDeleted", (deletedLobbyId: string) => {
+      // Define the event handlers to be able to remove them later
+      const handleLobbyDeleted = (deletedLobbyId: string) => {
         setLobbies((prevLobbies) =>
           prevLobbies.filter((lobby) => lobby.lobbyId !== deletedLobbyId),
         );
-      });
+      };
 
-      // Listen for card colors updates with proper type.
-      socketRef.current.on("cardColorsUpdated", (newCardColors: CardColors) => {
+      const handleCardColorsUpdated = (newCardColors: CardColors) => {
         setCardColors(newCardColors);
-      });
+      };
 
-      socketRef.current.on("lobbyCreationError", (errorMessage: string) => {
+      const handleCoinFlipUpdated = (newCoinFlip: boolean) => {
+        setGlobalCoinFlip(newCoinFlip);
+      };
+
+      const handleLobbyCreationError = (errorMessage: string) => {
         toast({
           title: "Ошибка создания лобби",
           description: errorMessage,
           variant: "destructive",
         });
-      });
+      };
+
+      // Add the event listeners
+      socketRef.current.on("lobbyDeleted", handleLobbyDeleted);
+      socketRef.current.on("cardColorsUpdated", handleCardColorsUpdated);
+      socketRef.current.on("coinFlipUpdated", handleCoinFlipUpdated);
+      socketRef.current.on("lobbyCreationError", handleLobbyCreationError);
+
+      // Clean up function to remove event listeners
+      return () => {
+        clearInterval(interval);
+        clearInterval(interval2);
+        if (socketRef.current) {
+          socketRef.current.off("lobbyDeleted", handleLobbyDeleted);
+          socketRef.current.off("cardColorsUpdated", handleCardColorsUpdated);
+          socketRef.current.off("coinFlipUpdated", handleCoinFlipUpdated);
+          socketRef.current.off("lobbyCreationError", handleLobbyCreationError);
+          socketRef.current.disconnect();
+        }
+      };
     }
 
     return () => {
       clearInterval(interval);
       clearInterval(interval2);
-      socketRef.current?.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
     };
-  }, [backendUrl, toast]);
+  }, [backendUrl, toast, fetchMapPoolData, fetchSourceMapPoolData]);
 
   const handleDeleteLobby = (lobbyId: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       setLobbies((prevLobbies) =>
         prevLobbies.filter((lobby) => lobby.lobbyId !== lobbyId),
       );
@@ -206,7 +245,10 @@ export default function AdminPage() {
   };
 
   const handleCopyLink = (lobbyId: string) => {
-    const lobbyUrl = `${window.origin}/lobby/${lobbyId}/obs`;
+    const lobby = lobbies.find(l => l.lobbyId === lobbyId);
+    if (!lobby) return;
+    const gameCategory = lobby.rules.gameName.toLowerCase() === "splatoon" ? "splatoon" : "fps";
+    const lobbyUrl = `${window.origin}/${gameCategory}/lobby/${lobbyId}/obs`;
     navigator.clipboard.writeText(lobbyUrl).then(
       () => {
         toast({
@@ -226,42 +268,54 @@ export default function AdminPage() {
   };
 
   const handleClear = (lobbyId: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.clear_obs", lobbyId);
     }
   };
 
   const handlePlayAnimation = (lobbyId: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.play_obs", lobbyId);
     }
   };
 
   const handleCoinFlip = (coinFlip: boolean) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       setGlobalCoinFlip(coinFlip);
       socketRef.current.emit("admin.coinFlipUpdate", coinFlip);
     }
   };
 
   const handleStartGame = (lobbyId: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.start", lobbyId);
     }
   };
 
   const handleAdminLobby = () => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-      socketRef.current.emit("createFPSLobby", {
-        lobbyId,
-        gameName: gameName.toLowerCase(),
-        gameType: gameType.toLowerCase(),
-        coinFlip: localCoinFlip.current,
-        knifeDecider: localKnifeDecider,
-        mapPoolSize,
-        admin: true,
-      });
+      
+      if (gameName === "Splatoon") {
+        // Create Splatoon lobby
+        socketRef.current.emit("createSplatoonLobby", {
+          lobbyId,
+          gameType: "bo3", // Default game type for Splatoon
+          coinFlip: localCoinFlip.current,
+          admin: true,
+        });
+      } else {
+        // Create FPS lobby (CS2 or Valorant)
+        socketRef.current.emit("createFPSLobby", {
+          lobbyId,
+          gameName: gameName.toLowerCase(),
+          gameType: gameType.toLowerCase(),
+          coinFlip: localCoinFlip.current,
+          knifeDecider: localKnifeDecider,
+          mapPoolSize,
+          admin: true,
+        });
+      }
       setAdminOverlay(false);
     }
   };
@@ -298,7 +352,7 @@ export default function AdminPage() {
     ) {
       toast({ description: "Карты не должны повторяться!" });
     } else {
-      if (socketRef.current) {
+      if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit("admin.editFPSMapPool", mapPool);
         toast({ description: "Маппул сохранен" });
       }
@@ -312,7 +366,7 @@ export default function AdminPage() {
   };
 
   const handleResetMapPool = () => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.editFPSMapPool");
       toast({ description: "Маппул сброшен" });
     }
@@ -335,7 +389,7 @@ export default function AdminPage() {
   };
 
   const handleSaveCardColors = () => {
-    if (socketRef.current && editingCardColors) {
+    if (socketRef.current && socketRef.current.connected && editingCardColors) {
       socketRef.current.emit("admin.editCardColors", editingCardColors);
       toast({ description: "Цвета карточек сохранены" });
     }
@@ -348,7 +402,7 @@ export default function AdminPage() {
   };
 
   const handleResetCardColors = () => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.editCardColors");
       toast({ description: "Цвета карточек сброшены" });
     }
@@ -418,7 +472,12 @@ export default function AdminPage() {
               >
                 <CardHeader className="bg-card border-b">
                   <CardTitle className="text-xl text-foreground flex items-center justify-between">
-                    <span className="truncate">Lobby: {lobby.lobbyId}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate">Lobby: {lobby.lobbyId}</span>
+                      <Badge variant="outline" className="ml-2">
+                        {lobby.rules.gameName.toUpperCase()}
+                      </Badge>
+                    </div>
                     <Badge
                       variant="secondary"
                       className="ml-2 flex items-center"
@@ -482,8 +541,14 @@ export default function AdminPage() {
                           /{lobby.rules.mapPoolSize}
                         </div>
                         <div className="text-sm text-foreground">
-                          Knife Decider:{" "}
-                          {lobby.rules.knifeDecider ? "Skip" : "No"}
+                          {lobby.rules.gameName.toLowerCase() === "splatoon" ? (
+                            <>Round Number: {lobby.rules.roundNumber || 0}</>
+                          ) : (
+                            <>
+                              Knife Decider:{" "}
+                              {lobby.rules.knifeDecider ? "Skip" : "No"}
+                            </>
+                          )}
                         </div>
                       </div>
                       <Separator />
@@ -492,21 +557,56 @@ export default function AdminPage() {
                           Picked:
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {lobby.pickedMaps.map((item, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className={
-                                item.teamName === "DECIDER"
-                                  ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]"
-                                  : ""
-                              }
-                            >
-                              {item.side === "DECIDER"
-                                ? `${item.map} (DECIDER)`
-                                : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side.toUpperCase()}`}
-                            </Badge>
-                          ))}
+                          {lobby.rules.gameName.toLowerCase() === "splatoon" &&
+                          lobby.roundHistory ? (
+                            <>
+                              {lobby.roundHistory.map((round, roundIndex) => (
+                                <div key={roundIndex} className="w-full">
+                                  <div className="text-sm font-medium text-muted-foreground mb-1">
+                                    Round {round.roundNumber}
+                                    {round.pickedMode &&
+                                      ` - ${round.pickedMode.mode.toUpperCase()}`}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {round.pickedMaps.map((item, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className={
+                                          item.teamName === "DECIDER"
+                                            ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]"
+                                            : ""
+                                        }
+                                      >
+                                        {item.map} ({item.teamName})
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              {lobby.pickedMaps.map((item, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className={
+                                    item.teamName === "DECIDER"
+                                      ? "bg-[#0A1A2F] hover:bg-[#0F2A4F]"
+                                      : ""
+                                  }
+                                >
+                                  {item?.side === "DECIDER"
+                                    ? `${item.map} (DECIDER)`
+                                    : lobby.rules.gameName.toLowerCase() ===
+                                        "splatoon"
+                                      ? `${item.map} (${item.teamName}), ${lobby.pickedMode?.mode.toUpperCase() || ""}`
+                                      : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side?.toUpperCase()}`}
+                                </Badge>
+                              ))}
+                            </>
+                          )}
                         </div>
                       </div>
                       <Separator />
@@ -599,7 +699,7 @@ export default function AdminPage() {
               <div className="space-y-6">
                 <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
                 <div className="flex justify-center space-x-4">
-                  {["CS2", "Valorant"].map((game) => (
+                  {["CS2", "Valorant", "Splatoon"].map((game) => (
                     <Button
                       key={game}
                       variant={gameName === game ? "default" : "outline"}
@@ -610,30 +710,36 @@ export default function AdminPage() {
                     </Button>
                   ))}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-center">
-                  Формат игры
-                </h3>
-                <div className="flex justify-center space-x-4">
-                  {["BO1", "BO2", "BO3", "BO5"].map((type) => (
-                    <Button
-                      key={type}
-                      variant={gameType === type ? "default" : "outline"}
-                      onClick={() => {
-                        setGameType(type);
-                        if (["BO1", "BO2"].includes(type)) {
-                          setLocalKnifeDecider(false);
-                        } else {
-                          setMapPoolSize(7);
-                        }
-                      }}
-                      className="w-20"
-                    >
-                      {type}
-                    </Button>
-                  ))}
-                </div>
+                
+                {gameName !== "Splatoon" && (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2 text-center">
+                      Формат игры
+                    </h3>
+                    <div className="flex justify-center space-x-4">
+                      {["BO1", "BO2", "BO3", "BO5"].map((type) => (
+                        <Button
+                          key={type}
+                          variant={gameType === type ? "default" : "outline"}
+                          onClick={() => {
+                            setGameType(type);
+                            if (["BO1", "BO2"].includes(type)) {
+                              setLocalKnifeDecider(false);
+                            } else {
+                              setMapPoolSize(7);
+                            }
+                          }}
+                          className="w-20"
+                        >
+                          {type}
+                        </Button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                
                 {/* Отображаем размер маппула только для BO1 и BO2 */}
-                {["BO1", "BO2"].includes(gameType) && (
+                {["BO1", "BO2"].includes(gameType) && gameName !== "Splatoon" && (
                   <>
                     <h3 className="text-lg font-semibold mb-2 text-center">
                       Размер маппула
@@ -653,7 +759,7 @@ export default function AdminPage() {
                   </>
                 )}
                 {/* Отображаем десайдер только для BO3 и BO5 */}
-                {["BO3", "BO5"].includes(gameType) && (
+                {["BO3", "BO5"].includes(gameType) && gameName !== "Splatoon" && (
                   <>
                     <h3 className="text-lg font-semibold mb-2 text-center">
                       Десайдер

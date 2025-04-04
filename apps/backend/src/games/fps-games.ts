@@ -5,10 +5,12 @@ export type GameName = "cs2" | "valorant";
 
 // FPS specific lobby interface
 export interface Lobby extends BaseLobby {
-  pickedMaps: Array<BaseLobby["pickedMaps"][number] & {
-    side: string;
-    sideTeamName: string;
-  }>; // Array of picked maps
+  pickedMaps: Array<
+    BaseLobby["pickedMaps"][number] & {
+      side: string;
+      sideTeamName: string;
+    }
+  >; // Array of picked maps
   rules: BaseLobby["rules"] & {
     gameName: GameName;
     mapNames: Array<string>; // Array of this lobby mappool
