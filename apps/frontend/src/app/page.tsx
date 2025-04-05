@@ -392,26 +392,26 @@ export default function HomePage() {
                     <h3 className="text-lg font-semibold mb-2 text-center">
                       Формат игры
                     </h3>
-                <div className="flex justify-center space-x-4">
-                  {(["BO1", "BO2", "BO3", "BO5"]).map((type) => (
-                    <Button
-                      key={type}
-                      variant={gameType === type ? "default" : "outline"}
-                      onClick={() => {
-                        setGameType(type);
-                        if (["BO1", "BO2"].includes(type)) {
-                          setLocalKnifeDecider(false);
-                        } else if (["BO3", "BO5"].includes(type)) {
-                          setMapPoolSize(7);
-                        }
-                      }}
-                      className="w-20"
-                    >
-                      {type}
-                      </Button>
-                    ))}
-                  </div>
-                </>
+                    <div className="flex justify-center space-x-4">
+                      {["BO1", "BO2", "BO3", "BO5"].map((type) => (
+                        <Button
+                          key={type}
+                          variant={gameType === type ? "default" : "outline"}
+                          onClick={() => {
+                            setGameType(type);
+                            if (["BO1", "BO2"].includes(type)) {
+                              setLocalKnifeDecider(false);
+                            } else if (["BO3", "BO5"].includes(type)) {
+                              setMapPoolSize(7);
+                            }
+                          }}
+                          className="w-20"
+                        >
+                          {type}
+                        </Button>
+                      ))}
+                    </div>
+                  </>
                 )}
 
                 {/* Отображаем размер маппула только для BO1 и BO2 */}

@@ -22,7 +22,7 @@ interface PickAction {
   mode?: {
     mode: string;
     translatedMode: string;
-  }
+  };
 }
 
 type Action = BanAction | PickAction;
@@ -39,8 +39,8 @@ interface CardColors {
 }
 
 const ObsPage = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [selectedLobbyId, setSelectedLobbyId] = useState<string | null>(null);
+  const [, setSocket] = useState<Socket | null>(null);
+  const [, setSelectedLobbyId] = useState<string | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
     {
@@ -55,7 +55,11 @@ const ObsPage = () => {
     { map: string; teamName: string }[]
   >([]);
   const [pattern, setPattern] = useState<string[]>([]);
-  const [pickedMode, setPickedMode] = useState<{ mode: string; teamName: string; translatedMode: string } | null>(null);
+  const [pickedMode, setPickedMode] = useState<{
+    mode: string;
+    teamName: string;
+    translatedMode: string;
+  } | null>(null);
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
   const [gameName, setGameName] = useState<string>("0");
   const [cardColors, setCardColors] = useState<CardColors>({
@@ -104,14 +108,14 @@ const ObsPage = () => {
     newSocket.on("admin.setObsLobby", (lobbyId: string) => {
       console.log("Received admin.setObsLobby event with lobby:", lobbyId);
       setSelectedLobbyId(lobbyId);
-      
+
       // Clear current state
       setPickedEntries([]);
       setBannedEntries([]);
       setVisibleActionsCount(0);
       setPickedMode(null);
       setPattern([]); // Clear pattern before joining new lobby
-      
+
       // Join the new lobby and get pattern list
       if (lobbyId) {
         console.log("Joining lobby as observer:", lobbyId);
@@ -155,14 +159,17 @@ const ObsPage = () => {
       setPattern(pattern);
     });
 
-    newSocket.on("modePicked", (data: { mode: string; teamName: string; translatedMode: string }) => {
-      console.log("Mode picked:", data);
-      setPickedMode(data);
-      // Reset the OBS view when a mode is picked
-      setPickedEntries([]);
-      setBannedEntries([]);
-      setVisibleActionsCount(0);
-    });
+    newSocket.on(
+      "modePicked",
+      (data: { mode: string; teamName: string; translatedMode: string }) => {
+        console.log("Mode picked:", data);
+        setPickedMode(data);
+        // Reset the OBS view when a mode is picked
+        setPickedEntries([]);
+        setBannedEntries([]);
+        setVisibleActionsCount(0);
+      },
+    );
 
     // Handle 'clear' event from the server
     newSocket.on("backend.clear_obs", () => {
@@ -185,7 +192,7 @@ const ObsPage = () => {
       pattern,
       bannedEntries,
       pickedEntries,
-      pickedMode
+      pickedMode,
     });
 
     if (pattern.length === 0) {
@@ -208,14 +215,15 @@ const ObsPage = () => {
         isMode: true,
         mode: {
           mode: pickedMode.mode,
-          translatedMode: pickedMode.translatedMode
+          translatedMode: pickedMode.translatedMode,
         },
       });
     }
 
     // Process each step in the pattern exactly as defined
     pattern.forEach((step) => {
-      if (step === "ban") {  // Only handle regular bans, ignore mode_ban
+      if (step === "ban") {
+        // Only handle regular bans, ignore mode_ban
         const banEntry = bannedCopy.shift();
         if (banEntry) {
           finalActions.push({
@@ -224,7 +232,8 @@ const ObsPage = () => {
             mapName: banEntry.map,
           });
         }
-      } else if (step === "pick" || step === "decider") {  // Only handle regular picks and deciders
+      } else if (step === "pick" || step === "decider") {
+        // Only handle regular picks and deciders
         const pickEntry = pickedCopy.shift();
         if (pickEntry) {
           finalActions.push({
@@ -247,7 +256,7 @@ const ObsPage = () => {
   useEffect(() => {
     console.log("Actions visibility effect:", {
       actionsLength: actions.length,
-      visibleActionsCount
+      visibleActionsCount,
     });
 
     // If the new actions array is shorter than what we have revealed, it's a reset scenario
@@ -293,6 +302,7 @@ const ObsPage = () => {
               <AnimatedPickCard
                 key={index}
                 teamName={action.teamName}
+                sideTeamName={action.sideTeamName}
                 mapName={action.mapName}
                 gameName={gameName}
                 side={action.side}
@@ -311,4 +321,4 @@ const ObsPage = () => {
   );
 };
 
-export default ObsPage; 
+export default ObsPage;

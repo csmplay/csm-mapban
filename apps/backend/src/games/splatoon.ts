@@ -138,11 +138,7 @@ export const gameRules: Record<GameType, GameTypeRules> = {
           { action: "ban", count: 1, team: "non-priority" },
           { action: "pick", count: 1, team: "priority" },
         ],
-        rules: [
-          "mode_ban",
-          "mode_ban",
-          "mode_pick",
-        ],
+        rules: ["mode_ban", "mode_ban", "mode_pick"],
       },
       maps: {
         steps: [
@@ -150,14 +146,7 @@ export const gameRules: Record<GameType, GameTypeRules> = {
           { action: "ban", count: 3, team: "non-priority" },
           { action: "pick", count: 1, team: "priority" },
         ],
-        rules: [
-          "ban",
-          "ban",
-          "ban",
-          "ban",
-          "ban",
-          "pick",
-        ],
+        rules: ["ban", "ban", "ban", "ban", "ban", "pick"],
       },
     },
     subsequent: {
@@ -166,22 +155,14 @@ export const gameRules: Record<GameType, GameTypeRules> = {
           { action: "ban", count: 1, team: "winner" },
           { action: "pick", count: 1, team: "loser" },
         ],
-        rules: [
-          "mode_ban",
-          "mode_pick",
-        ],
+        rules: ["mode_ban", "mode_pick"],
       },
       maps: {
         steps: [
           { action: "ban", count: 3, team: "winner" },
           { action: "pick", count: 1, team: "loser" },
         ],
-        rules: [
-          "ban",
-          "ban",
-          "ban",
-          "pick",
-        ],
+        rules: ["ban", "ban", "ban", "pick"],
       },
     },
   },
@@ -497,17 +478,6 @@ export function handleModePick(
     `${teamName} выбрали режим ${translatedMode}`,
   );
 
-  // Find the winning team's socket ID
-  let winningTeamSocketId = "";
-  let winningTeamName = "";
-  for (const [socketId, team] of lobby.teamNames.entries()) {
-    if (team === lobby.rules.lastWinner) {
-      winningTeamSocketId = socketId;
-      winningTeamName = team;
-      break;
-    }
-  }
-
   // Disable all controls first
   io.to(lobbyId).emit("canWorkUpdated", false);
   io.to(lobbyId).emit("canModeBan", false);
@@ -519,11 +489,9 @@ export function handleModePick(
   if (lobby.rules.roundNumber > 1) {
     // Find the winning team's socket ID
     let winningTeamSocketId = "";
-    let winningTeamName = "";
     for (const [socketId, team] of lobby.teamNames.entries()) {
       if (team === lobby.rules.lastWinner) {
         winningTeamSocketId = socketId;
-        winningTeamName = team;
         break;
       }
     }

@@ -9,6 +9,7 @@ export interface AnimatedPickCardProps {
   mapName: string;
   gameName: string;
   side: string;
+  sideTeamName?: string;
   cardColors: {
     text: string[]; // [text1, text2, text3]
     bg: string[]; // [bg1, bg2, bg3, bg4]
@@ -18,7 +19,7 @@ export interface AnimatedPickCardProps {
   mode?: {
     mode: string;
     translatedMode: string;
-  }
+  };
 }
 
 export default function AnimatedPickCard({
@@ -26,6 +27,7 @@ export default function AnimatedPickCard({
   mapName,
   gameName,
   side,
+  sideTeamName,
   cardColors,
   decider = false,
   isMode = false,
@@ -73,7 +75,7 @@ export default function AnimatedPickCard({
                   style={{ color: cardColors.text[0] }}
                   className={`${teamTextSize} font-bold block text-center pt-3`}
                 >
-                  {teamName}
+                  {sideTeamName}
                 </motion.div>
                 <motion.div
                   variants={{
@@ -116,7 +118,7 @@ export default function AnimatedPickCard({
                     height={220}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     style={{
-                      objectFit: "cover"
+                      objectFit: "cover",
                     }}
                   />
                 </div>

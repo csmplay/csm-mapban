@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useRouter, useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ActionLog } from "@/components/ui/ActionLog";
-import { ArrowLeft, Copy, Trophy, Eye } from "lucide-react";
+import { ArrowLeft, Copy, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -29,7 +35,10 @@ const getModeImagePath = (modeName: string): string => {
 
 // Map images by name
 const getMapImagePath = (mapName: string): string => {
-  const filename = mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "");
+  const filename = mapName
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/["«»]/g, "");
   return `/splatoon/maps/${filename}.jpg`;
 };
 
@@ -39,7 +48,6 @@ export default function SplatoonLobbyPage() {
   const { toast } = useToast();
   const [socket, setSocket] = useState<Socket | null>(null);
   const router = useRouter();
-  const [selectedLobbyId, setSelectedLobbyId] = useState<string | null>(null);
 
   // Maps and modes lists
   const [mapNames, setMapNames] = useState<string[]>([]);
@@ -75,11 +83,12 @@ export default function SplatoonLobbyPage() {
   // Function to filter game state history to only include ban/pick related messages
   const filteredGameStateHistory = useMemo(() => {
     return gameStateHistory
-      .filter(entry => 
-        entry.includes("забанили") || 
-        entry.includes("выбрали") || 
-        entry.includes("выбрали режим") || 
-        entry.includes("забанили режим")
+      .filter(
+        (entry) =>
+          entry.includes("забанили") ||
+          entry.includes("выбрали") ||
+          entry.includes("выбрали режим") ||
+          entry.includes("забанили режим"),
       )
       .reverse(); // Reverse the order so newest entries appear at the top
   }, [gameStateHistory]);
@@ -133,7 +142,7 @@ export default function SplatoonLobbyPage() {
       }
     });
 
-    newSocket.on('disconnect', () => {
+    newSocket.on("disconnect", () => {
       console.log("Disconnected from Socket.IO server");
     });
 
@@ -268,14 +277,14 @@ export default function SplatoonLobbyPage() {
     });
 
     // Handle rules updates
-    newSocket.on("rulesUpdated", (rules: { 
-      modesRulesList: string[],
-      mapRulesList: string[]
-    }) => {
-      console.log("Rules updated:", rules);
-      setModesRulesList(rules.modesRulesList);
-      setMapRulesList(rules.mapRulesList);
-    });
+    newSocket.on(
+      "rulesUpdated",
+      (rules: { modesRulesList: string[]; mapRulesList: string[] }) => {
+        console.log("Rules updated:", rules);
+        setModesRulesList(rules.modesRulesList);
+        setMapRulesList(rules.mapRulesList);
+      },
+    );
 
     newSocket.on("canModeBan", (canModeBanState: boolean) => {
       console.log(`canModeBan: ${canModeBanState}`);
@@ -401,32 +410,44 @@ export default function SplatoonLobbyPage() {
   }, [lobbyId, router, backendUrl]);
 
   // Handle mode ban selection
-  const handleModeBanClick = useCallback((mode: GameMode) => {
-    if (canModeBan) {
-      setSelectedMode(mode);
-    }
-  }, [canModeBan]);
+  const handleModeBanClick = useCallback(
+    (mode: GameMode) => {
+      if (canModeBan) {
+        setSelectedMode(mode);
+      }
+    },
+    [canModeBan],
+  );
 
   // Handle mode pick selection
-  const handleModePickClick = useCallback((mode: GameMode) => {
-    if (canModePick) {
-      setSelectedMode(mode);
-    }
-  }, [canModePick]);
+  const handleModePickClick = useCallback(
+    (mode: GameMode) => {
+      if (canModePick) {
+        setSelectedMode(mode);
+      }
+    },
+    [canModePick],
+  );
 
   // Handle map ban selection
-  const handleMapBanClick = useCallback((index: number) => {
-    if (canMapBan) {
-      setSelectedMapIndex(index);
-    }
-  }, [canMapBan]);
+  const handleMapBanClick = useCallback(
+    (index: number) => {
+      if (canMapBan) {
+        setSelectedMapIndex(index);
+      }
+    },
+    [canMapBan],
+  );
 
   // Handle map pick selection
-  const handleMapPickClick = useCallback((index: number) => {
-    if (canMapPick) {
-      setSelectedMapIndex(index);
-    }
-  }, [canMapPick]);
+  const handleMapPickClick = useCallback(
+    (index: number) => {
+      if (canMapPick) {
+        setSelectedMapIndex(index);
+      }
+    },
+    [canMapPick],
+  );
 
   // Handle submit button click
   const handleSubmit = useCallback(() => {
@@ -461,39 +482,56 @@ export default function SplatoonLobbyPage() {
         setSelectedMapIndex(null);
       }
     }
-  }, [socket, canModeBan, canModePick, canMapBan, canMapPick, selectedMode, selectedMapIndex, lobbyId, teamName, mapNames]);
+  }, [
+    socket,
+    canModeBan,
+    canModePick,
+    canMapBan,
+    canMapPick,
+    selectedMode,
+    selectedMapIndex,
+    lobbyId,
+    teamName,
+    mapNames,
+  ]);
 
   // Handle winner selection
-  const handleReportWinner = useCallback((winnerTeam: string) => {
-    if (socket) {
-      socket.emit("lobby.proposeWinner", {
-        lobbyId,
-        winnerTeam,
-        reportingTeam: teamName,
-      });
-      setShowWinnerReportOverlay(false);
-    }
-  }, [socket, lobbyId, teamName]);
+  const handleReportWinner = useCallback(
+    (winnerTeam: string) => {
+      if (socket) {
+        socket.emit("lobby.proposeWinner", {
+          lobbyId,
+          winnerTeam,
+          reportingTeam: teamName,
+        });
+        setShowWinnerReportOverlay(false);
+      }
+    },
+    [socket, lobbyId, teamName],
+  );
 
   // Handle winner confirmation
-  const handleConfirmWinner = useCallback((confirmed: boolean) => {
-    if (socket && pendingWinner) {
-      socket.emit("lobby.confirmWinner", {
-        lobbyId,
-        winnerTeam: pendingWinner,
-        confirmed,
-        confirmingTeam: teamName,
-      });
-      setShowWinnerConfirmOverlay(false);
-      setPendingWinner(null);
-      setReportingTeam(null);
+  const handleConfirmWinner = useCallback(
+    (confirmed: boolean) => {
+      if (socket && pendingWinner) {
+        socket.emit("lobby.confirmWinner", {
+          lobbyId,
+          winnerTeam: pendingWinner,
+          confirmed,
+          confirmingTeam: teamName,
+        });
+        setShowWinnerConfirmOverlay(false);
+        setPendingWinner(null);
+        setReportingTeam(null);
 
-      // If not confirmed, show the winner selection overlay for this team
-      if (!confirmed) {
-        setShowWinnerReportOverlay(true);
+        // If not confirmed, show the winner selection overlay for this team
+        if (!confirmed) {
+          setShowWinnerReportOverlay(true);
+        }
       }
-    }
-  }, [socket, pendingWinner, lobbyId, teamName]);
+    },
+    [socket, pendingWinner, lobbyId, teamName],
+  );
 
   const handleTeamNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -505,9 +543,12 @@ export default function SplatoonLobbyPage() {
   };
 
   // Handle team name input changes
-  const handleTeamNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setTeamName(e.target.value);
-  }, []); // No dependencies needed
+  const handleTeamNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTeamName(e.target.value);
+    },
+    [],
+  ); // No dependencies needed
 
   const handleSkipTeamName = useCallback(() => {
     if (pickedMaps.length !== 0 || bannedMaps.length !== 0) {
@@ -527,16 +568,6 @@ export default function SplatoonLobbyPage() {
       description: "Код лобби скопирован в буфер обмена",
     });
   }, [lobbyId, toast]);
-
-  const handleSetObsLobby = useCallback(() => {
-    if (socket && lobbyId) {
-      socket.emit("admin.setObsLobby", lobbyId);
-      toast({
-        title: "OBS View Updated",
-        description: "This lobby is now being displayed in the OBS view",
-      });
-    }
-  }, [socket, lobbyId]);
 
   if (isUndefined) {
     return (
@@ -1073,7 +1104,7 @@ export default function SplatoonLobbyPage() {
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Выбранная карта и режим
               </h2>
-              
+
               {/* Display active mode and picked map */}
               <div className="mb-6 p-3 bg-gray-100 rounded-lg flex justify-between items-center">
                 {activeMode && (
@@ -1093,7 +1124,7 @@ export default function SplatoonLobbyPage() {
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Выберите победителя раунда
               </h2>
-              
+
               <div className="space-y-3">
                 {teamNames.map(([socketId, name]) => (
                   <Button
@@ -1113,46 +1144,49 @@ export default function SplatoonLobbyPage() {
 
       {/* Winner Confirmation Overlay */}
       <AnimatePresence>
-        {showWinnerConfirmOverlay && pendingWinner && reportingTeam && reportingTeam !== teamName && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          >
+        {showWinnerConfirmOverlay &&
+          pendingWinner &&
+          reportingTeam &&
+          reportingTeam !== teamName && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
             >
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Подтверждение победителя
-              </h2>
-              
-              <p className="text-center mb-6">
-                {reportingTeam} сообщает, что {pendingWinner} победили в этом
-                раунде. Это верно?
-              </p>
-              <div className="space-y-3">
-                <Button
-                  onClick={() => handleConfirmWinner(true)}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  Подтвердить
-                </Button>
-                <Button
-                  onClick={() => handleConfirmWinner(false)}
-                  className="w-full bg-red-600 hover:bg-red-700"
-                >
-                  Отклонить
-                </Button>
-              </div>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+              >
+                <h2 className="text-2xl font-bold mb-4 text-center">
+                  Подтверждение победителя
+                </h2>
+
+                <p className="text-center mb-6">
+                  {reportingTeam} сообщает, что {pendingWinner} победили в этом
+                  раунде. Это верно?
+                </p>
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => handleConfirmWinner(true)}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    Подтвердить
+                  </Button>
+                  <Button
+                    onClick={() => handleConfirmWinner(false)}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    Отклонить
+                  </Button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
       </AnimatePresence>
     </div>
   );

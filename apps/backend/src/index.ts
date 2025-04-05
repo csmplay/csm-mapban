@@ -6,7 +6,11 @@ import { app, io } from "./utils/server";
 import * as FPSGames from "./games/fps-games";
 import * as Splatoon from "./games/splatoon";
 import { GameName, GameType, MapPool, Lobby, Roles } from "./utils/types";
-import { Lobby as SplatoonLobby, startGame as SplatoonStartGame, startNextRound as SplatoonStartNextRound, gameRules } from "./games/splatoon";
+import {
+  Lobby as SplatoonLobby,
+  startGame as SplatoonStartGame,
+  startNextRound as SplatoonStartNextRound,
+} from "./games/splatoon";
 
 const lobbies = new Map<string, Lobby>();
 let globalCoinFlip = true;
@@ -288,7 +292,10 @@ io.on("connection", (socket) => {
       if (getGameCategory(lobby.rules.gameName) === "splatoon") {
         // For Splatoon, we need to combine mode and map rules
         const splatoonLobby = lobby as SplatoonLobby;
-        const pattern = [...splatoonLobby.rules.modesRulesList, ...splatoonLobby.rules.mapRulesList];
+        const pattern = [
+          ...splatoonLobby.rules.modesRulesList,
+          ...splatoonLobby.rules.mapRulesList,
+        ];
         io.to(socket.id).emit("patternList", pattern);
       } else {
         // For FPS games, just send the map rules
@@ -404,6 +411,7 @@ io.on("connection", (socket) => {
                   ? "обороняющих"
                   : side.toUpperCase()
             } на карте ${map}`;
+            io.to(lobbyId).emit("gameStateUpdated", stateMessage);
             for (const [, otherName] of lobby.teamNames.entries()) {
               if (otherName !== teamName) {
                 mapTeamName = otherName;
@@ -426,13 +434,6 @@ io.on("connection", (socket) => {
             teamName,
             roundNumber: splatoonLobby.rules.roundNumber,
           });
-
-          // Generate appropriate message
-          const activeMode = splatoonLobby.pickedMode?.mode;
-          const translatedMode = activeMode
-            ? Splatoon.modeTranslations[activeMode]
-            : "unknown";
-          stateMessage = `${teamName} выбрали карту ${map} (${translatedMode})`;
 
           // Round complete - disable all controls and enable winner reporting
           io.to(lobbyId).emit("canWorkUpdated", false);
@@ -544,7 +545,10 @@ io.on("connection", (socket) => {
             roundNumber: (lobby as SplatoonLobby).rules.roundNumber,
           });
           // Add game state message for Splatoon map bans
-          io.to(lobbyId).emit("gameStateUpdated", `${teamName} забанили карту ${map}`);
+          io.to(lobbyId).emit(
+            "gameStateUpdated",
+            `${teamName} забанили карту ${map}`,
+          );
         } else {
           lobby.bannedMaps.push({ map, teamName });
         }
@@ -839,7 +843,8 @@ io.on("connection", (socket) => {
             io.to(observer).emit("modePicked", {
               mode: splatoonLobby.pickedMode.mode,
               teamName: splatoonLobby.pickedMode.teamName,
-              translatedMode: Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
+              translatedMode:
+                Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
             });
           }
         } else {
@@ -870,7 +875,7 @@ io.on("connection", (socket) => {
     if (lobby) {
       // Broadcast to all OBS views using the room
       io.to("obs_views").emit("admin.setObsLobby", lobbyId);
-      
+
       // Send current game state data
       if (getGameCategory(lobby.rules.gameName) === "splatoon") {
         const splatoonLobby = lobby as SplatoonLobby;
@@ -885,7 +890,8 @@ io.on("connection", (socket) => {
           io.to("obs_views").emit("modePicked", {
             mode: splatoonLobby.pickedMode.mode,
             teamName: splatoonLobby.pickedMode.teamName,
-            translatedMode: Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
+            translatedMode:
+              Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
           });
         }
       } else {
@@ -1064,7 +1070,7 @@ io.on("connection", (socket) => {
           io.to(winningTeamSocketId).emit("canBan", true);
           io.to(lobbyId).emit(
             "gameStateUpdated",
-            `${winningTeamName} выбирают карту для бана`,
+            `${winningTeamName} выбирают карту для бана (1/${getMaxRounds(lobby.rules.gameType)})`,
           );
         } else {
           // First round logic remains the same
@@ -1128,13 +1134,13 @@ io.on("connection", (socket) => {
       // Determine the ban count based on round number and team
       let banCount = 0;
       let totalBans = 0;
-      
+
       if (lobby.rules.roundNumber === 1) {
         // First round: Team 1 bans 2, Team 2 bans 3
         const isCoinFlipTeam = lobby.rules.coinFlip
           ? mapBanTeam === Array.from(lobby.teamNames.values())[0]
           : mapBanTeam === Array.from(lobby.teamNames.values())[1];
-          
+
         if (isCoinFlipTeam) {
           banCount = 1;
           totalBans = 2;
@@ -1161,7 +1167,7 @@ io.on("connection", (socket) => {
   socket.on(
     "lobby.reportWinner",
     (data: { lobbyId: string; winnerTeam: string }) => {
-      const { lobbyId} = data;
+      const { lobbyId } = data;
       const lobby = lobbies.get(lobbyId);
 
       if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
@@ -1220,7 +1226,10 @@ io.on("connection", (socket) => {
           splatoonLobby.rules.lastWinner = winnerTeam;
 
           // Start the next round with the confirmed winner
-          SplatoonStartNextRound(lobbyId, lobbies as Map<string, SplatoonLobby>);
+          SplatoonStartNextRound(
+            lobbyId,
+            lobbies as Map<string, SplatoonLobby>,
+          );
 
           // Emit winner confirmation event to all players
           io.to(lobbyId).emit("winnerConfirmed", { winnerTeam });
@@ -1258,7 +1267,7 @@ io.on("connection", (socket) => {
     const lobby = lobbies.get(lobbyId);
     if (lobby) {
       // Store the winner for the next round
-      if ('lastWinner' in lobby.rules) {
+      if ("lastWinner" in lobby.rules) {
         lobby.rules.lastWinner = winnerTeam;
       }
 
@@ -1298,7 +1307,7 @@ io.on("connection", (socket) => {
         });
       } else {
         // If not confirmed, reset the winner and enable controls for both teams
-        if ('lastWinner' in lobby.rules) {
+        if ("lastWinner" in lobby.rules) {
           lobby.rules.lastWinner = undefined;
         }
         io.to(lobbyId).emit("canWorkUpdated", true);
@@ -1365,7 +1374,7 @@ function handleGameEnd(lobbyId: string, lobbies: Map<string, Lobby>) {
         : Array.from(lobby.teamNames.values())[1];
 
     // Store the winner for the next round
-    if ('lastWinner' in lobby.rules) {
+    if ("lastWinner" in lobby.rules) {
       lobby.rules.lastWinner = winnerTeam;
     }
 

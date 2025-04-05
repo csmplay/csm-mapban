@@ -14,7 +14,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, LogIn, Users, Eye, Plus, PenBox, Droplet, Copy } from "lucide-react";
+import {
+  Trash2,
+  LogIn,
+  Users,
+  Eye,
+  Plus,
+  PenBox,
+  Droplet,
+  Copy,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
@@ -246,7 +255,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleCopyLink = (lobbyId: string) => {
+  const handleCopyLink = () => {
     const obsUrl = `${window.origin}/obs`;
     navigator.clipboard.writeText(obsUrl).then(
       () => {
@@ -272,12 +281,6 @@ export default function AdminPage() {
     }
   };
 
-  const handlePlayAnimation = (lobbyId: string) => {
-    if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit("admin.play_obs", lobbyId);
-    }
-  };
-
   const handleCoinFlip = (coinFlip: boolean) => {
     if (socketRef.current && socketRef.current.connected) {
       setGlobalCoinFlip(coinFlip);
@@ -294,7 +297,7 @@ export default function AdminPage() {
   const handleAdminLobby = () => {
     if (socketRef.current && socketRef.current.connected) {
       const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
-      
+
       if (gameName === "Splatoon") {
         // Create Splatoon lobby
         socketRef.current.emit("createSplatoonLobby", {
@@ -427,7 +430,7 @@ export default function AdminPage() {
       toast({
         title: "Error",
         description: "Could not update OBS view - socket not connected",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -446,7 +449,7 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto">
         <div className="relative max-w-7xl mx-auto mb-8">
           <Button
-            onClick={() => handleCopyLink("obs")}
+            onClick={() => handleCopyLink()}
             variant="outline"
             className="absolute top-0 left-0"
           >
@@ -454,12 +457,7 @@ export default function AdminPage() {
             Копировать OBS ссылку
           </Button>
           <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
-            <Image
-              src="/CSM White.svg"
-              alt="CSM"
-              width={90}
-              height={20}
-            />
+            <Image src="/CSM White.svg" alt="CSM" width={90} height={20} />
             mapban admin
           </h1>
           <Button
@@ -538,23 +536,30 @@ export default function AdminPage() {
                         </h3>
                         <div className="space-y-1">
                           <div className="flex items-center justify-start gap-4">
-                            {lobby.teamNames.map(([socketId, teamName], index) => (
-                              <div key={socketId} className="flex items-center">
-                                <Badge 
-                                  variant="outline" 
-                                  className={`text-base font-bold ${index === 0 ? "bg-blue-500" : index === 1 ? "bg-red-500" : ""}`}
+                            {lobby.teamNames.map(
+                              ([socketId, teamName], index) => (
+                                <div
+                                  key={socketId}
+                                  className="flex items-center"
                                 >
-                                  {teamName}
-                                </Badge>
-                              </div>
-                            ))}
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-base font-bold ${index === 0 ? "bg-blue-500" : index === 1 ? "bg-red-500" : ""}`}
+                                  >
+                                    {teamName}
+                                  </Badge>
+                                </div>
+                              ),
+                            )}
                           </div>
                         </div>
                       </div>
                       <Separator />
                       <div className="space-y-2">
                         <details className="cursor-pointer">
-                          <summary className="font-semibold text-foreground mb-2">Данные о лобби</summary>
+                          <summary className="font-semibold text-foreground mb-2">
+                            Данные о лобби
+                          </summary>
                           <div className="text-sm text-foreground">
                             Game Type:{" "}
                             {lobby.rules.gameType === "BO1"
@@ -574,7 +579,8 @@ export default function AdminPage() {
                             /{lobby.rules.mapPoolSize}
                           </div>
                           <div className="text-sm text-foreground">
-                            {lobby.rules.gameName.toLowerCase() === "splatoon" ? (
+                            {lobby.rules.gameName.toLowerCase() ===
+                            "splatoon" ? (
                               <>Round Number: {lobby.rules.roundNumber || 0}</>
                             ) : (
                               <>
@@ -670,13 +676,13 @@ export default function AdminPage() {
                       Показать OBS
                     </Button>
                     <Button
-                    onClick={() => handleClear(lobby.lobbyId)}
-                    variant="outline"
-                    className="flex-1"
-                  >
+                      onClick={() => handleClear(lobby.lobbyId)}
+                      variant="outline"
+                      className="flex-1"
+                    >
                       <Droplet className="w-4 h-4 mr-2" />
-                    Очистить OBS
-                  </Button>
+                      Очистить OBS
+                    </Button>
                   </div>
                   <Button
                     onClick={() => handleConnectToLobby(lobby.lobbyId)}
@@ -738,7 +744,7 @@ export default function AdminPage() {
                     </Button>
                   ))}
                 </div>
-                
+
                 {gameName !== "Splatoon" && (
                   <>
                     <h3 className="text-lg font-semibold mb-2 text-center">
@@ -765,54 +771,58 @@ export default function AdminPage() {
                     </div>
                   </>
                 )}
-                
+
                 {/* Отображаем размер маппула только для BO1 и BO2 */}
-                {["BO1", "BO2"].includes(gameType) && gameName !== "Splatoon" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-2 text-center">
-                      Размер маппула
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      {[4, 7].map((size) => (
-                        <Button
-                          key={size}
-                          variant={mapPoolSize === size ? "default" : "outline"}
-                          onClick={() => setMapPoolSize(size)}
-                          className="w-20"
-                        >
-                          {size} карт
-                        </Button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                {["BO1", "BO2"].includes(gameType) &&
+                  gameName !== "Splatoon" && (
+                    <>
+                      <h3 className="text-lg font-semibold mb-2 text-center">
+                        Размер маппула
+                      </h3>
+                      <div className="flex justify-center space-x-4">
+                        {[4, 7].map((size) => (
+                          <Button
+                            key={size}
+                            variant={
+                              mapPoolSize === size ? "default" : "outline"
+                            }
+                            onClick={() => setMapPoolSize(size)}
+                            className="w-20"
+                          >
+                            {size} карт
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 {/* Отображаем десайдер только для BO3 и BO5 */}
-                {["BO3", "BO5"].includes(gameType) && gameName !== "Splatoon" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-2 text-center">
-                      Десайдер
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      {[
-                        { label: "Рандом", value: false },
-                        { label: "Авто (пропуск)", value: true },
-                      ].map((option) => (
-                        <Button
-                          key={option.label}
-                          variant={
-                            localKnifeDecider === option.value
-                              ? "default"
-                              : "outline"
-                          }
-                          onClick={() => setLocalKnifeDecider(option.value)}
-                          className="w-30"
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </>
-                )}
+                {["BO3", "BO5"].includes(gameType) &&
+                  gameName !== "Splatoon" && (
+                    <>
+                      <h3 className="text-lg font-semibold mb-2 text-center">
+                        Десайдер
+                      </h3>
+                      <div className="flex justify-center space-x-4">
+                        {[
+                          { label: "Рандом", value: false },
+                          { label: "Авто (пропуск)", value: true },
+                        ].map((option) => (
+                          <Button
+                            key={option.label}
+                            variant={
+                              localKnifeDecider === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() => setLocalKnifeDecider(option.value)}
+                            className="w-30"
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 <div className="pt-6 ml-10 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
                   <AnimatedCheckbox
                     id="localCoinFlip"
@@ -1260,7 +1270,8 @@ export default function AdminPage() {
                 Удалить лобби
               </h2>
               <p className="text-center mb-6">
-                Вы уверены, что хотите удалить это лобби? Это действие нельзя отменить.
+                Вы уверены, что хотите удалить это лобби? Это действие нельзя
+                отменить.
               </p>
               <div className="flex justify-between">
                 <Button
