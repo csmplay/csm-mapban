@@ -28,6 +28,4 @@ COPY --from=builder /app/yarn.lock ./apps/frontend/
 WORKDIR /app/apps/frontend
 RUN yarn install --production --frozen-lockfile && yarn cache clean
 
-COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
-
 CMD ["yarn", "start"]
