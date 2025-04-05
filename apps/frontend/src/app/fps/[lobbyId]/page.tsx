@@ -25,7 +25,7 @@ export default function LobbyPage() {
       console.log(
         "Detected Splatoon lobby code in FPS lobby path, redirecting...",
       );
-      router.push(`/splatoon/lobby/${lobbyId}`);
+      router.push(`/splatoon/${lobbyId}`);
     }
   }, [lobbyId, router]);
 

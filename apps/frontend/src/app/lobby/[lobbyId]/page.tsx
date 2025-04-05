@@ -36,9 +36,9 @@ export default function LobbyPage() {
     newSocket.on("lobbyGameCategory", (gameCategory: string) => {
       setIsLoading(false);
       if (gameCategory === "splatoon") {
-        router.push(`/splatoon/lobby/${lobbyId}`);
+        router.push(`/splatoon/${lobbyId}`);
       } else {
-        router.push(`/fps/lobby/${lobbyId}`);
+        router.push(`/fps/${lobbyId}`);
       }
     });
 

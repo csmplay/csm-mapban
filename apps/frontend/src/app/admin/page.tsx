@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, LogIn, Users, Eye, Plus, PenBox } from "lucide-react";
+import { Trash2, LogIn, Users, Eye, Plus, PenBox, Droplet, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
@@ -105,6 +105,7 @@ export default function AdminPage() {
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
   const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
+  const [lobbyToDelete, setLobbyToDelete] = useState<string | null>(null);
 
   const [cardColors, setCardColors] = useState<CardColors>(initialCardColors);
   const [editCardColorsModal, setEditCardColorsModal] = useState(false);
@@ -241,15 +242,13 @@ export default function AdminPage() {
         prevLobbies.filter((lobby) => lobby.lobbyId !== lobbyId),
       );
       socketRef.current.emit("admin.delete", lobbyId);
+      setLobbyToDelete(null);
     }
   };
 
   const handleCopyLink = (lobbyId: string) => {
-    const lobby = lobbies.find(l => l.lobbyId === lobbyId);
-    if (!lobby) return;
-    const gameCategory = lobby.rules.gameName.toLowerCase() === "splatoon" ? "splatoon" : "fps";
-    const lobbyUrl = `${window.origin}/${gameCategory}/lobby/${lobbyId}/obs`;
-    navigator.clipboard.writeText(lobbyUrl).then(
+    const obsUrl = `${window.origin}/obs`;
+    navigator.clipboard.writeText(obsUrl).then(
       () => {
         toast({
           description: "Ссылка для OBS скопирована в буфер обмена",
@@ -414,6 +413,25 @@ export default function AdminPage() {
     }, 300);
   };
 
+  const handleSetObsLobby = (lobbyId: string) => {
+    console.log("Attempting to set OBS lobby:", lobbyId);
+    if (socketRef.current && socketRef.current.connected) {
+      console.log("Socket is connected, emitting setObsLobby event");
+      socketRef.current.emit("admin.setObsLobby", lobbyId);
+      toast({
+        title: "OBS View Updated",
+        description: "This lobby is now being displayed in the OBS view",
+      });
+    } else {
+      console.error("Socket is not connected!");
+      toast({
+        title: "Error",
+        description: "Could not update OBS view - socket not connected",
+        variant: "destructive"
+      });
+    }
+  };
+
   const checkboxVariants = {
     checked: { scale: 1.1 },
     unchecked: { scale: 1 },
@@ -427,8 +445,22 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         <div className="relative max-w-7xl mx-auto mb-8">
-          <h1 className="text-4xl font-bold text-center text-foreground">
-            Admin
+          <Button
+            onClick={() => handleCopyLink("obs")}
+            variant="outline"
+            className="absolute top-0 left-0"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Копировать OBS ссылку
+          </Button>
+          <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
+            <Image
+              src="/CSM White.svg"
+              alt="CSM"
+              width={90}
+              height={20}
+            />
+            mapban admin
           </h1>
           <Button
             onClick={() => setAdminOverlay(true)}
@@ -473,7 +505,7 @@ export default function AdminPage() {
                 <CardHeader className="bg-card border-b">
                   <CardTitle className="text-xl text-foreground flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="truncate">Lobby: {lobby.lobbyId}</span>
+                      <span className="truncate">Лобби: {lobby.lobbyId}</span>
                       <Badge variant="outline" className="ml-2">
                         {lobby.rules.gameName.toUpperCase()}
                       </Badge>
@@ -492,69 +524,71 @@ export default function AdminPage() {
                         className="flex-1"
                         disabled={lobby.teamNames.length !== 2}
                       >
-                        Start Game
+                        Старт
                       </Button>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <ScrollArea className="h-64 pr-4">
+                  <ScrollArea className="h-90 pr-4">
                     <div className="space-y-4">
                       <div>
                         <h3 className="font-semibold text-foreground mb-2">
-                          Teams:
+                          Команды:
                         </h3>
-                        <ul className="space-y-1">
-                          {lobby.teamNames.map(([socketId, teamName]) => (
-                            <li
-                              key={socketId}
-                              className="flex items-center text-sm"
-                            >
-                              <Badge variant="outline" className="mr-2">
-                                {teamName}
-                              </Badge>
-                              <span className="text-foreground truncate">
-                                {socketId}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-start gap-4">
+                            {lobby.teamNames.map(([socketId, teamName], index) => (
+                              <div key={socketId} className="flex items-center">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-base font-bold ${index === 0 ? "bg-blue-500" : index === 1 ? "bg-red-500" : ""}`}
+                                >
+                                  {teamName}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                       <Separator />
                       <div className="space-y-2">
-                        <div className="text-sm text-foreground">
-                          Game Type:{" "}
-                          {lobby.rules.gameType === "BO1"
-                            ? "BO1"
-                            : lobby.rules.gameType === "BO3"
-                              ? "BO3"
-                              : "BO5"}
-                        </div>
-                        <div className="text-sm text-foreground">
-                          Coin Flip: {lobby.rules.coinFlip ? "Yes" : "No"}
-                        </div>
-                        <div className="text-sm text-foreground">
-                          Current Game Step:{" "}
-                          {lobby.rules.mapPoolSize == 4
-                            ? lobby.gameStep - 3
-                            : lobby.gameStep}
-                          /{lobby.rules.mapPoolSize}
-                        </div>
-                        <div className="text-sm text-foreground">
-                          {lobby.rules.gameName.toLowerCase() === "splatoon" ? (
-                            <>Round Number: {lobby.rules.roundNumber || 0}</>
-                          ) : (
-                            <>
-                              Knife Decider:{" "}
-                              {lobby.rules.knifeDecider ? "Skip" : "No"}
-                            </>
-                          )}
-                        </div>
+                        <details className="cursor-pointer">
+                          <summary className="font-semibold text-foreground mb-2">Данные о лобби</summary>
+                          <div className="text-sm text-foreground">
+                            Game Type:{" "}
+                            {lobby.rules.gameType === "BO1"
+                              ? "BO1"
+                              : lobby.rules.gameType === "BO3"
+                                ? "BO3"
+                                : "BO5"}
+                          </div>
+                          <div className="text-sm text-foreground">
+                            Coin Flip: {lobby.rules.coinFlip ? "Yes" : "No"}
+                          </div>
+                          <div className="text-sm text-foreground">
+                            Current Game Step:{" "}
+                            {lobby.rules.mapPoolSize == 4
+                              ? lobby.gameStep - 3
+                              : lobby.gameStep}
+                            /{lobby.rules.mapPoolSize}
+                          </div>
+                          <div className="text-sm text-foreground">
+                            {lobby.rules.gameName.toLowerCase() === "splatoon" ? (
+                              <>Round Number: {lobby.rules.roundNumber || 0}</>
+                            ) : (
+                              <>
+                                Knife Decider:{" "}
+                                {lobby.rules.knifeDecider ? "Skip" : "No"}
+                              </>
+                            )}
+                          </div>
+                        </details>
                       </div>
                       <Separator />
                       <div>
                         <h3 className="font-semibold text-foreground mb-2">
-                          Picked:
+                          Пики:
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {lobby.rules.gameName.toLowerCase() === "splatoon" &&
@@ -612,7 +646,7 @@ export default function AdminPage() {
                       <Separator />
                       <div>
                         <h3 className="font-semibold text-foreground mb-2">
-                          Banned:
+                          Баны:
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {lobby.bannedMaps.map((item, index) => (
@@ -628,43 +662,37 @@ export default function AdminPage() {
                 <CardFooter className="bg-card border-t p-4 flex flex-wrap gap-2">
                   <div className="flex justify-center w-full">
                     <Button
-                      onClick={() => handleCopyLink(lobby.lobbyId)}
+                      onClick={() => handleSetObsLobby(lobby.lobbyId)}
                       variant="outline"
                       className="flex-1"
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Copy OBS Link
+                      Показать OBS
                     </Button>
-                  </div>
-                  <Button
+                    <Button
                     onClick={() => handleClear(lobby.lobbyId)}
                     variant="outline"
                     className="flex-1"
                   >
-                    Clear overlay
+                      <Droplet className="w-4 h-4 mr-2" />
+                    Очистить OBS
                   </Button>
-                  <Button
-                    onClick={() => handlePlayAnimation(lobby.lobbyId)}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Replay animation
-                  </Button>
+                  </div>
                   <Button
                     onClick={() => handleConnectToLobby(lobby.lobbyId)}
                     variant="outline"
                     className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    Connect
+                    Подключиться
                   </Button>
                   <Button
-                    onClick={() => handleDeleteLobby(lobby.lobbyId)}
+                    onClick={() => setLobbyToDelete(lobby.lobbyId)}
                     variant="destructive"
                     className="flex-1"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Delete lobby
+                    Удалить лобби
                   </Button>
                 </CardFooter>
               </Card>
@@ -1210,6 +1238,45 @@ export default function AdminPage() {
                     Закрыть
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        {lobbyToDelete && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={overlayVariants}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              variants={contentVariants}
+              transition={{ duration: 0.3 }}
+              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
+            >
+              <h2 className="text-2xl font-bold mb-4 text-center">
+                Удалить лобби
+              </h2>
+              <p className="text-center mb-6">
+                Вы уверены, что хотите удалить это лобби? Это действие нельзя отменить.
+              </p>
+              <div className="flex justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setLobbyToDelete(null)}
+                >
+                  Отменить
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => handleDeleteLobby(lobbyToDelete)}
+                >
+                  Удалить
+                </Button>
               </div>
             </motion.div>
           </motion.div>

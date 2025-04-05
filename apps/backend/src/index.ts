@@ -6,7 +6,7 @@ import { app, io } from "./utils/server";
 import * as FPSGames from "./games/fps-games";
 import * as Splatoon from "./games/splatoon";
 import { GameName, GameType, MapPool, Lobby, Roles } from "./utils/types";
-import { Lobby as SplatoonLobby, startGame as SplatoonStartGame, startNextRound as SplatoonStartNextRound} from "./games/splatoon";
+import { Lobby as SplatoonLobby, startGame as SplatoonStartGame, startNextRound as SplatoonStartNextRound, gameRules } from "./games/splatoon";
 
 const lobbies = new Map<string, Lobby>();
 let globalCoinFlip = true;
@@ -826,8 +826,27 @@ io.on("connection", (socket) => {
     const lobby = lobbies.get(lobbyId);
     if (lobby) {
       lobby.observers.forEach((observer) => {
-        io.to(observer).emit("bannedUpdated", lobby.bannedMaps);
-        io.to(observer).emit("pickedUpdated", lobby.pickedMaps);
+        if (getGameCategory(lobby.rules.gameName) === "splatoon") {
+          const splatoonLobby = lobby as SplatoonLobby;
+          // Send all relevant data for Splatoon lobbies
+          io.to(observer).emit("bannedUpdated", splatoonLobby.bannedMaps);
+          io.to(observer).emit("pickedUpdated", splatoonLobby.pickedMaps);
+          io.to(observer).emit("modesUpdated", {
+            banned: splatoonLobby.bannedModes,
+            active: splatoonLobby.rules.activeModes,
+          });
+          if (splatoonLobby.pickedMode) {
+            io.to(observer).emit("modePicked", {
+              mode: splatoonLobby.pickedMode.mode,
+              teamName: splatoonLobby.pickedMode.teamName,
+              translatedMode: Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
+            });
+          }
+        } else {
+          // Handle FPS lobbies as before
+          io.to(observer).emit("bannedUpdated", lobby.bannedMaps);
+          io.to(observer).emit("pickedUpdated", lobby.pickedMaps);
+        }
       });
     }
   });
@@ -836,6 +855,45 @@ io.on("connection", (socket) => {
     cardColors = newCardColors || defaultCardColors;
     console.log("Card colors updated:", cardColors);
     io.emit("cardColorsUpdated", cardColors);
+  });
+
+  // Track OBS views
+
+  socket.on("joinObsView", () => {
+    console.log("OBS view joined:", socket.id);
+    socket.join("obs_views");
+  });
+
+  socket.on("admin.setObsLobby", (lobbyId: string) => {
+    console.log("Setting OBS lobby:", lobbyId);
+    const lobby = lobbies.get(lobbyId);
+    if (lobby) {
+      // Broadcast to all OBS views using the room
+      io.to("obs_views").emit("admin.setObsLobby", lobbyId);
+      
+      // Send current game state data
+      if (getGameCategory(lobby.rules.gameName) === "splatoon") {
+        const splatoonLobby = lobby as SplatoonLobby;
+        // Send all relevant data for Splatoon lobbies
+        io.to("obs_views").emit("bannedUpdated", splatoonLobby.bannedMaps);
+        io.to("obs_views").emit("pickedUpdated", splatoonLobby.pickedMaps);
+        io.to("obs_views").emit("modesUpdated", {
+          banned: splatoonLobby.bannedModes,
+          active: splatoonLobby.rules.activeModes,
+        });
+        if (splatoonLobby.pickedMode) {
+          io.to("obs_views").emit("modePicked", {
+            mode: splatoonLobby.pickedMode.mode,
+            teamName: splatoonLobby.pickedMode.teamName,
+            translatedMode: Splatoon.modeTranslations[splatoonLobby.pickedMode.mode],
+          });
+        }
+      } else {
+        // Handle FPS lobbies as before
+        io.to("obs_views").emit("bannedUpdated", lobby.bannedMaps);
+        io.to("obs_views").emit("pickedUpdated", lobby.pickedMaps);
+      }
+    }
   });
 
   socket.on(

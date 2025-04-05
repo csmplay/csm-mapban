@@ -198,7 +198,7 @@ export default function HomePage() {
         // Wait for lobby creation confirmation before redirecting
         socket.once("lobbyCreated", () => {
           setShowSettingsOverlay(false);
-          router.push(`/fps/lobby/${lobbyId}`);
+          router.push(`/fps/${lobbyId}`);
         });
       }
     }

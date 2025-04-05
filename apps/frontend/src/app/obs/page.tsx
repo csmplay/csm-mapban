@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import AnimatedBanCard from "@/components/ui/ban";
 import AnimatedPickCard from "@/components/ui/pick";
@@ -28,7 +27,6 @@ interface PickAction {
 
 type Action = BanAction | PickAction;
 
-// Added a proper type for cardColors based on the structure expected from the backend.
 interface CardColors {
   ban: {
     text: string[];
@@ -40,9 +38,9 @@ interface CardColors {
   };
 }
 
-const LobbyObsPage = () => {
-  const { lobbyId } = useParams();
-  const [, setSocket] = useState<Socket | null>(null);
+const ObsPage = () => {
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [selectedLobbyId, setSelectedLobbyId] = useState<string | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
     {
@@ -58,13 +56,8 @@ const LobbyObsPage = () => {
   >([]);
   const [pattern, setPattern] = useState<string[]>([]);
   const [pickedMode, setPickedMode] = useState<{ mode: string; teamName: string; translatedMode: string } | null>(null);
-
-  // Keep track of how many actions have been revealed so far
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
-
   const [gameName, setGameName] = useState<string>("0");
-
-  // Replace the "any" type with our CardColors type; initialize with empty arrays.
   const [cardColors, setCardColors] = useState<CardColors>({
     ban: { text: [], bg: [] },
     pick: { text: [], bg: [] },
@@ -84,20 +77,47 @@ const LobbyObsPage = () => {
   }, [backendUrl]);
 
   useEffect(() => {
+    console.log("Initializing socket connection...");
     const newSocket = io(backendUrl);
     setSocket(newSocket);
+
+    newSocket.on("connect", () => {
+      console.log("Connected to Socket.IO server");
+      console.log("Joining as observer");
+      newSocket.emit("joinObsView");
+    });
+
+    newSocket.on("disconnect", () => {
+      console.log("Disconnected from Socket.IO server");
+    });
+
+    newSocket.on("error", (error: Error) => {
+      console.error("Socket error:", error);
+    });
 
     newSocket.on("cardColorsUpdated", (newCardColors: CardColors) => {
       console.log("Card colors updated:", newCardColors);
       setCardColors(newCardColors);
     });
 
-    newSocket.on("connect", () => {
-      console.log("Connected to Socket.IO server");
+    // Listen for admin selecting a lobby to display
+    newSocket.on("admin.setObsLobby", (lobbyId: string) => {
+      console.log("Received admin.setObsLobby event with lobby:", lobbyId);
+      setSelectedLobbyId(lobbyId);
+      
+      // Clear current state
+      setPickedEntries([]);
+      setBannedEntries([]);
+      setVisibleActionsCount(0);
+      setPickedMode(null);
+      setPattern([]); // Clear pattern before joining new lobby
+      
+      // Join the new lobby and get pattern list
       if (lobbyId) {
-        newSocket.emit("obs.getPatternList", lobbyId);
+        console.log("Joining lobby as observer:", lobbyId);
         newSocket.emit("joinLobby", lobbyId, "observer");
-        console.log(`Joined lobby ${lobbyId}`);
+        console.log("Requesting pattern list for lobby:", lobbyId);
+        newSocket.emit("obs.getPatternList", lobbyId);
       }
     });
 
@@ -114,6 +134,7 @@ const LobbyObsPage = () => {
           teamName: string;
           side: string;
           sideTeamName: string;
+          decider?: boolean;
         }>,
       ) => {
         console.log("Picked entries updated:", picked);
@@ -144,7 +165,6 @@ const LobbyObsPage = () => {
     });
 
     // Handle 'clear' event from the server
-    // Clear all entries to wait for new pickedUpdated/bannedUpdated
     newSocket.on("backend.clear_obs", () => {
       console.log("Clearing OBS state");
       setPickedEntries([]);
@@ -154,9 +174,10 @@ const LobbyObsPage = () => {
     });
 
     return () => {
+      console.log("Cleaning up socket connection...");
       newSocket.disconnect();
     };
-  }, [lobbyId, backendUrl]);
+  }, [backendUrl]);
 
   // Construct the final actions array based on the pattern and the data we have
   const actions: Action[] = useMemo(() => {
@@ -176,9 +197,25 @@ const LobbyObsPage = () => {
     const pickedCopy = [...pickedEntries];
     const finalActions: Action[] = [];
 
-    // First, add all bans in order
+    // Add mode pick first if it exists
+    if (pickedMode) {
+      finalActions.push({
+        type: "pick",
+        teamName: pickedMode.teamName,
+        mapName: pickedMode.translatedMode,
+        side: "mode",
+        sideTeamName: pickedMode.teamName,
+        isMode: true,
+        mode: {
+          mode: pickedMode.mode,
+          translatedMode: pickedMode.translatedMode
+        },
+      });
+    }
+
+    // Process each step in the pattern exactly as defined
     pattern.forEach((step) => {
-      if (step === "ban" || step === "mode_ban") {
+      if (step === "ban") {  // Only handle regular bans, ignore mode_ban
         const banEntry = bannedCopy.shift();
         if (banEntry) {
           finalActions.push({
@@ -187,55 +224,26 @@ const LobbyObsPage = () => {
             mapName: banEntry.map,
           });
         }
-      }
-    });
-
-    // Then, add all picks in order
-    pattern.forEach((step) => {
-      if (step === "pick" || step === "mode_pick") {
+      } else if (step === "pick" || step === "decider") {  // Only handle regular picks and deciders
         const pickEntry = pickedCopy.shift();
         if (pickEntry) {
           finalActions.push({
             type: "pick",
-            teamName: pickEntry.teamName || "Unknown Team",
+            teamName: pickEntry.teamName,
             mapName: pickEntry.map,
             side: pickEntry.side || "mode",
-            sideTeamName: pickEntry.sideTeamName || pickEntry.teamName || "Unknown Team",
-          });
-        }
-      } else if (step === "decider") {
-        const pickEntry = pickedCopy.shift();
-        if (pickEntry) {
-          finalActions.push({
-            type: "pick",
-            teamName: pickEntry.teamName || "Unknown Team",
-            mapName: pickEntry.map,
-            side: pickEntry.side || "decider",
-            sideTeamName: pickEntry.sideTeamName || pickEntry.teamName || "Unknown Team",
-            decider: true,
+            sideTeamName: pickEntry.sideTeamName || pickEntry.teamName,
+            decider: step === "decider",
           });
         }
       }
     });
-
-    // Add mode pick at the beginning if it exists
-    if (pickedMode) {
-      finalActions.unshift({
-        type: "pick",
-        teamName: pickedMode.teamName || "Unknown Team",
-        mapName: pickedMode.translatedMode,
-        side: "mode",
-        sideTeamName: pickedMode.teamName || "Unknown Team",
-        isMode: true,
-        mode: pickedMode,
-      });
-    }
 
     console.log("Final actions computed:", finalActions);
     return finalActions;
   }, [bannedEntries, pickedEntries, pattern, pickedMode]);
 
-  // Reveal actions one by one with a 3-second delay without resetting everything on new updates
+  // Reveal actions one by one with a 3-second delay
   useEffect(() => {
     console.log("Actions visibility effect:", {
       actionsLength: actions.length,
@@ -259,7 +267,6 @@ const LobbyObsPage = () => {
 
       return () => clearInterval(intervalId);
     }
-    // If actions.length == visibleActionsCount, do nothing (no changes needed)
   }, [actions, visibleActionsCount]);
 
   useEffect(() => {
@@ -304,4 +311,4 @@ const LobbyObsPage = () => {
   );
 };
 
-export default LobbyObsPage; 
+export default ObsPage; 

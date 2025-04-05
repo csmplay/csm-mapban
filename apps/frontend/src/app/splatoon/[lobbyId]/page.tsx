@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ActionLog } from "@/components/ui/ActionLog";
-import { ArrowLeft, Copy, Trophy } from "lucide-react";
+import { ArrowLeft, Copy, Trophy, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
@@ -39,6 +39,7 @@ export default function SplatoonLobbyPage() {
   const { toast } = useToast();
   const [socket, setSocket] = useState<Socket | null>(null);
   const router = useRouter();
+  const [selectedLobbyId, setSelectedLobbyId] = useState<string | null>(null);
 
   // Maps and modes lists
   const [mapNames, setMapNames] = useState<string[]>([]);
@@ -526,6 +527,16 @@ export default function SplatoonLobbyPage() {
       description: "Код лобби скопирован в буфер обмена",
     });
   }, [lobbyId, toast]);
+
+  const handleSetObsLobby = useCallback(() => {
+    if (socket && lobbyId) {
+      socket.emit("admin.setObsLobby", lobbyId);
+      toast({
+        title: "OBS View Updated",
+        description: "This lobby is now being displayed in the OBS view",
+      });
+    }
+  }, [socket, lobbyId]);
 
   if (isUndefined) {
     return (

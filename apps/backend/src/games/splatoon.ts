@@ -129,7 +129,7 @@ interface GameTypeRules {
   subsequent: GameRound;
 }
 
-const gameRules: Record<GameType, GameTypeRules> = {
+export const gameRules: Record<GameType, GameTypeRules> = {
   bo3: {
     first: {
       modes: {
@@ -139,9 +139,9 @@ const gameRules: Record<GameType, GameTypeRules> = {
           { action: "pick", count: 1, team: "priority" },
         ],
         rules: [
-          "Команда с приоритетом банит 1 режим",
-          "Вторая команда банит 1 режим",
-          "Команда с приоритетом выбирает режим",
+          "mode_ban",
+          "mode_ban",
+          "mode_pick",
         ],
       },
       maps: {
@@ -151,9 +151,12 @@ const gameRules: Record<GameType, GameTypeRules> = {
           { action: "pick", count: 1, team: "priority" },
         ],
         rules: [
-          "Команда с приоритетом банит 2 карты",
-          "Вторая команда банит 3 карты",
-          "Команда с приоритетом выбирает карту",
+          "ban",
+          "ban",
+          "ban",
+          "ban",
+          "ban",
+          "pick",
         ],
       },
     },
@@ -164,8 +167,8 @@ const gameRules: Record<GameType, GameTypeRules> = {
           { action: "pick", count: 1, team: "loser" },
         ],
         rules: [
-          "Победившая команда банит 1 режим",
-          "Проигравшая команда выбирает режим",
+          "mode_ban",
+          "mode_pick",
         ],
       },
       maps: {
@@ -174,8 +177,10 @@ const gameRules: Record<GameType, GameTypeRules> = {
           { action: "pick", count: 1, team: "loser" },
         ],
         rules: [
-          "Победившая команда банит 3 карты",
-          "Проигравшая команда выбирает карту",
+          "ban",
+          "ban",
+          "ban",
+          "pick",
         ],
       },
     },
