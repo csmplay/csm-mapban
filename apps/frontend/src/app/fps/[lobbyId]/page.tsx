@@ -663,6 +663,7 @@ export default function LobbyPage() {
                         type="text"
                         placeholder="Имя команды..."
                         value={teamName}
+                        maxLength={20}
                         onChange={(e) => setTeamName(e.target.value)}
                         className="w-full"
                       />

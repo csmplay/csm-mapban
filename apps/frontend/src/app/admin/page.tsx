@@ -71,11 +71,11 @@ type Lobby = {
     roundNumber?: number;
   };
   gameStep: number;
-  pickedMode?: { mode: string; teamName: string };
+  pickedMode?: { mode: string; teamName: string; translatedMode: string };
   roundHistory?: {
     roundNumber: number;
     pickedMaps: PickedMap[];
-    pickedMode?: { mode: string; teamName: string };
+    pickedMode?: { mode: string; teamName: string; translatedMode: string };
   }[];
 };
 
@@ -603,9 +603,9 @@ export default function AdminPage() {
                               {lobby.roundHistory.map((round, roundIndex) => (
                                 <div key={roundIndex} className="w-full">
                                   <div className="text-sm font-medium text-muted-foreground mb-1">
-                                    Round {round.roundNumber}
+                                    Раунд {round.roundNumber}
                                     {round.pickedMode &&
-                                      ` - ${round.pickedMode.mode.toUpperCase()}`}
+                                      ` - ${round.pickedMode.translatedMode.toUpperCase()}`}
                                   </div>
                                   <div className="flex flex-wrap gap-2">
                                     {round.pickedMaps.map((item, index) => (
@@ -641,7 +641,7 @@ export default function AdminPage() {
                                     ? `${item.map} (DECIDER)`
                                     : lobby.rules.gameName.toLowerCase() ===
                                         "splatoon"
-                                      ? `${item.map} (${item.teamName}), ${lobby.pickedMode?.mode.toUpperCase() || ""}`
+                                      ? `${item.map.toUpperCase()} ${lobby.pickedMode?.translatedMode.toUpperCase() || ""} (${item.teamName})`
                                       : `${item.map} (${item.teamName}), ${item.sideTeamName} - ${item.side?.toUpperCase()}`}
                                 </Badge>
                               ))}

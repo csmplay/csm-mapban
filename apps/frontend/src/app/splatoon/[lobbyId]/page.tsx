@@ -988,6 +988,7 @@ export default function SplatoonLobbyPage() {
                       placeholder="Имя команды..."
                       value={teamName}
                       onChange={handleTeamNameChange}
+                      maxLength={20}
                       className="w-full"
                     />
                     <div className="flex justify-between">

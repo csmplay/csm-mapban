@@ -22,13 +22,13 @@ export interface Lobby extends BaseLobby {
     mapNames: string[];
   };
   bannedModes: Array<{ mode: GameMode; teamName: string }>; // Array of banned modes
-  pickedMode?: { mode: GameMode; teamName: string }; // Selected mode
+  pickedMode?: { mode: GameMode; teamName: string; translatedMode: string }; // Selected mode
   pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of picked maps
   bannedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of banned maps
   roundHistory?: {
     roundNumber: number;
     pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>;
-    pickedMode?: { mode: GameMode; teamName: string };
+    pickedMode?: { mode: GameMode; teamName: string; translatedMode: string };
   }[];
 }
 
@@ -463,7 +463,7 @@ export function handleModePick(
   if (!lobby) return;
 
   // Set the picked mode
-  lobby.pickedMode = { mode, teamName };
+  lobby.pickedMode = { mode, teamName, translatedMode: modeTranslations[mode] };
 
   // Increment game step
   lobby.gameStep++;
