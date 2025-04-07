@@ -69,7 +69,7 @@ const ObsPage = () => {
 
   const backendUrl =
     process.env.NODE_ENV === "development"
-      ? process.env.BACKEND_URL + "/" || "http://localhost:4000/"
+      ? "http://localhost:4000/"
       : "/";
 
   useEffect(() => {
