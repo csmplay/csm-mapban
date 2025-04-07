@@ -1045,6 +1045,9 @@ io.on("connection", (socket) => {
           `${teamName} выбрали режим ${translatedMode}`,
         );
 
+        // Send updated map list to all clients
+        io.to(lobbyId).emit("availableMaps", lobby.rules.mapNames);
+
         // Disable all controls first
         io.to(lobbyId).emit("canWorkUpdated", false);
         io.to(lobbyId).emit("canModeBan", false);
