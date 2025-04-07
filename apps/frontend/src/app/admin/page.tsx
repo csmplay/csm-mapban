@@ -125,9 +125,7 @@ export default function AdminPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const backendUrl =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:4000/"
-      : "/";
+    process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   const [activeTab, setActiveTab] = useState(0);
 
@@ -457,7 +455,13 @@ export default function AdminPage() {
             Копировать OBS ссылку
           </Button>
           <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
-            <Image src="/CSM White.svg" alt="CSM" width={90} height={20} unoptimized />
+            <Image
+              src="/CSM White.svg"
+              alt="CSM"
+              width={90}
+              height={20}
+              unoptimized
+            />
             mapban admin
           </h1>
           <Button

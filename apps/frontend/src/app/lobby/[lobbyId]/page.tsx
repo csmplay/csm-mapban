@@ -17,9 +17,7 @@ export default function LobbyPage() {
   const [isError, setIsError] = useState(false);
 
   const backendUrl =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:4000/"
-      : "/";
+    process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   useEffect(() => {
     const newSocket = io(backendUrl);

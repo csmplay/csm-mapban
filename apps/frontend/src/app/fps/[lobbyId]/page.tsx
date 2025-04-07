@@ -66,9 +66,7 @@ export default function LobbyPage() {
   const [pickMapId, setPickMapId] = useState<number>(0);
 
   const backendUrl =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:4000/"
-      : "/";
+    process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   // Socket Calls Handling
   useEffect(() => {
@@ -403,7 +401,7 @@ export default function LobbyPage() {
                     } transition-all duration-300 
                                         ${isSelected && !isPicked ? "border-gray-500" : "border-gray-300"}
                                         ${isPicked ? "border-green-400" : ""}`}
-                                        unoptimized
+                    unoptimized
                   />
                   <div
                     className={`relative z-10 bg-black/50 px-2 py-1 rounded-md`}

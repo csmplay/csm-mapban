@@ -122,9 +122,7 @@ export default function SplatoonLobbyPage() {
   const redTeamName = redTeamEntry ? redTeamEntry[1] : "Team Red";
 
   const backendUrl =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:4000/"
-      : "/";
+    process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   // Rules states
   const [, setModesRulesList] = useState<string[]>([]);
@@ -254,10 +252,13 @@ export default function SplatoonLobbyPage() {
       },
     );
 
-    newSocket.on("modePicked", (data: { mode: GameMode; teamName: string; translatedMode: string }) => {
-      setActiveMode(data.mode);
-      setWinnerConfirmed(false);
-    });
+    newSocket.on(
+      "modePicked",
+      (data: { mode: GameMode; teamName: string; translatedMode: string }) => {
+        setActiveMode(data.mode);
+        setWinnerConfirmed(false);
+      },
+    );
 
     // Handle UI state updates
     newSocket.on("canWorkUpdated", (canWorkState: boolean) => {

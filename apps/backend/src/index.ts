@@ -1030,7 +1030,11 @@ io.on("connection", (socket) => {
 
       if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
         // Set the active mode
-        lobby.pickedMode = { mode, teamName, translatedMode: Splatoon.modeTranslations[mode] };
+        lobby.pickedMode = {
+          mode,
+          teamName,
+          translatedMode: Splatoon.modeTranslations[mode],
+        };
 
         // Increment game step
         lobby.gameStep++;

@@ -52,9 +52,7 @@ export default function HomePage() {
   const [useCustomMapPool, setUseCustomMapPool] = useState(false);
 
   const backendUrl =
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:4000/"
-      : "/";
+    process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   // Fetch map pool data
   const fetchMapPoolData = async () => {
