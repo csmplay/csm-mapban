@@ -56,7 +56,7 @@ export default function AnimatedPickCard({
               className="absolute top-0 left-0 right-0 px-3 overflow-hidden"
             >
               <motion.div
-                className="flex flex-row justify-between overflow-hidden"
+                className={`flex flex-row ${gameName === "splatoon" ? "justify-center" : "justify-between"} overflow-hidden`}
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -77,27 +77,29 @@ export default function AnimatedPickCard({
                 >
                   {sideTeamName}
                 </motion.div>
-                <motion.div
-                  variants={{
-                    hidden: { x: 20, opacity: 0 },
-                    visible: { x: 0, opacity: 1 },
-                  }}
-                  className="pr-6"
-                >
-                  {!decider && !isMode && gameName !== "splatoon" && (
-                    <Image
-                      src={`/${gameName}/${side}_white.png`}
-                      alt={side}
-                      draggable={false}
-                      width={40}
-                      height={40}
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="pt-2.5"
-                      unoptimized
-                    />
-                  )}
-                </motion.div>
+                {gameName !== "splatoon" && (
+                  <motion.div
+                    variants={{
+                      hidden: { x: 20, opacity: 0 },
+                      visible: { x: 0, opacity: 1 },
+                    }}
+                    className="pr-6"
+                  >
+                    {!decider && !isMode && (
+                      <Image
+                        src={`/${gameName}/${side}_white.png`}
+                        alt={side}
+                        draggable={false}
+                        width={40}
+                        height={40}
+                        priority={true}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="pt-2.5"
+                        unoptimized
+                      />
+                    )}
+                  </motion.div>
+                )}
               </motion.div>
             </motion.div>
 
@@ -145,11 +147,14 @@ export default function AnimatedPickCard({
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              style={{ backgroundColor: cardColors.bg[2] }}
-              className="absolute bottom-0 left-0 right-0 p-4 rounded-bl-lg rounded-br-lg"
+              style={{ backgroundColor: cardColors.bg[2],
+                width: "320px",
+                height: "110px",
+               }}
+              className="absolute bottom-0 left-0 right-0 pt-3 pb-4 pl-4 pr-4 rounded-bl-lg rounded-br-lg"
             >
               <motion.div
-                className="flex flex-col items-center"
+                className="flex flex-col items-center gap-1"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -158,6 +163,11 @@ export default function AnimatedPickCard({
                     opacity: 1,
                     transition: { staggerChildren: 0.2, delayChildren: 0.3 },
                   },
+
+                }}
+                style={{
+                  width: "288px",
+                  height: "86px",
                 }}
               >
                 <motion.div
@@ -180,7 +190,7 @@ export default function AnimatedPickCard({
                     visible: { y: 0, opacity: 1 },
                   }}
                   style={{ color: cardColors.text[2] }}
-                  className={`${mapNameTextSize} font-bold pt-1`}
+                  className={`${mapNameTextSize} font-bold flex items-center`}
                 >
                   {isMode ? mode?.translatedMode : mapName}
                 </motion.div>

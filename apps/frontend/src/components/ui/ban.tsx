@@ -22,8 +22,12 @@ export default function AnimatedBanCard({
 }: AnimatedBanCardProps) {
   const [isVisible] = useState(true);
 
-  const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
-  const mapNameTextSize = mapName.length > 12 ? "text-2xl" : "text-3xl";
+  const teamTextSize = teamName.length > 9 
+    ? teamName.length > 15 ? "text-xl" : "text-2xl" 
+    : "text-3xl";
+  const mapNameTextSize = mapName.length > 12 
+    ? mapName.length > 18 ? "text-xl" : "text-2xl" 
+    : "text-3xl";
 
   return (
     <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
@@ -77,11 +81,14 @@ export default function AnimatedBanCard({
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              style={{ backgroundColor: cardColors.bg[2] }}
-              className="absolute bottom-0 left-0 right-0 p-4 rounded-bl-lg rounded-br-lg"
+              style={{ backgroundColor: cardColors.bg[2], 
+                width: "320px",
+                height: "110px",
+              }}
+              className="absolute bottom-0 left-0 right-0 pt-3 pb-4 pl-4 pr-4 rounded-bl-lg rounded-br-lg"
             >
               <motion.div
-                className="flex flex-col items-center"
+                className="flex flex-col items-center gap-1"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -91,19 +98,23 @@ export default function AnimatedBanCard({
                     transition: { staggerChildren: 0.2, delayChildren: 0.3 },
                   },
                 }}
+                style={{
+                  width: "288px",
+                  height: "86px",
+                }}
               >
                 <motion.div
                   variants={{
                     hidden: { y: -20, opacity: 0 },
                     visible: { y: 0, opacity: 1 },
                   }}
-                  style={{ color: cardColors.text[1] }}
+                  style={{ color: cardColors.text[1]}}
                   className="text-4xl font-bold"
                 >
                   BAN
                 </motion.div>
                 <div
-                  style={{ backgroundColor: cardColors.bg[3] }}
+                  style={{ backgroundColor: cardColors.bg[3]}}
                   className="w-48 h-0.5"
                 />
                 <motion.div
@@ -111,8 +122,10 @@ export default function AnimatedBanCard({
                     hidden: { y: 20, opacity: 0 },
                     visible: { y: 0, opacity: 1 },
                   }}
-                  style={{ color: cardColors.text[2] }}
-                  className={`${mapNameTextSize} font-bold pt-1`}
+                  style={{ color: cardColors.text[2],
+                    height: "40px",
+                  }}
+                  className={`${mapNameTextSize} font-bold flex items-center`}
                 >
                   {mapName}
                 </motion.div>

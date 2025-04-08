@@ -1056,172 +1056,179 @@ export default function AdminPage() {
               <h2 className="text-2xl font-bold mb-4 text-center">
                 Редактировать цвета карточек
               </h2>
-              <div className="space-y-6">
-                {/* BAN card colors */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Текст (BAN)
-                  </h3>
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="flex justify-center space-x-8">
-                      {editingCardColors.ban?.text?.map(
-                        (color: string, index: number) => (
-                          <div key={index} className="flex flex-col items-center space-y-2">
-                            <input
-                              type="color"
-                              value={color}
-                              onChange={(e) => {
-                                const newText = [...editingCardColors.ban.text];
-                                newText[index] = e.target.value;
-                                setEditingCardColors({
-                                  ...editingCardColors,
-                                  ban: { ...editingCardColors.ban, text: newText },
-                                });
-                              }}
-                              className="w-12 h-12"
-                            />
-                            <span className="text-sm text-center">
-                              {index === 0 ? "Команда" : 
-                               index === 1 ? "Действие" :
-                               index === 2 ? "Карта" : ""}
-                            </span>
-                          </div>
-                        ),
-                      )}
+              <div className="grid grid-cols-2 gap-8">
+                {/* BAN Colors Section */}
+                <div className="bg-card/50 p-6 rounded-lg">
+                  <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">BAN</h2>
+                  
+                  {/* BAN Text Colors */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-center">Текст</h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="grid grid-cols-3 gap-6">
+                        {editingCardColors.ban?.text?.map(
+                          (color: string, index: number) => (
+                            <div key={index} className="flex flex-col items-center space-y-2">
+                              <input
+                                type="color"
+                                value={color}
+                                onChange={(e) => {
+                                  const newText = [...editingCardColors.ban.text];
+                                  newText[index] = e.target.value;
+                                  setEditingCardColors({
+                                    ...editingCardColors,
+                                    ban: { ...editingCardColors.ban, text: newText },
+                                  });
+                                }}
+                                className="w-16 h-16 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-center font-medium">
+                                {index === 0 ? "Команда" : 
+                                 index === 1 ? "Действие" :
+                                 index === 2 ? "Карта" : ""}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Фон (BAN)
-                  </h3>
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="flex justify-center space-x-8">
-                      {editingCardColors.ban?.bg?.map(
-                        (color: string, index: number) => (
-                          <div key={index} className="flex flex-col items-center space-y-2">
-                            <input
-                              type="color"
-                              value={color}
-                              onChange={(e) => {
-                                const newBg = [...editingCardColors.ban.bg];
-                                newBg[index] = e.target.value;
-                                setEditingCardColors({
-                                  ...editingCardColors,
-                                  ban: { ...editingCardColors.ban, bg: newBg },
-                                });
-                              }}
-                              className="w-12 h-12"
-                            />
-                            <span className="text-sm text-center">
-                              {index === 0 ? "Верх" : 
-                               index === 1 ? "Подложка" : 
-                               index === 2 ? "Низ" : 
-                               index === 3 ? "Полоска" : ""}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {/* PICK card colors */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Текст (PICK)
-                  </h3>
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="flex justify-center space-x-8">
-                      {editingCardColors.pick?.text?.map(
-                        (color: string, index: number) => (
-                          <div key={index} className="flex flex-col items-center space-y-2">
-                            <input
-                              type="color"
-                              value={color}
-                              onChange={(e) => {
-                                const newText = [...editingCardColors.pick.text];
-                                newText[index] = e.target.value;
-                                setEditingCardColors({
-                                  ...editingCardColors,
-                                  pick: {
-                                    ...editingCardColors.pick,
-                                    text: newText,
-                                  },
-                                });
-                              }}
-                              className="w-12 h-12"
-                            />
-                            <span className="text-sm text-center">
-                              {index === 0 ? "Команда" : 
-                               index === 1 ? "Действие" :
-                               index === 2 ? "Карта" : ""}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">
-                    Фон (PICK)
-                  </h3>
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="flex justify-center space-x-8">
-                      {editingCardColors.pick?.bg?.map(
-                        (color: string, index: number) => (
-                          <div key={index} className="flex flex-col items-center space-y-2">
-                            <input
-                              type="color"
-                              value={color}
-                              onChange={(e) => {
-                                const newBg = [...editingCardColors.pick.bg];
-                                newBg[index] = e.target.value;
-                                setEditingCardColors({
-                                  ...editingCardColors,
-                                  pick: { ...editingCardColors.pick, bg: newBg },
-                                });
-                              }}
-                              className="w-12 h-12"
-                            />
-                            <span className="text-sm text-center">
-                              {index === 0 ? "Верх" : 
-                               index === 1 ? "Подложка" : 
-                               index === 2 ? "Низ" : 
-                               index === 3 ? "Полоска" : ""}
-                            </span>
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setEditCardColorsModal(false);
-                      setEditingCardColors(null);
 
-                      setTimeout(() => {
-                        setShowSettingsModal(true);
-                      }, 300);
-                    }}
-                  >
-                    Назад
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={handleResetCardColors}
-                  >
-                    Сбросить
-                  </Button>
-                  <Button type="button" onClick={handleSaveCardColors}>
-                    Сохранить
-                  </Button>
+                  {/* BAN Background Colors */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-center">Фон</h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        {editingCardColors.ban?.bg?.map(
+                          (color: string, index: number) => (
+                            <div key={index} className="flex flex-col items-center space-y-2">
+                              <input
+                                type="color"
+                                value={color}
+                                onChange={(e) => {
+                                  const newBg = [...editingCardColors.ban.bg];
+                                  newBg[index] = e.target.value;
+                                  setEditingCardColors({
+                                    ...editingCardColors,
+                                    ban: { ...editingCardColors.ban, bg: newBg },
+                                  });
+                                }}
+                                className="w-16 h-16 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-center font-medium">
+                                {index === 0 ? "Верх" : 
+                                 index === 1 ? "Подложка" : 
+                                 index === 2 ? "Низ" : 
+                                 index === 3 ? "Полоска" : ""}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* PICK Colors Section */}
+                <div className="bg-card/50 p-6 rounded-lg">
+                  <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">PICK</h2>
+                  
+                  {/* PICK Text Colors */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-center">Текст</h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="grid grid-cols-3 gap-6">
+                        {editingCardColors.pick?.text?.map(
+                          (color: string, index: number) => (
+                            <div key={index} className="flex flex-col items-center space-y-2">
+                              <input
+                                type="color"
+                                value={color}
+                                onChange={(e) => {
+                                  const newText = [...editingCardColors.pick.text];
+                                  newText[index] = e.target.value;
+                                  setEditingCardColors({
+                                    ...editingCardColors,
+                                    pick: {
+                                      ...editingCardColors.pick,
+                                      text: newText,
+                                    },
+                                  });
+                                }}
+                                className="w-16 h-16 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-center font-medium">
+                                {index === 0 ? "Команда" : 
+                                 index === 1 ? "Действие" :
+                                 index === 2 ? "Карта" : ""}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* PICK Background Colors */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 text-center">Фон</h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        {editingCardColors.pick?.bg?.map(
+                          (color: string, index: number) => (
+                            <div key={index} className="flex flex-col items-center space-y-2">
+                              <input
+                                type="color"
+                                value={color}
+                                onChange={(e) => {
+                                  const newBg = [...editingCardColors.pick.bg];
+                                  newBg[index] = e.target.value;
+                                  setEditingCardColors({
+                                    ...editingCardColors,
+                                    pick: { ...editingCardColors.pick, bg: newBg },
+                                  });
+                                }}
+                                className="w-16 h-16 rounded cursor-pointer"
+                              />
+                              <span className="text-sm text-center font-medium">
+                                {index === 0 ? "Верх" : 
+                                 index === 1 ? "Подложка" : 
+                                 index === 2 ? "Низ" : 
+                                 index === 3 ? "Полоска" : ""}
+                              </span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditCardColorsModal(false);
+                    setEditingCardColors(null);
+
+                    setTimeout(() => {
+                      setShowSettingsModal(true);
+                    }, 300);
+                  }}
+                >
+                  Назад
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleResetCardColors}
+                >
+                  Сбросить
+                </Button>
+                <Button type="button" onClick={handleSaveCardColors}>
+                  Сохранить
+                </Button>
               </div>
             </motion.div>
           </motion.div>
@@ -1350,6 +1357,7 @@ export default function AdminPage() {
             <div className="scale-75 bg-[#00FF00]">
               <AnimatedPickCard
                 teamName="PICK Team"
+                sideTeamName="PICK Team"
                 mapName="Mirage"
                 side="t"
                 gameName="cs2"
