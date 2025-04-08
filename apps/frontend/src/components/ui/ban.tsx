@@ -12,6 +12,7 @@ export interface AnimatedBanCardProps {
     text: string[];
     bg: string[];
   };
+  highlightElement?: string;
 }
 
 export default function AnimatedBanCard({
@@ -19,6 +20,7 @@ export default function AnimatedBanCard({
   mapName,
   gameName,
   cardColors,
+  highlightElement,
 }: AnimatedBanCardProps) {
   const [isVisible] = useState(true);
 
@@ -28,6 +30,10 @@ export default function AnimatedBanCard({
   const mapNameTextSize = mapName.length > 12 
     ? mapName.length > 18 ? "text-xl" : "text-2xl" 
     : "text-3xl";
+
+  const getHighlightClass = (element: string) => {
+    return highlightElement === element ? "animate-pulse" : "";
+  };
 
   return (
     <div className="bg-transparent flex flex-col items-center justify-end gap-8 p-4">
@@ -44,11 +50,11 @@ export default function AnimatedBanCard({
                 clipPath: "polygon(0 0, 90% 0, 100% 100%, 0 100%)",
                 height: "60px",
               }}
-              className="absolute top-0 left-0 right-0 p-3 overflow-hidden"
+              className={`absolute top-0 left-0 right-0 p-3 overflow-hidden ${getHighlightClass('top')}`}
             >
               <span
                 style={{ color: cardColors.text[0] }}
-                className={`${teamTextSize} font-bold block text-center`}
+                className={`${teamTextSize} font-bold block text-center ${getHighlightClass('team')}`}
               >
                 {teamName}
               </span>
@@ -60,7 +66,7 @@ export default function AnimatedBanCard({
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
               style={{ backgroundColor: cardColors.bg[1], originY: 1 }}
-              className="absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden"
+              className={`absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden ${getHighlightClass('base')}`}
             >
               <Image
                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
@@ -85,7 +91,7 @@ export default function AnimatedBanCard({
                 width: "320px",
                 height: "110px",
               }}
-              className="absolute bottom-0 left-0 right-0 pt-3 pb-4 pl-4 pr-4 rounded-bl-lg rounded-br-lg"
+              className={`absolute bottom-0 left-0 right-0 pt-3 pb-4 pl-4 pr-4 rounded-bl-lg rounded-br-lg ${getHighlightClass('bottom')}`}
             >
               <motion.div
                 className="flex flex-col items-center gap-1"
@@ -109,13 +115,13 @@ export default function AnimatedBanCard({
                     visible: { y: 0, opacity: 1 },
                   }}
                   style={{ color: cardColors.text[1]}}
-                  className="text-4xl font-bold"
+                  className={`text-4xl font-bold ${getHighlightClass('action')}`}
                 >
                   BAN
                 </motion.div>
                 <div
                   style={{ backgroundColor: cardColors.bg[3]}}
-                  className="w-48 h-0.5"
+                  className={`w-48 h-0.5 ${getHighlightClass('stripe')}`}
                 />
                 <motion.div
                   variants={{
@@ -125,7 +131,7 @@ export default function AnimatedBanCard({
                   style={{ color: cardColors.text[2],
                     height: "40px",
                   }}
-                  className={`${mapNameTextSize} font-bold flex items-center`}
+                  className={`${mapNameTextSize} font-bold flex items-center ${getHighlightClass('map')}`}
                 >
                   {mapName}
                 </motion.div>

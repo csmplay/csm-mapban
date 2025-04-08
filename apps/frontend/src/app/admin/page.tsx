@@ -121,6 +121,7 @@ export default function AdminPage() {
   const [editingCardColors, setEditingCardColors] = useState<CardColors | null>(
     null,
   );
+  const [hoveredElement, setHoveredElement] = useState<{type: 'ban' | 'pick', element: string} | null>(null);
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -1072,6 +1073,8 @@ export default function AdminPage() {
                               <input
                                 type="color"
                                 value={color}
+                                onMouseEnter={() => setHoveredElement({ type: 'ban', element: index === 0 ? 'team' : index === 1 ? 'action' : 'map' })}
+                                onMouseLeave={() => setHoveredElement(null)}
                                 onChange={(e) => {
                                   const newText = [...editingCardColors.ban.text];
                                   newText[index] = e.target.value;
@@ -1105,6 +1108,8 @@ export default function AdminPage() {
                               <input
                                 type="color"
                                 value={color}
+                                onMouseEnter={() => setHoveredElement({ type: 'ban', element: index === 0 ? 'top' : index === 1 ? 'base' : index === 2 ? 'bottom' : 'stripe' })}
+                                onMouseLeave={() => setHoveredElement(null)}
                                 onChange={(e) => {
                                   const newBg = [...editingCardColors.ban.bg];
                                   newBg[index] = e.target.value;
@@ -1144,6 +1149,8 @@ export default function AdminPage() {
                               <input
                                 type="color"
                                 value={color}
+                                onMouseEnter={() => setHoveredElement({ type: 'pick', element: index === 0 ? 'team' : index === 1 ? 'action' : 'map' })}
+                                onMouseLeave={() => setHoveredElement(null)}
                                 onChange={(e) => {
                                   const newText = [...editingCardColors.pick.text];
                                   newText[index] = e.target.value;
@@ -1180,6 +1187,8 @@ export default function AdminPage() {
                               <input
                                 type="color"
                                 value={color}
+                                onMouseEnter={() => setHoveredElement({ type: 'pick', element: index === 0 ? 'top' : index === 1 ? 'base' : index === 2 ? 'bottom' : 'stripe' })}
+                                onMouseLeave={() => setHoveredElement(null)}
                                 onChange={(e) => {
                                   const newBg = [...editingCardColors.pick.bg];
                                   newBg[index] = e.target.value;
@@ -1346,22 +1355,24 @@ export default function AdminPage() {
           <motion.div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-50">
             <div className="scale-75 bg-[#00FF00]">
               <AnimatedBanCard
-                teamName="BAN Team"
-                mapName="Dust 2"
-                gameName="cs2"
+                teamName="Spilled Tea"
+                mapName='Велозал "9-й вал"'
+                gameName="splatoon"
                 cardColors={editingCardColors.ban}
+                highlightElement={hoveredElement?.type === 'ban' ? hoveredElement.element : undefined}
               />
             </div>
           </motion.div>
           <motion.div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50">
             <div className="scale-75 bg-[#00FF00]">
               <AnimatedPickCard
-                teamName="PICK Team"
-                sideTeamName="PICK Team"
+                teamName="Костромаэнерго"
+                sideTeamName="Костромаэнерго"
                 mapName="Mirage"
                 side="t"
                 gameName="cs2"
                 cardColors={editingCardColors.pick}
+                highlightElement={hoveredElement?.type === 'pick' ? hoveredElement.element : undefined}
               />
             </div>
           </motion.div>
