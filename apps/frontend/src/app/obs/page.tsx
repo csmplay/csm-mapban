@@ -43,10 +43,7 @@ interface PickModeAction {
 
 interface DeciderAction {
   type: "decider";
-  teamName: string;
-  sideTeamName: string;
   mapName: string;
-  side: string;
 }
 
 type Action = BanAction | BanModeAction | PickAction | PickModeAction | DeciderAction;
@@ -100,6 +97,7 @@ const ObsPage = () => {
     translatedMode: "",
   };
   const [pickedMode, setPickedMode] = useState<{ mode: string; teamName: string; translatedMode: string }>(defaultPickedMode);
+  const [deciderEntries, setDeciderEntries] = useState("");
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
   const [gameName, setGameName] = useState<string>("0");
   const [cardColors, setCardColors] = useState<CardColors>({
@@ -251,6 +249,11 @@ const ObsPage = () => {
       },
     );
 
+    newSocket.on("deciderUpdated", (decider: string) => {
+      console.log("Decider updated:", decider);
+      setDeciderEntries(decider);
+    });
+
     // Fallback for when modePicked event might be missed
     newSocket.on(
       "currentPickedMode",
@@ -341,7 +344,6 @@ const ObsPage = () => {
           });
         }
       } else if (step === "mode_pick" && pickedModeCopy.mode != "") {
-        console.log(pickedModeCopy, "!=", defaultPickedMode);
         const pickEntry = pickedModeCopy;
         finalActions.push({
           type: "pick_mode",
@@ -357,10 +359,7 @@ const ObsPage = () => {
         if (pickEntry) {
           finalActions.push({
             type: "decider",
-            teamName: pickEntry.teamName,
             mapName: pickEntry.map,
-            side: pickEntry.side || "mode",
-            sideTeamName: pickEntry.sideTeamName || pickEntry.teamName,
           });
         }
       }
@@ -472,8 +471,6 @@ const ObsPage = () => {
               return (
                 <AnimatedDeciderCard
                   key={index}
-                  teamName={action.teamName}
-                  sideTeamName={action.sideTeamName}
                   mapName={action.mapName}
                   gameName={gameName}
                   cardColors={cardColors.decider}

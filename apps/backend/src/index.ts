@@ -259,7 +259,7 @@ io.on("connection", (socket) => {
           gameStep: 0,
           rules: {
             gameName: "splatoon",
-            gameType,
+            gameType: "bo3",
             mapNames: [],
             mapRulesList: Splatoon.mapRulesLists[gameType].first,
             modesRulesList: Splatoon.modesRulesLists[gameType].first,
@@ -536,17 +536,17 @@ io.on("connection", (socket) => {
     (data: {
       lobbyId: string;
       map: string;
-      side: string;
     }) => {
-      const { lobbyId, map, side } = data;
+      const { lobbyId, map} = data;
       const lobby = lobbies.get(lobbyId);
       if (lobby) {
         // Set the decider map
-        lobby.deciderMap = { map, side };
+        lobby.deciderMap = { map };
         
+        console.log("Sending decider map to all clients:", map);
         // Update the game state
         io.to(lobbyId).emit("gameStateUpdated", `Десайдер - ${map}`);
-        io.to(lobbyId).emit("deciderUpdated", { map, side });
+        io.to(lobbyId).emit("deciderUpdated", { map });
         
         // Move to next game step
         lobby.gameStep++;

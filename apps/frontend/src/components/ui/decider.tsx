@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 export interface AnimatedDeciderCardProps {
-  teamName: string;
-  sideTeamName: string;
   mapName: string;
   gameName: string;
   cardColors: {
@@ -17,8 +15,6 @@ export interface AnimatedDeciderCardProps {
 }
 
 export default function AnimatedDeciderCard({
-  teamName,
-  sideTeamName,
   mapName,
   gameName,
   cardColors,
@@ -26,7 +22,6 @@ export default function AnimatedDeciderCard({
 }: AnimatedDeciderCardProps) {
   const [isVisible] = useState(true);
 
-  const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
   const mapNameTextSize = mapName.length > 12 ? "text-2xl" : "text-3xl";
 
   const getHighlightClass = (element: string) => {

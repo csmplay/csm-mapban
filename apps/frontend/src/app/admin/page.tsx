@@ -462,7 +462,7 @@ export default function AdminPage() {
       // Create a Splatoon lobby for proper mode handling
       socketRef.current.emit("createSplatoonLobby", {
         lobbyId,
-        gameType: "bo3",
+        gameType: "preview",
         coinFlip: false,
         admin: true,
       });
@@ -513,11 +513,15 @@ export default function AdminPage() {
           });
 
           // Add a decider
-          socketRef.current.emit("lobby.decider", {
-            lobbyId,
-            map: "Mirage",
-            side: "t",
-          });
+            setTimeout(() => {
+            socketRef.current?.emit("lobby.pick", {
+              lobbyId,
+              map: 'Велозал "9-й вал"',
+              teamName: "",
+              side: "DECIDER",
+              sideTeamName: ""
+            });
+            }, 3000);
 
           // Set this lobby as the OBS view
           socketRef.current.emit("admin.setObsLobby", lobbyId);
@@ -1740,8 +1744,6 @@ export default function AdminPage() {
               )}
               {activeTab === 1 && (
                 <AnimatedDeciderCard
-                  teamName="Костромаэнерго"
-                  sideTeamName="Костромаэнерго"
                   mapName="Mirage"
                   gameName="cs2"
                   cardColors={editingCardColors.decider}
@@ -1774,8 +1776,6 @@ export default function AdminPage() {
               )}
               {activeTab === 1 && (
                 <AnimatedDeciderCard
-                  teamName="Костромаэнерго"
-                  sideTeamName="Костромаэнерго"
                   mapName="Mirage"
                   gameName="cs2"
                   cardColors={editingCardColors.decider}

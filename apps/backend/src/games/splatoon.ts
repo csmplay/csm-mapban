@@ -3,7 +3,7 @@ import { io } from "../utils/server";
 import { getGameCategory } from "../index";
 
 export type GameName = "splatoon";
-export type GameType = "bo3";
+export type GameType = "bo3" | "preview";
 export type GameMode = "clam" | "rainmaker" | "tower" | "zones";
 
 // Splatoon specific lobby interface
@@ -38,6 +38,10 @@ export const modesRulesLists = {
     first: ["mode_ban", "mode_ban", "mode_pick"], // first round
     subsequent: ["mode_ban", "mode_pick"], // subsequent rounds: priority bans, non-priority picks
   },
+  preview: {
+    first: ["mode_ban", "mode_pick"], // first round
+    subsequent: ["mode_ban", "mode_pick"], // subsequent rounds: priority bans, non-priority picks
+  }
 };
 
 // Maps ban rules
@@ -46,6 +50,10 @@ export const mapRulesLists = {
     first: ["ban", "ban", "ban", "ban", "ban", "pick"], // first round (2 + 3 + 1 pick)
     subsequent: ["ban", "ban", "ban", "pick"], // subsequent rounds (3 + 1 pick)
   },
+  preview: {
+    first: ["ban", "pick", "decider"], // first round (2 + 1 pick + 2 decider)
+    subsequent: ["ban", "ban", "ban", "pick"], // subsequent rounds (3 + 1 pick)
+  }
 };
 
 // Splatoon map lists
@@ -109,7 +117,7 @@ export const modeTranslations = {
 
 // Game rules configuration
 interface GameStep {
-  action: "ban" | "pick";
+  action: "ban" | "pick" | "decider";
   count: number;
   team: "priority" | "non-priority" | "winner" | "loser";
 }
@@ -147,6 +155,41 @@ export const gameRules: Record<GameType, GameTypeRules> = {
           { action: "pick", count: 1, team: "priority" },
         ],
         rules: ["ban", "ban", "ban", "ban", "ban", "pick"],
+      },
+    },
+    subsequent: {
+      modes: {
+        steps: [
+          { action: "ban", count: 1, team: "winner" },
+          { action: "pick", count: 1, team: "loser" },
+        ],
+        rules: ["mode_ban", "mode_pick"],
+      },
+      maps: {
+        steps: [
+          { action: "ban", count: 3, team: "winner" },
+          { action: "pick", count: 1, team: "loser" },
+        ],
+        rules: ["ban", "ban", "ban", "pick"],
+      },
+    },
+  },
+  preview: {
+    first: {
+      modes: {
+        steps: [
+          { action: "ban", count: 1, team: "priority" },
+          { action: "pick", count: 1, team: "priority" },
+        ],
+        rules: ["mode_ban", "mode_pick"],
+      },
+      maps: {
+        steps: [
+          { action: "ban", count: 2, team: "priority" },
+          { action: "pick", count: 1, team: "priority" },
+          { action: "decider", count: 2, team: "priority" },
+        ],
+        rules: ["ban", "pick", "decider"],
       },
     },
     subsequent: {
