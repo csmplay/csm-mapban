@@ -4,28 +4,26 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-export interface AnimatedPickCardProps {
+export interface AnimatedDeciderCardProps {
   teamName: string;
+  sideTeamName: string;
   mapName: string;
   gameName: string;
-  side: string;
-  sideTeamName: string;
   cardColors: {
-    text: string[]; // [text1, text2, text3]
-    bg: string[]; // [bg1, bg2, bg3, bg4]
+    text: string[];
+    bg: string[];
   };
   highlightElement?: string;
 }
 
-export default function AnimatedPickCard({
+export default function AnimatedDeciderCard({
   teamName,
+  sideTeamName,
   mapName,
   gameName,
-  side,
-  sideTeamName,
   cardColors,
   highlightElement,
-}: AnimatedPickCardProps) {
+}: AnimatedDeciderCardProps) {
   const [isVisible] = useState(true);
 
   const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
@@ -64,37 +62,6 @@ export default function AnimatedPickCard({
                   },
                 }}
               >
-                <motion.div
-                  variants={{
-                    hidden: { x: -20, opacity: 0 },
-                    visible: { x: 0, opacity: 1 },
-                  }}
-                  style={{ color: cardColors.text[0] }}
-                  className={`${teamTextSize} font-bold block text-center pt-3 ${getHighlightClass('team')} ${gameName === 'splatoon' ? 'w-full' : ''}`}
-                >
-                  {sideTeamName}
-                </motion.div>
-                {gameName !== 'splatoon' && (
-                  <motion.div
-                    variants={{
-                      hidden: { x: 20, opacity: 0 },
-                      visible: { x: 0, opacity: 1 },
-                    }}
-                    className="pr-6"
-                  >
-                    <Image
-                      src={`/${gameName}/${side}_white.png`}
-                      alt={side}
-                      draggable={false}
-                      width={40}
-                      height={40}
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="pt-2.5"
-                      unoptimized
-                    />
-                  </motion.div>
-                )}
               </motion.div>
             </motion.div>
 
@@ -155,7 +122,7 @@ export default function AnimatedPickCard({
                   style={{ color: cardColors.text[1] }}
                   className={`text-4xl font-bold ${getHighlightClass('action')}`}
                 >
-                  PICK
+                  DECIDER
                 </motion.div>
                 <div
                   style={{ backgroundColor: cardColors.bg[3] }}
@@ -178,4 +145,4 @@ export default function AnimatedPickCard({
       </AnimatePresence>
     </div>
   );
-}
+} 

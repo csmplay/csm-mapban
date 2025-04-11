@@ -29,4 +29,5 @@ export interface BaseLobby {
   };
   pickedMaps: Array<{ map: string; teamName: string }>; // Array of picked maps
   bannedMaps: Array<{ map: string; teamName: string }>; // Array of banned maps
+  deciderMap?: { map: string; side: string }; // Optional decider map
 }

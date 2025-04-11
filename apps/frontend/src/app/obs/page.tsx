@@ -4,11 +4,23 @@ import React, { useEffect, useState, useMemo } from "react";
 import { io, Socket } from "socket.io-client";
 import AnimatedBanCard from "@/components/ui/ban";
 import AnimatedPickCard from "@/components/ui/pick";
+import AnimatedBanModeCard from "@/components/ui/ban_mode";
+import AnimatedPickModeCard from "@/components/ui/pick_mode";
+import AnimatedDeciderCard from "@/components/ui/decider";
 
 interface BanAction {
   type: "ban";
   teamName: string;
   mapName: string;
+}
+
+interface BanModeAction {
+  type: "ban_mode";
+  teamName: string;
+  mode: {
+    mode: string;
+    translatedMode: string;
+  };
 }
 
 interface PickAction {
@@ -17,15 +29,27 @@ interface PickAction {
   mapName: string;
   side: string;
   sideTeamName: string;
-  decider?: boolean;
-  isMode?: boolean;
-  mode?: {
+}
+
+interface PickModeAction {
+  type: "pick_mode";
+  teamName: string;
+  sideTeamName: string;
+  mode: {
     mode: string;
     translatedMode: string;
   };
 }
 
-type Action = BanAction | PickAction;
+interface DeciderAction {
+  type: "decider";
+  teamName: string;
+  sideTeamName: string;
+  mapName: string;
+  side: string;
+}
+
+type Action = BanAction | BanModeAction | PickAction | PickModeAction | DeciderAction;
 
 interface CardColors {
   ban: {
@@ -33,6 +57,18 @@ interface CardColors {
     bg: string[];
   };
   pick: {
+    text: string[];
+    bg: string[];
+  };
+  pick_mode: {
+    text: string[];
+    bg: string[];
+  };
+  ban_mode: {
+    text: string[];
+    bg: string[];
+  };
+  decider: {
     text: string[];
     bg: string[];
   };
@@ -54,17 +90,24 @@ const ObsPage = () => {
   const [bannedEntries, setBannedEntries] = useState<
     { map: string; teamName: string }[]
   >([]);
+  const [bannedModeEntries, setBannedModeEntries] = useState<
+    Array<{ mode: string; teamName: string; translatedMode?: string }>
+  >([]);
   const [pattern, setPattern] = useState<string[]>([]);
-  const [pickedMode, setPickedMode] = useState<{
-    mode: string;
-    teamName: string;
-    translatedMode: string;
-  } | null>(null);
+  const defaultPickedMode = {
+    mode: "",
+    teamName: "",
+    translatedMode: "",
+  };
+  const [pickedMode, setPickedMode] = useState<{ mode: string; teamName: string; translatedMode: string }>(defaultPickedMode);
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
   const [gameName, setGameName] = useState<string>("0");
   const [cardColors, setCardColors] = useState<CardColors>({
     ban: { text: [], bg: [] },
     pick: { text: [], bg: [] },
+    pick_mode: { text: [], bg: [] },
+    ban_mode: { text: [], bg: [] },
+    decider: { text: [], bg: [] },
   });
 
   const backendUrl =
@@ -105,22 +148,30 @@ const ObsPage = () => {
     // Listen for admin selecting a lobby to display
     newSocket.on("admin.setObsLobby", (lobbyId: string) => {
       console.log("Received admin.setObsLobby event with lobby:", lobbyId);
-      setSelectedLobbyId(lobbyId);
 
       // Clear current state
-      setPickedEntries([]);
-      setBannedEntries([]);
-      setVisibleActionsCount(0);
-      setPickedMode(null);
-      setPattern([]); // Clear pattern before joining new lobby
+      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+        setVisibleActionsCount(0);
+        setPickedMode(defaultPickedMode);
+        setPickedEntries([]);
+        setBannedEntries([]);
+        setPattern([]); // Clear pattern before joining new lobby
+        if (lobbyId) {
+          console.log("Joining lobby as observer:", lobbyId);
+          newSocket.emit("joinLobby", lobbyId, "observer");
+          console.log("Requesting pattern list for lobby:", lobbyId);
+          newSocket.emit("obs.getPatternList", lobbyId);
+          // Request current picked mode if it exists
+          newSocket.emit("obs.getCurrentPickedMode", lobbyId);
+          setSelectedLobbyId(lobbyId);
+        }
+      }, 900); // Match the updated transition duration
 
       // Join the new lobby and get pattern list
-      if (lobbyId) {
-        console.log("Joining lobby as observer:", lobbyId);
-        newSocket.emit("joinLobby", lobbyId, "observer");
-        console.log("Requesting pattern list for lobby:", lobbyId);
-        newSocket.emit("obs.getPatternList", lobbyId);
-      }
+
     });
 
     newSocket.on("gameName", (gameNameVar: string) => {
@@ -152,6 +203,37 @@ const ObsPage = () => {
       },
     );
 
+    newSocket.on(
+      "modesUpdated",
+      (data: { 
+        banned: Array<{ mode: string; teamName: string }>; 
+        active: string[];
+      }) => {
+        console.log("Mode bans updated:", data.banned);
+        
+        // Only reset UI when banned modes array is empty (indicating a new round)
+        if (data.banned.length === 0) {
+          console.log("New round detected - resetting UI");
+          // First fade out the UI
+          document.body.style.transition = 'opacity 0.9s';
+          document.body.style.opacity = '0';
+          
+          // Then update state variables AFTER the transition
+          setTimeout(() => {
+            document.body.style.opacity = '1';
+            setVisibleActionsCount(0);
+            setBannedModeEntries(data.banned);
+            setPickedMode(defaultPickedMode);
+            setBannedEntries([]);
+            setPickedEntries([]);
+          }, 900); // Match the transition duration
+        } else {
+          // Just update the banned modes without resetting UI
+          setBannedModeEntries(data.banned);
+        }
+      },
+    );
+
     newSocket.on("patternList", (pattern: string[]) => {
       console.log("Pattern list received:", pattern);
       setPattern(pattern);
@@ -160,22 +242,41 @@ const ObsPage = () => {
     newSocket.on(
       "modePicked",
       (data: { mode: string; teamName: string; translatedMode: string }) => {
-        console.log("Mode picked:", data);
-        setPickedMode(data);
-        // Reset the OBS view when a mode is picked
-        setPickedEntries([]);
-        setBannedEntries([]);
-        setVisibleActionsCount(0);
+        console.log("Mode picked event received:", data);
+        if (data && data.mode && data.teamName) {
+          setPickedMode(data);
+        } else {
+          console.warn("Received incomplete modePicked data:", data);
+        }
+      },
+    );
+
+    // Fallback for when modePicked event might be missed
+    newSocket.on(
+      "currentPickedMode",
+      (data: { mode: string; teamName: string; translatedMode: string } | null) => {
+        console.log("Current picked mode received:", data);
+        if (data && data.mode && data.teamName) {
+          setPickedMode(data);
+        }
       },
     );
 
     // Handle 'clear' event from the server
     newSocket.on("backend.clear_obs", () => {
       console.log("Clearing OBS state");
-      setPickedEntries([]);
-      setBannedEntries([]);
-      setVisibleActionsCount(0);
-      setPickedMode(null);
+      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+        setVisibleActionsCount(0);
+        setPattern([]);
+        setSelectedLobbyId(null);
+        setPickedEntries([]);
+        setBannedEntries([]);
+        setPickedMode(defaultPickedMode);
+      }, 900); // Match the updated transition duration
+
     });
 
     return () => {
@@ -189,6 +290,7 @@ const ObsPage = () => {
     console.log("Computing actions with:", {
       pattern,
       bannedEntries,
+      bannedModeEntries,
       pickedEntries,
       pickedMode,
     });
@@ -199,29 +301,14 @@ const ObsPage = () => {
     }
 
     const bannedCopy = [...bannedEntries];
+    const bannedModeCopy = [...bannedModeEntries];
+    const pickedModeCopy = pickedMode;
     const pickedCopy = [...pickedEntries];
     const finalActions: Action[] = [];
-
-    // Add mode pick first if it exists
-    if (pickedMode) {
-      finalActions.push({
-        type: "pick",
-        teamName: pickedMode.teamName,
-        mapName: pickedMode.translatedMode,
-        side: "mode",
-        sideTeamName: pickedMode.teamName,
-        isMode: true,
-        mode: {
-          mode: pickedMode.mode,
-          translatedMode: pickedMode.translatedMode,
-        },
-      });
-    }
 
     // Process each step in the pattern exactly as defined
     pattern.forEach((step) => {
       if (step === "ban") {
-        // Only handle regular bans, ignore mode_ban
         const banEntry = bannedCopy.shift();
         if (banEntry) {
           finalActions.push({
@@ -230,8 +317,19 @@ const ObsPage = () => {
             mapName: banEntry.map,
           });
         }
-      } else if (step === "pick" || step === "decider") {
-        // Only handle regular picks and deciders
+      } else if (step === "mode_ban") {
+        const banEntry = bannedModeCopy.shift();
+        if (banEntry) {
+          finalActions.push({
+            type: "ban_mode",
+            teamName: banEntry.teamName,
+            mode: {
+              mode: banEntry.mode,
+              translatedMode: banEntry.translatedMode || banEntry.mode,
+            },
+          });
+        }
+      } else if (step === "pick") {
         const pickEntry = pickedCopy.shift();
         if (pickEntry) {
           finalActions.push({
@@ -240,7 +338,29 @@ const ObsPage = () => {
             mapName: pickEntry.map,
             side: pickEntry.side || "mode",
             sideTeamName: pickEntry.sideTeamName || pickEntry.teamName,
-            decider: step === "decider",
+          });
+        }
+      } else if (step === "mode_pick" && pickedModeCopy.mode != "") {
+        console.log(pickedModeCopy, "!=", defaultPickedMode);
+        const pickEntry = pickedModeCopy;
+        finalActions.push({
+          type: "pick_mode",
+          teamName: pickEntry.teamName,
+          sideTeamName: pickEntry.teamName,
+          mode: {
+            mode: pickEntry.mode,
+            translatedMode: pickEntry.translatedMode,
+          },
+        });
+      } else if (step === "decider") {
+        const pickEntry = pickedCopy.shift();
+        if (pickEntry) {
+          finalActions.push({
+            type: "decider",
+            teamName: pickEntry.teamName,
+            mapName: pickEntry.map,
+            side: pickEntry.side || "mode",
+            sideTeamName: pickEntry.sideTeamName || pickEntry.teamName,
           });
         }
       }
@@ -248,7 +368,7 @@ const ObsPage = () => {
 
     console.log("Final actions computed:", finalActions);
     return finalActions;
-  }, [bannedEntries, pickedEntries, pattern, pickedMode]);
+  }, [bannedEntries, bannedModeEntries, pickedEntries, pattern, pickedMode]);
 
   // Reveal actions one by one with a 3-second delay
   useEffect(() => {
@@ -277,6 +397,17 @@ const ObsPage = () => {
   }, [actions, visibleActionsCount]);
 
   useEffect(() => {
+    if (visibleActionsCount === 0) {
+      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = '0';
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+        setVisibleActionsCount(0);
+      }, 900); // Match the updated transition duration
+    }
+  }, [visibleActionsCount]);
+
+  useEffect(() => {
     document.body.classList.add("obs-page");
     return () => document.body.classList.remove("obs-page");
   }, []);
@@ -285,33 +416,71 @@ const ObsPage = () => {
     <div className="bg-transparent p-8 justify-start">
       <div className="flex space-x-4 py-16">
         {actions.slice(0, visibleActionsCount).map((action, index) => {
-          if (action.type === "ban") {
-            return (
-              <AnimatedBanCard
-                key={index}
-                teamName={action.teamName}
-                mapName={action.mapName}
-                gameName={gameName}
-                cardColors={cardColors.ban}
-              />
-            );
-          } else if (action.type === "pick") {
-            return (
-              <AnimatedPickCard
-                key={index}
-                teamName={action.teamName}
-                sideTeamName={action.sideTeamName}
-                mapName={action.mapName}
-                gameName={gameName}
-                side={action.side}
-                cardColors={cardColors.pick}
-                decider={action.decider}
-                isMode={action.isMode}
-                mode={action.mode}
-              />
-            );
-          } else {
+          // Skip rendering if cardColors is not yet populated
+          console.log('Rendering action:', action);
+          console.log('Card colors for action type:', cardColors[action.type]);
+          if (!cardColors || !cardColors[action.type]) {
+            console.log('Skipping render due to missing card colors for type:', action.type);
             return null;
+          }
+
+          switch (action.type) {
+            case "ban":
+              return (
+                <AnimatedBanCard
+                  key={index}
+                  teamName={action.teamName}
+                  mapName={action.mapName}
+                  gameName={gameName}
+                  cardColors={cardColors.ban}
+                />
+              );
+            case "ban_mode":
+              return (
+                <AnimatedBanModeCard
+                  key={index}
+                  teamName={action.teamName}
+                  mode={action.mode}
+                  gameName={gameName}
+                  cardColors={cardColors.ban_mode}
+                />
+              );
+            case "pick":
+              return (
+                <AnimatedPickCard
+                  key={index}
+                  teamName={action.teamName}
+                  sideTeamName={action.sideTeamName}
+                  mapName={action.mapName}
+                  gameName={gameName}
+                  side={action.side}
+                  cardColors={cardColors.pick}
+                />
+              );
+            case "pick_mode":
+              return (
+                <AnimatedPickModeCard
+                  key={index}
+                  teamName={action.teamName}
+                  sideTeamName={action.sideTeamName}
+                  mode={action.mode}
+                  gameName={gameName}
+                  cardColors={cardColors.pick_mode}
+                />
+              );
+            case "decider":
+              return (
+                <AnimatedDeciderCard
+                  key={index}
+                  teamName={action.teamName}
+                  sideTeamName={action.sideTeamName}
+                  mapName={action.mapName}
+                  gameName={gameName}
+                  cardColors={cardColors.decider}
+                />
+              );
+            default:
+              return null;
           }
         })}
       </div>

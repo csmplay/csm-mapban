@@ -21,7 +21,7 @@ export interface Lobby extends BaseLobby {
     admin: boolean;
     mapNames: string[];
   };
-  bannedModes: Array<{ mode: GameMode; teamName: string }>; // Array of banned modes
+  bannedModes: Array<{ mode: GameMode; teamName: string; translatedMode: string }>; // Array of banned modes
   pickedMode?: { mode: GameMode; teamName: string; translatedMode: string }; // Selected mode
   pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of picked maps
   bannedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of banned maps
@@ -343,7 +343,7 @@ export function handleModeBan(
   if (!lobby) return;
 
   // Add the mode to the banned modes list
-  lobby.bannedModes.push({ mode, teamName });
+  lobby.bannedModes.push({ mode, teamName, translatedMode: modeTranslations[mode] || mode });
 
   // Remove the mode from active modes
   const modeIndex = lobby.rules.activeModes.indexOf(mode);
@@ -392,6 +392,7 @@ export function handleModeBan(
   io.to(lobbyId).emit("modesUpdated", {
     banned: lobby.bannedModes,
     active: lobby.rules.activeModes,
+    picked: lobby.pickedMode,
   });
 }
 

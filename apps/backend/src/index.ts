@@ -532,6 +532,29 @@ io.on("connection", (socket) => {
   );
 
   socket.on(
+    "lobby.decider",
+    (data: {
+      lobbyId: string;
+      map: string;
+      side: string;
+    }) => {
+      const { lobbyId, map, side } = data;
+      const lobby = lobbies.get(lobbyId);
+      if (lobby) {
+        // Set the decider map
+        lobby.deciderMap = { map, side };
+        
+        // Update the game state
+        io.to(lobbyId).emit("gameStateUpdated", `Десайдер - ${map}`);
+        io.to(lobbyId).emit("deciderUpdated", { map, side });
+        
+        // Move to next game step
+        lobby.gameStep++;
+      }
+    },
+  );
+
+  socket.on(
     "lobby.ban",
     (data: { lobbyId: string; map: string; teamName: string }) => {
       const { lobbyId, map, teamName } = data;
@@ -887,6 +910,7 @@ io.on("connection", (socket) => {
           active: splatoonLobby.rules.activeModes,
         });
         if (splatoonLobby.pickedMode) {
+          console.log("SENT PICKED MODE");
           io.to("obs_views").emit("modePicked", {
             mode: splatoonLobby.pickedMode.mode,
             teamName: splatoonLobby.pickedMode.teamName,
@@ -912,7 +936,11 @@ io.on("connection", (socket) => {
         console.log(`Lobby ${lobbyId}: ${teamName} banning mode ${mode}`);
 
         // Add the mode to the banned modes list
-        lobby.bannedModes.push({ mode, teamName });
+        lobby.bannedModes.push({ 
+          mode, 
+          teamName,
+          translatedMode: Splatoon.modeTranslations[mode] || mode 
+        });
 
         // Remove the mode from active modes
         const modeIndex = lobby.rules.activeModes.indexOf(mode);
@@ -1359,6 +1387,27 @@ io.on("connection", (socket) => {
           );
         }
       }
+    }
+  });
+
+  socket.on("obs.getCurrentPickedMode", (lobbyId: string) => {
+    const lobby = lobbies.get(lobbyId);
+    if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
+      const splatoonLobby = lobby as SplatoonLobby;
+      if (splatoonLobby.pickedMode) {
+        console.log("Sending current picked mode to observer:", splatoonLobby.pickedMode);
+        io.to(socket.id).emit("currentPickedMode", {
+          mode: splatoonLobby.pickedMode.mode,
+          teamName: splatoonLobby.pickedMode.teamName,
+          translatedMode: splatoonLobby.pickedMode.translatedMode,
+        });
+      } else {
+        // If no mode is picked, send null
+        io.to(socket.id).emit("currentPickedMode", null);
+      }
+    } else {
+      // Non-Splatoon lobby or no lobby
+      io.to(socket.id).emit("currentPickedMode", null);
     }
   });
 });

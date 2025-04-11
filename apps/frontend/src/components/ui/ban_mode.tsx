@@ -4,32 +4,35 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-export interface AnimatedPickCardProps {
+export interface AnimatedBanModeCardProps {
   teamName: string;
-  mapName: string;
+  mode: {
+    mode: string;
+    translatedMode: string;
+  };
   gameName: string;
-  side: string;
-  sideTeamName: string;
   cardColors: {
-    text: string[]; // [text1, text2, text3]
-    bg: string[]; // [bg1, bg2, bg3, bg4]
+    text: string[];
+    bg: string[];
   };
   highlightElement?: string;
 }
 
-export default function AnimatedPickCard({
+export default function AnimatedBanModeCard({
   teamName,
-  mapName,
+  mode,
   gameName,
-  side,
-  sideTeamName,
   cardColors,
   highlightElement,
-}: AnimatedPickCardProps) {
+}: AnimatedBanModeCardProps) {
   const [isVisible] = useState(true);
 
-  const teamTextSize = teamName.length > 9 ? "text-2xl" : "text-3xl";
-  const mapNameTextSize = mapName.length > 12 ? "text-2xl" : "text-3xl";
+  const teamTextSize = teamName.length > 9 
+    ? teamName.length > 15 ? "text-xl" : "text-2xl" 
+    : "text-3xl";
+  const modeTextSize = mode.translatedMode.length > 12 
+    ? mode.translatedMode.length > 18 ? "text-xl" : "text-2xl" 
+    : "text-3xl";
 
   const getHighlightClass = (element: string) => {
     return highlightElement === element ? "animate-pulse" : "";
@@ -50,52 +53,16 @@ export default function AnimatedPickCard({
                 clipPath: "polygon(0 0, 90% 0, 100% 100%, 0 100%)",
                 height: "60px",
               }}
-              className={`absolute top-0 left-0 right-0 px-3 overflow-hidden ${getHighlightClass('top')}`}
+              className={`absolute top-0 left-0 right-0 p-3 overflow-hidden ${getHighlightClass('top')}`}
             >
-              <motion.div
-                className="flex flex-row justify-between overflow-hidden"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.2, delayChildren: 1 },
-                  },
-                }}
-              >
-                <motion.div
-                  variants={{
-                    hidden: { x: -20, opacity: 0 },
-                    visible: { x: 0, opacity: 1 },
-                  }}
+              <div className="flex items-center justify-center h-full">
+                <span
                   style={{ color: cardColors.text[0] }}
-                  className={`${teamTextSize} font-bold block text-center pt-3 ${getHighlightClass('team')} ${gameName === 'splatoon' ? 'w-full' : ''}`}
+                  className={`${teamTextSize} font-bold ${getHighlightClass('team')}`}
                 >
-                  {sideTeamName}
-                </motion.div>
-                {gameName !== 'splatoon' && (
-                  <motion.div
-                    variants={{
-                      hidden: { x: 20, opacity: 0 },
-                      visible: { x: 0, opacity: 1 },
-                    }}
-                    className="pr-6"
-                  >
-                    <Image
-                      src={`/${gameName}/${side}_white.png`}
-                      alt={side}
-                      draggable={false}
-                      width={40}
-                      height={40}
-                      priority={true}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="pt-2.5"
-                      unoptimized
-                    />
-                  </motion.div>
-                )}
-              </motion.div>
+                  {teamName}
+                </span>
+              </div>
             </motion.div>
 
             {/* Image Section */}
@@ -106,29 +73,30 @@ export default function AnimatedPickCard({
               style={{ backgroundColor: cardColors.bg[1], originY: 1 }}
               className={`absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden ${getHighlightClass('base')}`}
             >
-              <Image
-                src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
-                alt={mapName}
-                draggable={false}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                style={{
-                  objectFit: "cover",
-                  clipPath:
-                    "polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)",
-                }}
-                unoptimized
-              />
+              <div className="w-full h-full flex items-center justify-center">
+                <Image
+                  src={`/${gameName}/modes/${mode.mode.toLowerCase()}.png`}
+                  alt={mode.translatedMode}
+                  draggable={false}
+                  width={220}
+                  height={220}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  style={{
+                    objectFit: "cover",
+                  }}
+                  unoptimized
+                />
+              </div>
             </motion.div>
 
             {/* Bottom Info Section */}
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              style={{ backgroundColor: cardColors.bg[2],
+              style={{ backgroundColor: cardColors.bg[2], 
                 width: "320px",
                 height: "110px",
-               }}
+              }}
               className={`absolute bottom-0 left-0 right-0 pt-3 pb-4 pl-4 pr-4 rounded-bl-lg rounded-br-lg ${getHighlightClass('bottom')}`}
             >
               <motion.div
@@ -152,13 +120,13 @@ export default function AnimatedPickCard({
                     hidden: { y: -20, opacity: 0 },
                     visible: { y: 0, opacity: 1 },
                   }}
-                  style={{ color: cardColors.text[1] }}
+                  style={{ color: cardColors.text[1]}}
                   className={`text-4xl font-bold ${getHighlightClass('action')}`}
                 >
-                  PICK
+                  BAN MODE
                 </motion.div>
                 <div
-                  style={{ backgroundColor: cardColors.bg[3] }}
+                  style={{ backgroundColor: cardColors.bg[3]}}
                   className={`w-48 h-0.5 ${getHighlightClass('stripe')}`}
                 />
                 <motion.div
@@ -166,10 +134,12 @@ export default function AnimatedPickCard({
                     hidden: { y: 20, opacity: 0 },
                     visible: { y: 0, opacity: 1 },
                   }}
-                  style={{ color: cardColors.text[2] }}
-                  className={`${mapNameTextSize} font-bold flex items-center ${getHighlightClass('map')}`}
+                  style={{ color: cardColors.text[2],
+                    height: "40px",
+                  }}
+                  className={`${modeTextSize} font-bold flex items-center ${getHighlightClass('mode')}`}
                 >
-                  {mapName}
+                  {mode.translatedMode}
                 </motion.div>
               </motion.div>
             </motion.div>
@@ -178,4 +148,4 @@ export default function AnimatedPickCard({
       </AnimatePresence>
     </div>
   );
-}
+} 
