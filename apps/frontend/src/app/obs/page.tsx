@@ -46,7 +46,12 @@ interface DeciderAction {
   mapName: string;
 }
 
-type Action = BanAction | BanModeAction | PickAction | PickModeAction | DeciderAction;
+type Action =
+  | BanAction
+  | BanModeAction
+  | PickAction
+  | PickModeAction
+  | DeciderAction;
 
 interface CardColors {
   ban: {
@@ -96,7 +101,11 @@ const ObsPage = () => {
     teamName: "",
     translatedMode: "",
   };
-  const [pickedMode, setPickedMode] = useState<{ mode: string; teamName: string; translatedMode: string }>(defaultPickedMode);
+  const [pickedMode, setPickedMode] = useState<{
+    mode: string;
+    teamName: string;
+    translatedMode: string;
+  }>(defaultPickedMode);
   const [deciderEntries, setDeciderEntries] = useState("");
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
   const [gameName, setGameName] = useState<string>("0");
@@ -148,10 +157,10 @@ const ObsPage = () => {
       console.log("Received admin.setObsLobby event with lobby:", lobbyId);
 
       // Clear current state
-      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
-      document.body.style.opacity = '0';
+      document.body.style.transition = "opacity 0.9s"; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = "0";
       setTimeout(() => {
-        document.body.style.opacity = '1';
+        document.body.style.opacity = "1";
         setVisibleActionsCount(0);
         setPickedMode(defaultPickedMode);
         setPickedEntries([]);
@@ -169,7 +178,6 @@ const ObsPage = () => {
       }, 900); // Match the updated transition duration
 
       // Join the new lobby and get pattern list
-
     });
 
     newSocket.on("gameName", (gameNameVar: string) => {
@@ -203,22 +211,22 @@ const ObsPage = () => {
 
     newSocket.on(
       "modesUpdated",
-      (data: { 
-        banned: Array<{ mode: string; teamName: string }>; 
+      (data: {
+        banned: Array<{ mode: string; teamName: string }>;
         active: string[];
       }) => {
         console.log("Mode bans updated:", data.banned);
-        
+
         // Only reset UI when banned modes array is empty (indicating a new round)
         if (data.banned.length === 0) {
           console.log("New round detected - resetting UI");
           // First fade out the UI
-          document.body.style.transition = 'opacity 0.9s';
-          document.body.style.opacity = '0';
-          
+          document.body.style.transition = "opacity 0.9s";
+          document.body.style.opacity = "0";
+
           // Then update state variables AFTER the transition
           setTimeout(() => {
-            document.body.style.opacity = '1';
+            document.body.style.opacity = "1";
             setVisibleActionsCount(0);
             setBannedModeEntries(data.banned);
             setPickedMode(defaultPickedMode);
@@ -257,7 +265,9 @@ const ObsPage = () => {
     // Fallback for when modePicked event might be missed
     newSocket.on(
       "currentPickedMode",
-      (data: { mode: string; teamName: string; translatedMode: string } | null) => {
+      (
+        data: { mode: string; teamName: string; translatedMode: string } | null,
+      ) => {
         console.log("Current picked mode received:", data);
         if (data && data.mode && data.teamName) {
           setPickedMode(data);
@@ -268,10 +278,10 @@ const ObsPage = () => {
     // Handle 'clear' event from the server
     newSocket.on("backend.clear_obs", () => {
       console.log("Clearing OBS state");
-      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
-      document.body.style.opacity = '0';
+      document.body.style.transition = "opacity 0.9s"; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = "0";
       setTimeout(() => {
-        document.body.style.opacity = '1';
+        document.body.style.opacity = "1";
         setVisibleActionsCount(0);
         setPattern([]);
         setSelectedLobbyId(null);
@@ -279,7 +289,6 @@ const ObsPage = () => {
         setBannedEntries([]);
         setPickedMode(defaultPickedMode);
       }, 900); // Match the updated transition duration
-
     });
 
     return () => {
@@ -397,10 +406,10 @@ const ObsPage = () => {
 
   useEffect(() => {
     if (visibleActionsCount === 0) {
-      document.body.style.transition = 'opacity 0.9s'; // Updated to make fade-out 3 times slower
-      document.body.style.opacity = '0';
+      document.body.style.transition = "opacity 0.9s"; // Updated to make fade-out 3 times slower
+      document.body.style.opacity = "0";
       setTimeout(() => {
-        document.body.style.opacity = '1';
+        document.body.style.opacity = "1";
         setVisibleActionsCount(0);
       }, 900); // Match the updated transition duration
     }
@@ -416,10 +425,13 @@ const ObsPage = () => {
       <div className="flex space-x-4 py-16">
         {actions.slice(0, visibleActionsCount).map((action, index) => {
           // Skip rendering if cardColors is not yet populated
-          console.log('Rendering action:', action);
-          console.log('Card colors for action type:', cardColors[action.type]);
+          console.log("Rendering action:", action);
+          console.log("Card colors for action type:", cardColors[action.type]);
           if (!cardColors || !cardColors[action.type]) {
-            console.log('Skipping render due to missing card colors for type:', action.type);
+            console.log(
+              "Skipping render due to missing card colors for type:",
+              action.type,
+            );
             return null;
           }
 

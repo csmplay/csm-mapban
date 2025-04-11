@@ -21,7 +21,11 @@ export interface Lobby extends BaseLobby {
     admin: boolean;
     mapNames: string[];
   };
-  bannedModes: Array<{ mode: GameMode; teamName: string; translatedMode: string }>; // Array of banned modes
+  bannedModes: Array<{
+    mode: GameMode;
+    teamName: string;
+    translatedMode: string;
+  }>; // Array of banned modes
   pickedMode?: { mode: GameMode; teamName: string; translatedMode: string }; // Selected mode
   pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of picked maps
   bannedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of banned maps
@@ -41,7 +45,7 @@ export const modesRulesLists = {
   preview: {
     first: ["mode_ban", "mode_pick"], // first round
     subsequent: ["mode_ban", "mode_pick"], // subsequent rounds: priority bans, non-priority picks
-  }
+  },
 };
 
 // Maps ban rules
@@ -53,7 +57,7 @@ export const mapRulesLists = {
   preview: {
     first: ["ban", "pick", "decider"], // first round (2 + 1 pick + 2 decider)
     subsequent: ["ban", "ban", "ban", "pick"], // subsequent rounds (3 + 1 pick)
-  }
+  },
 };
 
 // Splatoon map lists
@@ -386,7 +390,11 @@ export function handleModeBan(
   if (!lobby) return;
 
   // Add the mode to the banned modes list
-  lobby.bannedModes.push({ mode, teamName, translatedMode: modeTranslations[mode] || mode });
+  lobby.bannedModes.push({
+    mode,
+    teamName,
+    translatedMode: modeTranslations[mode] || mode,
+  });
 
   // Remove the mode from active modes
   const modeIndex = lobby.rules.activeModes.indexOf(mode);
