@@ -37,7 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.23.0",
-    "eslint-config-next": "15.2.4",
+    "eslint-config-next": "15.4.5",
     "glob": "^11.0.1",
     "lru-cache": "^11.1.0",
     "postcss": "^8",
