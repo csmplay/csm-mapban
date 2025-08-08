@@ -36,3 +36,16 @@ To set up the CSM Mapban service, follow these simple steps:
    ```bash
    yarn start
    ```
+
+## License and Trademark Notice
+
+This project’s source code is licensed under the GNU Affero General Public
+License v3.0 (AGPLv3). The code is developed and maintained by CyberSport
+Masters.
+
+The **Cybersport Masters** logo is a registered trademark and may not be used,
+copied, modified, or distributed without explicit written permission from
+**CyberSport Masters**.
+
+For detailed rules on trademark usage, please refer to the
+[TRADEMARK.md](./TRADEMARK.md) file.
