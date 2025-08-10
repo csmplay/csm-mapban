@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024, 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import path from "node:path";

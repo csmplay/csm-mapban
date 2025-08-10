@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";

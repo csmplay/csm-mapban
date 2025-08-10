@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import * as FPSGames from "../games/fps-games";
 import * as Splatoon from "../games/splatoon";
 

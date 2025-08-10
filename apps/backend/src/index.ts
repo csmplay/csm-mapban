@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024, 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { serializeForJSON } from "./utils/serialization";
 import { sanitizeInput } from "./utils/input-validation";
 import { defaultCardColors } from "./utils/card-colors";

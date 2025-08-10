@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2024 CyberSport Masters <git@csmpro.ru> -->
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

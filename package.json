@@ -16,7 +16,7 @@
   },
   "keywords": [],
   "author": "CyberSport Masters",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "description": "",
   "workspaces": [
     "apps/*"

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024, 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";

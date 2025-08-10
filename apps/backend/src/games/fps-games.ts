@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 import { BaseLobby } from "../utils/types";
 import { io } from "../utils/server";
 

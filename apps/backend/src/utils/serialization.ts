@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+// SPDX-License-Identifier: AGPL-3.0-only
+
 /**
  * Utility function to recursively serialize objects for JSON
  * Converts Maps and Sets to array representations
