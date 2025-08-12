@@ -1,27 +1,27 @@
 # SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM node:20-alpine AS base
+FROM oven/bun:alpine AS base
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json yarn.lock* ./
+COPY package.json bun.lock ./
 COPY apps/frontend/package.json ./apps/frontend/package.json
-RUN yarn install --frozen-lockfile
+COPY apps/backend/package.json ./apps/backend/package.json
+RUN bun install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/frontend/node_modules ./apps/frontend/node_modules
 
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app/apps/frontend
-RUN yarn build
+RUN bun run --bun build
 
 FROM base AS runner
 WORKDIR /app
@@ -43,4 +43,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "apps/frontend/server.js"]
+CMD ["bun", "run", "apps/frontend/server.js"]

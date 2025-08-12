@@ -41,7 +41,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 path = [
     "**/.gitignore",
     ".npmrc",
-    "yarn.lock",
+    "bun.lock",
     "**/package.json",
     "turbo.json",
     "apps/*/tsconfig.json",

@@ -1,25 +1,34 @@
 # SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
 # SPDX-License-Identifier: AGPL-3.0-only
 
-FROM node:lts-alpine AS builder
+FROM oven/bun:alpine AS base
+
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json yarn.lock turbo.json ./
+COPY package.json bun.lock ./
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/frontend/package.json ./apps/frontend/package.json
+RUN bun install --frozen-lockfile
 
-COPY apps/backend ./apps/backend
-
-RUN yarn install --frozen-lockfile
-
-RUN yarn turbo run build --filter=backend...
-
-FROM node:lts-alpine
+FROM base AS builder
 WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 
-COPY --from=builder /app/apps/backend ./apps/backend
-
-COPY --from=builder /app/yarn.lock ./apps/backend/
+COPY . .
 
 WORKDIR /app/apps/backend
-RUN yarn install --production --frozen-lockfile
+RUN bun run --bun build
 
-CMD ["yarn", "start"]
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=builder /app/apps/backend ./apps/backend
+COPY --from=builder /app/node_modules ./node_modules
+
+WORKDIR /app/apps/backend
+
+CMD ["bun", "run", "dist/index.js"]

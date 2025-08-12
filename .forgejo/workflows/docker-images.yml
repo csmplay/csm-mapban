@@ -17,6 +17,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Install bun
+        uses: https://github.com/oven-sh/setup-bun@v2
+
       - name: Install Docker
         run: |
           apt update

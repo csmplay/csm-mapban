@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "bun@1.2.11",
   "engines": {
-    "npm": "use yarn"
+    "npm": "use bun",
+    "yarn": "use bun",
+    "pnpm": "use bun",
+    "bun": ">=1.2.11"
   },
   "scripts": {
     "dev": "dotenv -- turbo run dev --parallel -- --turbopack",

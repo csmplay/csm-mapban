@@ -24,8 +24,8 @@ flexible customization.
 Run the containers:
 
 ```bash
-docker run -d -p 1703:4000 --name csm-mapban-backend ghcr.io/csmplay/csm-mapban-backend:latest
-docker run -d -p 1702:3000 --name csm-mapban-frontend ghcr.io/csmplay/csm-mapban-frontend:latest
+docker run -d -p 1703:4000 git.csmpro.ru/csmpro/csm-mapban/backend:latest
+docker run -d -p 1702:3000 git.csmpro.ru/csmpro/csm-mapban/frontend:latest
 ```
 
 OR
@@ -41,30 +41,12 @@ Open http://localhost:1702
 
 ### Build from source
 
-#### Docker
-
-1. Create env file:
-
-```bash
-cp .env.example .env
-```
-
-2. Start dev stack:
-
-```bash
-docker compose -f docker-compose-dev.yml up --build
-```
-
-Open http://localhost:1702
-
-#### No Docker
-
-Requirements: Node.js 20+ and Yarn 1.x.
+Requirements: Node.js 20+ and Bun 1.2+.
 
 1. Install dependencies
 
 ```bash
-yarn install
+bun install
 ```
 
 2. Create .env:
@@ -76,8 +58,8 @@ cp .env.example .env
 3. Build and start
 
 ```bash
-yarn build
-yarn start
+bun --bun run build
+bun start
 ```
 
 Open http://localhost:3000
