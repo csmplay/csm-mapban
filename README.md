@@ -59,7 +59,7 @@ Open http://localhost:1702
 
 #### No Docker
 
-Requirements: Node.js 18+ and Yarn 1.x.
+Requirements: Node.js 20+ and Yarn 1.x.
 
 1. Install dependencies
 
