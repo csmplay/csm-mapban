@@ -5,3 +5,6 @@ apps/frontend/node_modules
 apps/backend/dist
 .turbo
 .env
+
+result
+result-*

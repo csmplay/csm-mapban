@@ -67,6 +67,14 @@ wget https://git.csmpro.ru/csmpro/csm-mapban/raw/branch/main/docker-compose.yml
 docker compose up -d
 ```
 
+### Using Nix Package
+
+Use Nix package:
+
+```bash
+nix run git+https://git.csmpro.ru/csmpro/csm-mapban
+```
+
 ## License and Trademark Notice
 
 ### REUSE Compliance
