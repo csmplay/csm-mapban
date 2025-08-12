@@ -564,7 +564,6 @@ export default function AdminPage() {
               alt="CSM"
               width={90}
               height={20}
-              unoptimized
             />
             mapban admin
           </h1>
@@ -1037,7 +1036,6 @@ export default function AdminPage() {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
                           }}
-                          unoptimized
                         />
                       </div>
                       <div className="p-3">
@@ -1082,7 +1080,6 @@ export default function AdminPage() {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
                           }}
-                          unoptimized
                         />
                       </div>
                       <div className="p-3">

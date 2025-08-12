@@ -404,7 +404,6 @@ export default function LobbyPage() {
                     } transition-all duration-300 
                                         ${isSelected && !isPicked ? "border-gray-500" : "border-gray-300"}
                                         ${isPicked ? "border-green-400" : ""}`}
-                    unoptimized
                   />
                   <div
                     className={`relative z-10 bg-black/50 px-2 py-1 rounded-md`}
@@ -481,7 +480,6 @@ export default function LobbyPage() {
                                     ? "border-red-500"
                                     : "border-blue-500"
                                 }`}
-                                unoptimized
                               />
                             </motion.div>
 
@@ -505,7 +503,6 @@ export default function LobbyPage() {
                                     ? "border-blue-500"
                                     : "border-red-500"
                                 }`}
-                                unoptimized
                               />
                             </motion.div>
                           </>
@@ -620,7 +617,6 @@ export default function LobbyPage() {
                   height={100}
                   className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
                   onClick={() => handlePromptClick("ct")}
-                  unoptimized
                 />
                 <Image
                   src={`/${gameName}/t.jpg`}
@@ -629,7 +625,6 @@ export default function LobbyPage() {
                   height={100}
                   className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
                   onClick={() => handlePromptClick("t")}
-                  unoptimized
                 />
               </div>
             </motion.div>

@@ -93,7 +93,6 @@ export default function AnimatedBanModeCard({
                   style={{
                     objectFit: "cover",
                   }}
-                  unoptimized
                 />
               </div>
             </motion.div>

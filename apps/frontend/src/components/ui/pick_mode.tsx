@@ -101,7 +101,6 @@ export default function AnimatedPickModeCard({
                   style={{
                     objectFit: "cover",
                   }}
-                  unoptimized
                 />
               </div>
             </motion.div>

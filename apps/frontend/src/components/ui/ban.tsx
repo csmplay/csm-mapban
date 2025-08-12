@@ -88,7 +88,6 @@ export default function AnimatedBanCard({
                   clipPath:
                     "polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)",
                 }}
-                unoptimized
               />
             </motion.div>
 

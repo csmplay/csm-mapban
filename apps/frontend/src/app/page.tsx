@@ -295,7 +295,6 @@ export default function HomePage() {
               width={150}
               height={40}
               className="mx-auto"
-              unoptimized
             />
             <p className="text-muted-foreground mt-2">
               Присоединитесь к существующему лобби или создайте новое
@@ -578,7 +577,6 @@ export default function HomePage() {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
                           }}
-                          unoptimized
                         />
                       </div>
                       <div className="p-3">
@@ -623,7 +621,6 @@ export default function HomePage() {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
                           }}
-                          unoptimized
                         />
                       </div>
                       <div className="p-3">

@@ -94,7 +94,6 @@ export default function AnimatedPickCard({
                       priority={true}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="pt-2.5"
-                      unoptimized
                     />
                   </motion.div>
                 )}
@@ -120,7 +119,6 @@ export default function AnimatedPickCard({
                   clipPath:
                     "polygon(0% 50%, 20% 0%, 100% 0%, 100% 50%, 80% 100%, 0% 100%)",
                 }}
-                unoptimized
               />
             </motion.div>
 

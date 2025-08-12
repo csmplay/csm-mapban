@@ -716,7 +716,6 @@ export default function SplatoonLobbyPage() {
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
                         }}
-                        unoptimized
                       />
                     </div>
                     <span className="text-sm font-medium">{name}</span>
@@ -810,7 +809,6 @@ export default function SplatoonLobbyPage() {
                         } transition-all duration-300 
                         ${isSelected && !isPicked ? "border-gray-500" : "border-gray-300"}
                         ${isPicked ? "border-green-400" : ""}`}
-                        unoptimized
                       />
                       <div className="relative z-10 bg-black/50 px-2 py-1 rounded-md">
                         <span
