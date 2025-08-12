@@ -1,0 +1,32 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: csm-cs-mapban
+Upstream-Contact: CyberSport Masters <git@csmpro.ru>
+Source: https://git.in.csmpro.ru/CyberSportMasters/csm-cs-mapban
+
+Files: apps/frontend/public/splatoon/maps/*.jpg
+Copyright: Nintendo
+License: LicenseRef-Proprietary
+
+Files: apps/frontend/public/cs2/**.png apps/frontend/public/cs2/**.jpg
+Copyright: Valve Corporation
+License: LicenseRef-Proprietary
+
+Files: apps/frontend/public/valorant/maps/*.jpg
+Copyright: Riot Games
+License: LicenseRef-Proprietary
+
+Files: apps/frontend/public/CSM*.svg apps/frontend/public/coin_*.webm
+Copyright: 2025 CyberSport Masters <git@csmpro.ru>
+License: LicenseRef-CyberSportMasters
+
+Files: apps/frontend/public/splatoon/modes/**.png apps/frontend/public/valorant/ct.jpg apps/frontend/public/valorant/t.jpg apps/frontend/public/valorant/ct_white.png apps/frontend/public/valorant/t_white.png apps/frontend/src/app/favicon.ico
+Copyright: 2025 CyberSport Masters <git@csmpro.ru>
+License: CC-BY-SA-4.0
+
+Files: **/.gitignore .gitignore package.json .npmrc bun.lock **/package.json turbo.json apps/*/tsconfig.json apps/*/.eslintrc.json apps/frontend/components.json apps/backend/nodemon.json .forgejo/workflows/docker-images.yml .forgejo/workflows/codeql.yml .forgejo/workflows/reuse-lint.yml .github/dependabot.yml flake.nix flake.lock
+Copyright: 2024-2025 CyberSport Masters <git@csmpro.ru>
+License: AGPL-3.0-only
+
+Files: apps/frontend/src/app/fonts/Geist*.woff
+Copyright: 2024 The Geist Project Authors
+License: OFL-1.1

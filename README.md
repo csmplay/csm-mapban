@@ -3,6 +3,7 @@
 
 # CSM Mapban
 
+[![](https://git.csmpro.ru/csmpro/csm-mapban/badges/workflows/reuse-lint.yml/badge.svg)](https://git.csmpro.ru/csmpro/csm-mapban/actions?workflow=reuse-lint.yml)
 #### Author: [@goosemooz](https://github.com/goosemooz)
 
 #### Maintainers: [@ch4og](https://github.com/ch4og)

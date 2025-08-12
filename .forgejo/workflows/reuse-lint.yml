@@ -1,0 +1,19 @@
+name: "REUSE Compliance Check"
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  reuse-lint:
+    runs-on: node-bookworm
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Run REUSE Compliance Check
+        uses: https://github.com/fsfe/reuse-action@v1
