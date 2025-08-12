@@ -1,0 +1,50 @@
+name: "Build & Push Docker Images"
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: node-bookworm
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Docker
+        run: |
+          apt update
+          apt install -y docker.io
+
+      - name: Log in to Forgejo Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: git.in.csmpro.ru
+          username: ${{ forge.repository_owner }}
+          password: ${{ secrets.PACKAGES_TOKEN }}
+
+      - name: Build Backend Image
+        run: |
+          docker build \
+            -f apps/backend/Dockerfile \
+            -t git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/backend:latest .
+
+      - name: Push Backend Image
+        run: |
+          docker push git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/backend:latest
+
+      - name: Build Frontend Image
+        run: |
+          docker build \
+            -f apps/frontend/Dockerfile \
+            -t git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/frontend:latest .
+
+      - name: Push Frontend Image
+        run: |
+          docker push git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/frontend:latest
