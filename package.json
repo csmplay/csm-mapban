@@ -25,7 +25,7 @@
     "turbo": "^2.5.5"
   },
   "dependencies": {
-    "dotenv-cli": "^8.0.0",
+    "dotenv-cli": "^10.0.0",
     "prettier": "^3.5.3"
   }
 }
