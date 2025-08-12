@@ -19,50 +19,53 @@ flexible customization.
 - OBS overlay (browser source)
 - Configurable map pools/modes and card colors
 
-### Quick start with Docker (prebuilt images)
+## Getting Started
 
-Run the containers:
+### Production Deployment
 
-```bash
-docker run -d -p 1703:4000 git.csmpro.ru/csmpro/csm-mapban/backend:latest
-docker run -d -p 1702:3000 git.csmpro.ru/csmpro/csm-mapban/frontend:latest
+For production deployment, you need to configure a reverse proxy (nginx, Caddy, etc.) to route API requests to the backend:
+
+Example nginx configuration:
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location /api/ {
+        proxy_pass http://backend:4000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
 ```
 
-OR
+### Using Prebuilt Images (Docker)
 
-Use docker compose:
+The easiest way to run CSM Mapban in production:
 
 ```bash
-wget https://raw.githubusercontent.com/csmplay/csm-mapban/main/docker-compose.yml
+docker run -d git.csmpro.ru/csmpro/csm-mapban/backend:latest
+docker run -d git.csmpro.ru/csmpro/csm-mapban/frontend:latest
+```
+
+Or with docker compose:
+
+```bash
+wget https://git.csmpro.ru/csmpro/csm-mapban/raw/branch/main/docker-compose.yml
 docker compose up -d
 ```
-
-Open http://localhost:1702
-
-### Build from source
-
-Requirements: Node.js 20+ and Bun 1.2+.
-
-1. Install dependencies
-
-```bash
-bun install
-```
-
-2. Create .env:
-
-```bash
-cp .env.example .env
-```
-
-3. Build and start
-
-```bash
-bun --bun run build
-bun start
-```
-
-Open http://localhost:3000
 
 ## License and Trademark Notice
 
