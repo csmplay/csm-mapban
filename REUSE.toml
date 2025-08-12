@@ -49,7 +49,8 @@ path = [
     "apps/frontend/components.json",
     "apps/backend/nodemon.json",
     ".forgejo/workflows/docker-images.yml",
-    ".forgejo/workflows/codeql.yml"
+    ".forgejo/workflows/codeql.yml",
+    ".github/dependabot.yml"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024-2025 CyberSport Masters <git@csmpro.ru>"
