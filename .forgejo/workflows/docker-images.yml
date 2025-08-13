@@ -26,7 +26,7 @@ jobs:
           apt install -y docker.io
 
       - name: Log in to Forgejo Container Registry
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
           registry: git.in.csmpro.ru
           username: ${{ forge.repository_owner }}
