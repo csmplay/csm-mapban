@@ -16,7 +16,7 @@
       bun = pkgs.bun;
     in {
       devShells.default = pkgs.mkShell {
-        buildInputs = with pkgs; [bun git reuse];
+        buildInputs = with pkgs; [bun git reuse docker];
         NODE_ENV = "development";
       };
 
