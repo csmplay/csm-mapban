@@ -1,5 +1,12 @@
 {
   "extends": ["config:best-practices"],
   "osvVulnerabilityAlerts": true,
-  "ignorePaths": ["docker-compose.yml"]
+  "ignorePaths": ["docker-compose.yml"],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["actions/checkout"],
+      "allowedVersions": "4.0.0"
+    }
+  ]
 }
