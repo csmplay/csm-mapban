@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       
       - name: Run REUSE Compliance Check
         uses: https://github.com/fsfe/reuse-action@bb774aa972c2a89ff34781233d275075cbddf542 # v5

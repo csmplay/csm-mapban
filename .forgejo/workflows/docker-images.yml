@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
       - name: Install bun
         uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
