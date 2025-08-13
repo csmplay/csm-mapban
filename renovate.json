@@ -8,5 +8,7 @@
       "matchPackageNames": ["actions/checkout"],
       "allowedVersions": "4.0.0"
     }
-  ]
+  ],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0
 }
