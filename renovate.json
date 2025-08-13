@@ -1,4 +1,5 @@
 {
   "extends": ["config:best-practices"],
-  "osvVulnerabilityAlerts": true
+  "osvVulnerabilityAlerts": true,
+  "ignorePaths": ["docker-compose.yml"]
 }
