@@ -15,29 +15,42 @@
       pkgs = nixpkgs.legacyPackages.${system};
       bun = pkgs.bun;
     in {
+      packages.default = pkgs.stdenv.mkDerivation {
+        pname = "csm-mapban";
+        version = "1.0.0";
+        
+        src = ./.;
+        
+        nativeBuildInputs = [ bun pkgs.nodejs ];
+        
+        buildPhase = ''
+          export HOME=$(mktemp -d)
+          bun install --frozen-lockfile
+          bun run --bun build
+        '';
+        
+        installPhase = ''
+          mkdir -p $out/bin $out/share/csm-mapban
+          cp -r . $out/share/csm-mapban/
+          
+          # Create wrapper script
+          cat > $out/bin/csm-mapban << EOF
+          #!/bin/sh
+          cd $out/share/csm-mapban
+          exec ${bun}/bin/bun start
+          EOF
+          chmod +x $out/bin/csm-mapban
+        '';
+      };
+
       devShells.default = pkgs.mkShell {
         buildInputs = with pkgs; [bun git reuse docker];
-        NODE_ENV = "development";
       };
 
       apps = {
         default = {
           type = "app";
-          program = "${pkgs.writeShellScript "csm-mapban" ''
-            TMPDIR=$(mktemp -d)
-            trap "chmod -R +w $TMPDIR 2>/dev/null || true; rm -rf $TMPDIR" EXIT
-            
-            cp -r ${toString ./.}/* $TMPDIR/
-            chmod -R +w $TMPDIR
-            cd $TMPDIR
-            
-            ${bun}/bin/bun install --frozen-lockfile
-            
-            export PATH="${bun}/bin:$PATH"
-            ${bun}/bin/bun run --bun build
-            
-            ${bun}/bin/bun start
-          ''}";
+          program = "${self.packages.${system}.default}/bin/csm-mapban";
         };
       };
     });

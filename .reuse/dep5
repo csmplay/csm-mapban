@@ -23,7 +23,7 @@ Files: apps/frontend/public/splatoon/modes/**.png apps/frontend/public/valorant/
 Copyright: 2025 CyberSport Masters <git@csmpro.ru>
 License: CC-BY-SA-4.0
 
-Files: **/.gitignore .gitignore .envrc assets/screenshot.png package.json .npmrc bun.lock **/package.json turbo.json apps/*/tsconfig.json apps/*/.eslintrc.json apps/frontend/components.json apps/backend/nodemon.json .forgejo/workflows/docker-images.yml .forgejo/workflows/codeql.yml .forgejo/workflows/reuse-lint.yml renovate.json flake.nix flake.lock
+Files: **/.gitignore .gitignore .envrc assets/screenshot.png package.json .npmrc bun.lock **/package.json turbo.json apps/*/tsconfig.json apps/*/.eslintrc.json apps/frontend/components.json apps/backend/nodemon.json .forgejo/workflows/ci.yml .forgejo/workflows/cd.yml renovate.json flake.nix flake.lock
 Copyright: 2024-2025 CyberSport Masters <git@csmpro.ru>
 License: AGPL-3.0-only
 

@@ -1,4 +1,4 @@
-name: "Build & Push Docker Images"
+name: "CD"
 
 on:
   schedule:
@@ -10,8 +10,9 @@ permissions:
   packages: write
 
 jobs:
-  build-and-push:
-    runs-on: node-bookworm
+  build-and-push-docker:
+    name: Build and Push Docker Images
+    runs-on: node
 
     steps:
       - name: Checkout Repository
@@ -51,3 +52,8 @@ jobs:
       - name: Push Frontend Image
         run: |
           docker push git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/frontend:latest
+
+      - name: Trigger Portainer webhook
+        env:
+          PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
+        run: curl -fsS -m 30 -X POST "$PORTAINER_WEBHOOK_URL"
