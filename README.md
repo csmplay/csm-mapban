@@ -3,14 +3,29 @@
 
 # CSM Mapban
 
-[![](https://git.csmpro.ru/csmpro/csm-mapban/badges/workflows/reuse-lint.yml/badge.svg)](https://git.csmpro.ru/csmpro/csm-mapban/actions?workflow=reuse-lint.yml)
-#### Author: [@goosemooz](https://github.com/goosemooz)
+[![REUSE status](https://api.reuse.software/badge/git.in.csmpro.ru/csmpro/csm-mapban)](https://api.reuse.software/info/git.in.csmpro.ru/csmpro/csm-mapban)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue?logo=open-source-initiative&logoColor=white)](./LICENSE)
+[![Service status](https://img.shields.io/website?url=https%3A%2F%2Fmapban.csmpro.ru&label=service&up_message=online&down_message=down&up_color=brightgreen&down_color=red&logo=rocket&logoColor=white)](https://mapban.csmpro.ru/)
+[![Source code at CSM Git](https://img.shields.io/badge/source-CSM%20Git-24292e?logo=forgejo&logoColor=white)](https://git.in.csmpro.ru/csmpro/csm-mapban)
 
-#### Maintainers: [@ch4og](https://github.com/ch4og)
+CSM Mapban is a modern map veto and pick tool for tournaments, featuring
+live-synced lobbies and OBS-ready overlays.
 
-CSM Mapban is a modern map veto/pick and overlay tool for tournaments. It
-provides live‑synced lobbies, admin or auto flow, and OBS‑ready overlays with
-flexible customization.
+![CSM Mapban screenshot](assets/screenshot.png)
+
+<p>
+  The project was originally created by
+  <a href="https://github.com/goosemooz" style="display:inline-block; margin-top:4px;">
+    <img src="https://github.com/goosemooz.png" width="16" height="16" alt="@goosemooz" style="vertical-align:sub; margin-right:4px;">
+    @goosemooz
+  </a>,
+  and is now developed and maintained by
+  <a href="https://github.com/ch4og" style="display:inline-block; margin-top:4px;">
+    <img src="https://github.com/ch4og.png" width="16" height="16" alt="@ch4og" style="vertical-align:sub; margin-right:4px;">
+    @ch4og
+  </a>,
+  with full respect and acknowledgment to the original author and friend of mine.
+</p>
 
 ## Features
 
@@ -24,9 +39,11 @@ flexible customization.
 
 ### Production Deployment
 
-For production deployment, you need to configure a reverse proxy (nginx, Caddy, etc.) to route API requests to the backend:
+For production deployment, you need to configure a reverse proxy (nginx, Caddy,
+etc.) to route API requests to the backend:
 
 Example nginx configuration:
+
 ```nginx
 server {
     listen 80;
