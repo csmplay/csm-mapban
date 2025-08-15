@@ -13,7 +13,7 @@ export type GameMode = "clam" | "rainmaker" | "tower" | "zones";
 export interface Lobby extends BaseLobby {
   rules: BaseLobby["rules"] & {
     gameName: GameName;
-    gameType: GameType; // Splatoon only supports BO3 and BO5
+    gameType: GameType; // Splatoon supports both BO3 and preview
     mapPoolSize: 32; // Map pool size (8 maps * 4 modes)
     modesRulesList: string[]; // Current modes pick/ban rules
     mapRulesList: string[]; // Current maps pick/ban rules
@@ -23,6 +23,7 @@ export interface Lobby extends BaseLobby {
     coinFlip: boolean;
     admin: boolean;
     mapNames: string[];
+    modesSize: number; // 2 or 4 modes
   };
   bannedModes: Array<{
     mode: GameMode;
@@ -32,6 +33,7 @@ export interface Lobby extends BaseLobby {
   pickedMode?: { mode: GameMode; teamName: string; translatedMode: string }; // Selected mode
   pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of picked maps
   bannedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>; // Array of banned maps
+  priorityTeam?: string; // Team name that has priority (won coin flip or is first team)
   roundHistory?: {
     roundNumber: number;
     pickedMaps: Array<{ map: string; teamName: string; roundNumber?: number }>;
@@ -39,27 +41,54 @@ export interface Lobby extends BaseLobby {
   }[];
 }
 
-// Modes ban rules
+// Alias for SplatoonLobby to match the interface
+export type SplatoonLobby = Lobby;
+
+// Modes ban rules - different for 2 and 4 modes
 export const modesRulesLists = {
   bo3: {
-    first: ["mode_ban", "mode_ban", "mode_pick"], // first round
-    subsequent: ["mode_ban", "mode_pick"], // subsequent rounds: priority bans, non-priority picks
+    first: {
+      2: ["mode_pick"], // 2 modes: priority team picks directly
+      4: ["mode_ban", "mode_ban", "mode_pick"], // 4 modes: first round
+    },
+    subsequent: {
+      2: ["mode_pick"], // 2 modes: losing team picks
+      4: ["mode_ban", "mode_pick"], // 4 modes: subsequent rounds
+    },
   },
   preview: {
-    first: ["mode_ban", "mode_pick"], // first round
-    subsequent: ["mode_ban", "mode_pick"], // subsequent rounds: priority bans, non-priority picks
+    first: {
+      2: ["mode_pick"], // 2 modes: priority team picks directly
+      4: ["mode_ban", "mode_pick"], // 4 modes: first round
+    },
+    subsequent: {
+      2: ["mode_pick"], // 2 modes: losing team picks
+      4: ["mode_ban", "mode_pick"], // 4 modes: subsequent rounds
+    },
   },
 };
 
-// Maps ban rules
+// Maps ban rules - different for 2 and 4 modes
 export const mapRulesLists = {
   bo3: {
-    first: ["ban", "ban", "ban", "ban", "ban", "pick"], // first round (2 + 3 + 1 pick)
-    subsequent: ["ban", "ban", "ban", "pick"], // subsequent rounds (3 + 1 pick)
+    first: {
+      2: ["ban", "ban", "ban", "ban", "ban", "pick"], // 2 modes: priority bans 2, other bans 3, priority picks
+      4: ["ban", "ban", "ban", "ban", "ban", "pick"], // 4 modes: first round (2 + 3 + 1 pick)
+    },
+    subsequent: {
+      2: ["ban", "ban", "ban", "ban", "ban", "pick"], // 2 modes: winner bans 2, loser bans 3, winner picks
+      4: ["ban", "ban", "ban", "pick"], // 4 modes: subsequent rounds (3 + 1 pick)
+    },
   },
   preview: {
-    first: ["ban", "pick", "decider"], // first round (2 + 1 pick + 2 decider)
-    subsequent: ["ban", "ban", "ban", "pick"], // subsequent rounds (3 + 1 pick)
+    first: {
+      2: ["ban", "ban", "ban", "ban", "ban", "pick"], // 2 modes: priority bans 2, other bans 3, priority picks
+      4: ["ban", "pick", "decider"], // 4 modes: first round (2 + 1 pick + 2 decider)
+    },
+    subsequent: {
+      2: ["ban", "ban", "ban", "ban", "ban", "pick"], // 2 modes: winner bans 2, loser bans 3, winner picks
+      4: ["ban", "ban", "ban", "pick"], // 4 modes: subsequent rounds (3 + 1 pick)
+    },
   },
 };
 
@@ -245,16 +274,18 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
   const lobby = lobbies.get(lobbyId);
   if (!lobby) return;
 
+  console.log(`Starting Splatoon game in lobby ${lobbyId} with ${lobby.rules.modesSize} modes`);
+
   // Initialize game state
   lobby.rules.roundNumber = 1;
   lobby.rules.activeModes = [...gameModes];
   lobby.bannedModes = [];
   lobby.gameStep = 0;
 
-  // Set rules for first round
+  // Set rules for first round based on modesSize
   const rules = gameRules[lobby.rules.gameType].first;
-  lobby.rules.modesRulesList = rules.modes.rules;
-  lobby.rules.mapRulesList = rules.maps.rules;
+  lobby.rules.modesRulesList = modesRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
+  lobby.rules.mapRulesList = mapRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
 
   // Emit startWithoutCoin to hide the team name overlay
   io.to(lobbyId).emit("startWithoutCoin");
@@ -268,12 +299,18 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
         (Math.random() > 0.5 ? 1 : 0);
       io.to(lobbyId).emit("coinFlip", result);
 
+      console.log(`Coin flip result: ${result} (0 = first team, 1 = second team)`);
+
       // Wait for coin flip animation to complete
       setTimeout(() => {
         const entry = Array.from(lobby.teamNames.entries())[result] as [
           string,
           string,
         ];
+
+        // Set the priority team
+        lobby.priorityTeam = entry[1];
+        console.log(`Priority team set to: ${entry[1]} (socket: ${entry[0]})`);
 
         // Disable all controls first
         io.to(lobbyId).emit("canWorkUpdated", false);
@@ -282,20 +319,36 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
         io.to(lobbyId).emit("canBan", false);
         io.to(lobbyId).emit("canPick", false);
 
-        // Enable controls for the winning team
-        io.to(entry[0]).emit("canWorkUpdated", true);
-        io.to(entry[0]).emit("canModeBan", true);
+        // Enable controls based on modesSize
+        if (lobby.rules.modesSize === 2) {
+          // For 2 modes: priority team picks mode directly
+          io.to(entry[0]).emit("canWorkUpdated", true);
+          io.to(entry[0]).emit("canModePick", true);
+          
+          console.log(`Enabled mode pick for priority team: ${entry[1]}`);
+          
+          io.to(lobbyId).emit(
+            "gameStateUpdated",
+            `${entry[1]} выбирают режим для игры`,
+          );
+        } else {
+          // For 4 modes: priority team bans mode first
+          io.to(entry[0]).emit("canWorkUpdated", true);
+          io.to(entry[0]).emit("canModeBan", true);
 
-        // Update game state message
-        io.to(lobbyId).emit(
-          "gameStateUpdated",
-          `${entry[1]} выбирают режим для бана`,
-        );
+          console.log(`Enabled mode ban for priority team: ${entry[1]}`);
+
+          io.to(lobbyId).emit(
+            "gameStateUpdated",
+            `${entry[1]} выбирают режим для бана`,
+          );
+        }
 
         // Send available modes to clients
         io.to(lobbyId).emit("modesUpdated", {
           banned: lobby.bannedModes,
           active: lobby.rules.activeModes,
+          modesSize: lobby.rules.modesSize,
         });
       }, 3000); // Wait for 3 seconds (coin flip animation duration)
     }
@@ -303,22 +356,44 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
     // If no coin flip, enable controls for all teams
     for (const [socketId] of lobby.teamNames.entries()) {
       io.to(socketId).emit("canWorkUpdated", true);
-      io.to(socketId).emit("canModeBan", true);
+      if (lobby.rules.modesSize === 2) {
+        io.to(socketId).emit("canModePick", true);
+      } else {
+        io.to(socketId).emit("canModeBan", true);
+      }
     }
 
     // Get the first team from the lobby
     const firstTeam = Array.from(lobby.teamNames.entries())[0];
     if (firstTeam) {
       const firstTeamName = firstTeam[1];
-      io.to(lobbyId).emit(
-        "gameStateUpdated",
-        `${firstTeamName} выбирают режим для бана`,
-      );
+      // Set the priority team (first team when no coin flip)
+      lobby.priorityTeam = firstTeamName;
+      console.log(`No coin flip: Priority team set to first team: ${firstTeamName}`);
+      
+      if (lobby.rules.modesSize === 2) {
+        io.to(lobbyId).emit(
+          "gameStateUpdated",
+          `${firstTeamName} выбирают режим для игры`,
+        );
+      } else {
+        io.to(lobbyId).emit(
+          "gameStateUpdated",
+          `${firstTeamName} выбирают режим для бана`,
+        );
+      }
     } else {
-      io.to(lobbyId).emit(
-        "gameStateUpdated",
-        "Первая команда выбирает режим для бана",
-      );
+      if (lobby.rules.modesSize === 2) {
+        io.to(lobbyId).emit(
+          "gameStateUpdated",
+          "Первая команда выбирает режим для игры",
+        );
+      } else {
+        io.to(lobbyId).emit(
+          "gameStateUpdated",
+          "Первая команда выбирают режим для бана",
+        );
+      }
     }
   }
 }
@@ -367,19 +442,48 @@ export function startNextRound(lobbyId: string, lobbies: Map<string, Lobby>) {
     }
   }
 
-  // Enable mode banning only for the winning team
-  io.to(winningTeamSocketId).emit("canWorkUpdated", true);
-  io.to(winningTeamSocketId).emit("canModeBan", true);
+  // Set the priority team for subsequent rounds (winner has priority)
+  lobby.priorityTeam = winningTeamName;
 
-  io.to(lobbyId).emit(
-    "gameStateUpdated",
-    `${winningTeamName} выбирают режим для бана`,
-  );
+  // Set rules for subsequent rounds based on modesSize
+  lobby.rules.modesRulesList = modesRulesLists[lobby.rules.gameType].subsequent[lobby.rules.modesSize as 2 | 4];
+  lobby.rules.mapRulesList = mapRulesLists[lobby.rules.gameType].subsequent[lobby.rules.modesSize as 2 | 4];
+
+  if (lobby.rules.modesSize === 2) {
+    // For 2 modes: losing team picks mode directly
+    let losingTeamSocketId = "";
+    let losingTeamName = "";
+    for (const [socketId, teamName] of lobby.teamNames.entries()) {
+      if (teamName !== winningTeamName) {
+        losingTeamSocketId = socketId;
+        losingTeamName = teamName;
+        break;
+      }
+    }
+
+    io.to(losingTeamSocketId).emit("canWorkUpdated", true);
+    io.to(losingTeamSocketId).emit("canModePick", true);
+
+    io.to(lobbyId).emit(
+      "gameStateUpdated",
+      `${losingTeamName} выбирают режим для игры`,
+    );
+  } else {
+    // For 4 modes: winning team bans mode first
+    io.to(winningTeamSocketId).emit("canWorkUpdated", true);
+    io.to(winningTeamSocketId).emit("canModeBan", true);
+
+    io.to(lobbyId).emit(
+      "gameStateUpdated",
+      `${winningTeamName} выбирают режим для бана`,
+    );
+  }
 
   // Send updated modes to clients
   io.to(lobbyId).emit("modesUpdated", {
     banned: lobby.bannedModes,
     active: lobby.rules.activeModes,
+    modesSize: lobby.rules.modesSize,
   });
 }
 
@@ -391,6 +495,12 @@ export function handleModeBan(
 ) {
   const lobby = lobbies.get(lobbyId) as Lobby;
   if (!lobby) return;
+
+  // Safety check: mode banning is not used for 2 modes
+  if (lobby.rules.modesSize === 2) {
+    console.warn("Mode banning called for 2-mode game, this shouldn't happen");
+    return;
+  }
 
   // Add the mode to the banned modes list
   lobby.bannedModes.push({
@@ -447,11 +557,12 @@ export function handleModeBan(
     banned: lobby.bannedModes,
     active: lobby.rules.activeModes,
     picked: lobby.pickedMode,
+    modesSize: lobby.rules.modesSize,
   });
 }
 
 // Helper function to start map selection phase for Splatoon
-function startMapSelectionPhase(
+export function startMapSelectionPhase(
   lobbyId: string,
   lobbies: Map<string, Lobby>,
   getGameCategory: (gameName: GameName) => string,
@@ -459,27 +570,38 @@ function startMapSelectionPhase(
   const lobby = lobbies.get(lobbyId) as Lobby;
 
   if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
+    console.log(`Starting map selection phase for lobby ${lobbyId}`);
+    console.log(`Round number: ${lobby.rules.roundNumber}`);
+    console.log(`Priority team: ${lobby.priorityTeam}`);
+    console.log(`Coin flip enabled: ${lobby.rules.coinFlip}`);
+    console.log(`Teams: ${Array.from(lobby.teamNames.values()).join(', ')}`);
+
     // Reset game step to start map selection phase
     lobby.gameStep = 0;
 
-    // Determine who starts the map ban phase based on round
+    // Determine who starts the map ban phase based on round and modesSize
     let mapBanTeam = "";
     let mapBanSocketId = "";
 
     if (lobby.rules.roundNumber === 1) {
-      // In first round, the team with coin flip advantage starts map bans
-      for (const [socketId, teamName] of lobby.teamNames.entries()) {
-        if (
-          (lobby.rules.coinFlip && !mapBanTeam) ||
-          (!lobby.rules.coinFlip && mapBanTeam)
-        ) {
-          mapBanTeam = teamName;
-          mapBanSocketId = socketId;
-          break;
-        } else {
-          mapBanTeam = teamName;
-          mapBanSocketId = socketId;
+      // In first round, use the priority team that was set during startGame
+      if (lobby.priorityTeam) {
+        mapBanTeam = lobby.priorityTeam;
+        // Find the socket ID for the priority team
+        for (const [socketId, teamName] of lobby.teamNames.entries()) {
+          if (teamName === lobby.priorityTeam) {
+            mapBanSocketId = socketId;
+            break;
+          }
         }
+        console.log(`First round: Priority team is ${mapBanTeam} (from lobby.priorityTeam)`);
+        console.log(`Map ban team: ${mapBanTeam} (socket: ${mapBanSocketId})`);
+      } else {
+        // Fallback: use first team if priorityTeam is not set
+        const firstTeam = Array.from(lobby.teamNames.entries())[0];
+        mapBanTeam = firstTeam[1];
+        mapBanSocketId = firstTeam[0];
+        console.log(`First round: Fallback to first team ${mapBanTeam} (socket: ${mapBanSocketId})`);
       }
     } else {
       // In subsequent rounds, the winning team starts map bans
@@ -490,6 +612,7 @@ function startMapSelectionPhase(
           break;
         }
       }
+      console.log(`Subsequent round: Winner team starts map bans: ${mapBanTeam} (socket: ${mapBanSocketId})`);
     }
 
     // Update UI states
@@ -497,11 +620,42 @@ function startMapSelectionPhase(
     io.to(mapBanSocketId).emit("canWorkUpdated", true);
     io.to(mapBanSocketId).emit("canBan", true);
 
-    // Update game state message
-    // io.to(lobbyId).emit(
-    //   "gameStateUpdated",
-    //   `${mapBanTeam} выбирают карту для бана`,
-    // );
+    console.log(`Enabled map banning for team: ${mapBanTeam}`);
+
+    // Determine the ban count based on round number, team, and modesSize
+    let banCount = 0;
+    let totalBans = 0;
+
+    if (lobby.rules.modesSize === 2) {
+      // 2 modes: Always priority/winner bans 2, other team bans 3
+      if (lobby.rules.roundNumber === 1) {
+        // First round: Priority team bans 2
+        banCount = 1;
+        totalBans = 2;
+      } else {
+        // Subsequent rounds: Winner bans 2
+        banCount = 1;
+        totalBans = 2;
+      }
+    } else {
+      // 4 modes: Original logic
+      if (lobby.rules.roundNumber === 1) {
+        // First round: Priority team bans 2, other team bans 3
+        banCount = 1;
+        totalBans = 2;
+      } else {
+        // Subsequent rounds: Winner bans 3
+        banCount = 1;
+        totalBans = 3;
+      }
+    }
+
+    console.log(`Ban count: ${banCount}/${totalBans} for ${mapBanTeam}`);
+
+    io.to(lobbyId).emit(
+      "gameStateUpdated",
+      `${mapBanTeam} выбирают карту для бана (${banCount}/${totalBans})`,
+    );
 
     // Send available maps to clients
     io.to(lobbyId).emit("availableMaps", lobby.rules.mapNames);
@@ -540,29 +694,8 @@ export function handleModePick(
   io.to(lobbyId).emit("canBan", false);
   io.to(lobbyId).emit("canPick", false);
 
-  // For subsequent rounds, the winning team gets to ban maps first
-  if (lobby.rules.roundNumber > 1) {
-    // Find the winning team's socket ID
-    let winningTeamSocketId = "";
-    for (const [socketId, team] of lobby.teamNames.entries()) {
-      if (team === lobby.rules.lastWinner) {
-        winningTeamSocketId = socketId;
-        break;
-      }
-    }
-
-    // Enable map banning for the winning team
-    io.to(winningTeamSocketId).emit("canWorkUpdated", true);
-    io.to(winningTeamSocketId).emit("canBan", true);
-    // io.to(lobbyId).emit(
-    //   "gameStateUpdated",
-    //   `${winningTeamName} выбирают карту для бана`,
-    // );
-  } else {
-    // First round logic remains the same
-    // Move to map selection phase
-    startMapSelectionPhase(lobbyId, lobbies, getGameCategory);
-  }
+  // Move to map selection phase
+  startMapSelectionPhase(lobbyId, lobbies, getGameCategory);
 
   // Broadcast updated mode to all clients
   io.to(lobbyId).emit("modePicked", {

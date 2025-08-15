@@ -99,6 +99,7 @@ const startGame = (lobbyId: string) => {
       io.to(lobbyId).emit("modesUpdated", {
         banned: (lobby as SplatoonLobby).bannedModes,
         active: (lobby as SplatoonLobby).rules.activeModes,
+        modesSize: (lobby as SplatoonLobby).rules.modesSize,
       });
     } else {
       FPSGames.startGame(lobbyId, lobbies as Map<string, FPSGames.Lobby>);
@@ -134,6 +135,9 @@ io.on("connection", (socket) => {
     }
     const lobby = lobbies.get(lobbyId)!;
 
+    if (lobby.rules.gameName === "splatoon") {
+      io.to(socket.id).emit("modesSizeUpdated", (lobby as SplatoonLobby).rules.modesSize);
+    }
     io.to(lobbyId).emit("mapNames", lobby.rules.mapNames);
     io.to(lobbyId).emit("gameName", lobby.rules.gameName);
 
@@ -242,10 +246,11 @@ io.on("connection", (socket) => {
     (data: {
       lobbyId: string;
       gameType: Splatoon.GameType;
+      modesSize: number;
       coinFlip: boolean | null;
       admin: boolean | null;
     }) => {
-      const { lobbyId, gameType, coinFlip, admin } = data;
+      const { lobbyId, gameType, coinFlip, admin, modesSize } = data;
       console.log("Splatoon Lobby created with id " + lobbyId);
 
       let lobby = lobbies.get(lobbyId) as SplatoonLobby;
@@ -260,19 +265,21 @@ io.on("connection", (socket) => {
           bannedMaps: [],
           bannedModes: [],
           gameStep: 0,
+          priorityTeam: undefined, // Will be set during startGame
           rules: {
             gameName: "splatoon",
-            gameType: "bo3",
+            gameType: gameType,
             mapNames: [],
-            mapRulesList: Splatoon.mapRulesLists[gameType].first,
-            modesRulesList: Splatoon.modesRulesLists[gameType].first,
-            activeModes: [...Splatoon.gameModes],
+            mapRulesList: Splatoon.mapRulesLists[gameType].first[modesSize as 2 | 4],
+            modesRulesList: Splatoon.modesRulesLists[gameType].first[modesSize as 2 | 4],
+            activeModes: modesSize === 2 ? ["clam", "rainmaker"] : [...Splatoon.gameModes],
             roundNumber: 1,
             coinFlip: coinFlip ?? globalCoinFlip,
             admin: admin ?? false,
             mapPoolSize: 32,
+            modesSize: modesSize ?? 4,
           },
-        };
+        } as SplatoonLobby;
 
         lobbies.set(lobbyId, lobby);
         io.to(socket.id).emit("lobbyCreated", lobbyId);
@@ -509,9 +516,9 @@ io.on("connection", (socket) => {
                 "Десайдер - " + notPickedMap,
               );
             } else if (!(lobby as FPSGames.Lobby).rules.knifeDecider) {
-              io.to(otherSocketId).emit("canWorkUpdated", false);
-              io.to(socket.id).emit("canWorkUpdated", true);
-              io.to(socket.id).emit("canPick", true);
+              io.to(socket.id).emit("canWorkUpdated", false);
+              io.to(otherSocketId).emit("canWorkUpdated", true);
+              io.to(otherSocketId).emit("canPick", true);
               io.to(lobbyId).emit(
                 "gameStateUpdated",
                 teamName + " выбирают карту для пика",
@@ -597,151 +604,348 @@ io.on("connection", (socket) => {
         // Handle Splatoon specific ban logic
         if (getGameCategory(lobby.rules.gameName) === "splatoon") {
           const splatoonLobby = lobby as SplatoonLobby;
+          
+          console.log(`Map ban logic for Splatoon lobby ${lobbyId}`);
+          console.log(`Round number: ${splatoonLobby.rules.roundNumber}`);
+          console.log(`Modes size: ${splatoonLobby.rules.modesSize}`);
+          console.log(`Priority team: ${splatoonLobby.priorityTeam}`);
+          console.log(`Current team banning: ${teamName}`);
+          console.log(`Current banned maps count: ${splatoonLobby.bannedMaps.length}`);
 
           // First round has different rules than subsequent rounds
           if (splatoonLobby.rules.roundNumber === 1) {
-            // First round rule: Team 1 bans 2, Team 2 bans 3, Team 1 picks
-            // Check if Team 1 (coinFlip team) has completed their 2 bans
-            const isCoinFlipTeam = splatoonLobby.rules.coinFlip
-              ? teamName === Array.from(lobby.teamNames.values())[0]
-              : teamName === Array.from(lobby.teamNames.values())[1];
+            if (splatoonLobby.rules.modesSize === 2) {
+              // 2 modes: Priority team bans 2, other team bans 3
+              const isPriorityTeam = teamName === splatoonLobby.priorityTeam;
+              console.log(`2 modes: Is priority team: ${isPriorityTeam}`);
 
-            const coinFlipTeamBans = splatoonLobby.bannedMaps
-              .filter(
-                (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
-              )
-              .filter((ban) => {
-                const banTeam = ban.teamName;
-                return splatoonLobby.rules.coinFlip
-                  ? banTeam === Array.from(lobby.teamNames.values())[0]
-                  : banTeam === Array.from(lobby.teamNames.values())[1];
-              });
-
-            if (isCoinFlipTeam && coinFlipTeamBans.length < 2) {
-              // Team 1 (with coinFlip advantage) still needs to ban more
-              io.to(socket.id).emit("canWorkUpdated", true);
-              io.to(socket.id).emit("canBan", true);
-              io.to(lobbyId).emit(
-                "gameStateUpdated",
-                `${teamName} выбирают карту для бана (${coinFlipTeamBans.length + 1}/2)`,
-              );
-            } else if (!isCoinFlipTeam && coinFlipTeamBans.length >= 2) {
-              // Team 2 can now ban
-              const team2Bans = splatoonLobby.bannedMaps
+              const priorityTeamBans = splatoonLobby.bannedMaps
                 .filter(
                   (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
                 )
-                .filter((ban) => ban.teamName === teamName);
+                .filter((ban) => ban.teamName === splatoonLobby.priorityTeam);
 
-              if (team2Bans.length < 3) {
-                // Team 2 still needs to ban more
+              console.log(`Priority team bans in this round: ${priorityTeamBans.length}`);
+
+              if (isPriorityTeam && priorityTeamBans.length < 2) {
+                // Priority team still needs to ban more
+                console.log(`Priority team needs to ban more: ${priorityTeamBans.length + 1}/2`);
                 io.to(socket.id).emit("canWorkUpdated", true);
                 io.to(socket.id).emit("canBan", true);
                 io.to(lobbyId).emit(
                   "gameStateUpdated",
-                  `${teamName} выбирают карту для бана (${team2Bans.length + 1}/3)`,
+                  `${teamName} выбирают карту для бана (${priorityTeamBans.length + 1}/2)`,
                 );
-              } else {
-                // Team 2 has finished banning, Team 1 now picks
-                const team1 = splatoonLobby.rules.coinFlip
-                  ? Array.from(lobby.teamNames.values())[0]
-                  : Array.from(lobby.teamNames.values())[1];
-                const team1SocketId = splatoonLobby.rules.coinFlip
-                  ? Array.from(lobby.teamNames.keys())[0]
-                  : Array.from(lobby.teamNames.keys())[1];
+              } else if (!isPriorityTeam && priorityTeamBans.length >= 2) {
+                // Other team can now ban
+                const otherTeamBans = splatoonLobby.bannedMaps
+                  .filter(
+                    (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                  )
+                  .filter((ban) => ban.teamName === teamName);
 
-                // Disable Team 2's controls
+                console.log(`Other team bans in this round: ${otherTeamBans.length}`);
+
+                if (otherTeamBans.length < 3) {
+                  // Other team still needs to ban more
+                  console.log(`Other team needs to ban more: ${otherTeamBans.length + 1}/3`);
+                  io.to(socket.id).emit("canWorkUpdated", true);
+                  io.to(socket.id).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${teamName} выбирают карту для бана (${otherTeamBans.length + 1}/3)`,
+                  );
+                } else {
+                  // Other team has finished banning, priority team now picks
+                  console.log(`Other team finished banning, enabling pick for priority team`);
+                  const priorityTeam = splatoonLobby.priorityTeam;
+                  let priorityTeamSocketId = "";
+                  for (const [socketId, teamName] of lobby.teamNames.entries()) {
+                    if (teamName === priorityTeam) {
+                      priorityTeamSocketId = socketId;
+                      break;
+                    }
+                  }
+
+                  // Disable other team's controls
+                  io.to(socket.id).emit("canWorkUpdated", false);
+                  io.to(socket.id).emit("canBan", false);
+
+                  // Enable priority team's controls
+                  io.to(priorityTeamSocketId).emit("canWorkUpdated", true);
+                  io.to(priorityTeamSocketId).emit("canPick", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${priorityTeam} выбирают карту для игры`,
+                  );
+                }
+              } else if (!isPriorityTeam && priorityTeamBans.length < 2) {
+                // Other team's turn but priority team hasn't finished their bans yet
+                console.log(`Other team's turn but priority team hasn't finished bans yet`);
                 io.to(socket.id).emit("canWorkUpdated", false);
                 io.to(socket.id).emit("canBan", false);
-
-                // Enable Team 1's controls
-                io.to(team1SocketId).emit("canWorkUpdated", true);
-                io.to(team1SocketId).emit("canPick", true);
                 io.to(lobbyId).emit(
                   "gameStateUpdated",
-                  `${team1} выбирают карту для игры`,
+                  `Ожидание, пока ${splatoonLobby.priorityTeam} завершат свои баны`,
                 );
-              }
-            } else if (!isCoinFlipTeam && coinFlipTeamBans.length < 2) {
-              // Team 2's turn but Team 1 hasn't finished their bans yet
-              io.to(socket.id).emit("canWorkUpdated", false);
-              io.to(socket.id).emit("canBan", false);
-              io.to(lobbyId).emit(
-                "gameStateUpdated",
-                `Ожидание, пока ${Array.from(lobby.teamNames.values())[splatoonLobby.rules.coinFlip ? 0 : 1]} завершат свои баны`,
-              );
-            } else if (isCoinFlipTeam && coinFlipTeamBans.length >= 2) {
-              // Team 1 has finished their 2 bans, enable Team 2 to ban
-              let team2SocketId = "";
-              let team2Name = "";
-              for (const [socketId, teamName] of lobby.teamNames.entries()) {
-                if (
-                  (splatoonLobby.rules.coinFlip &&
-                    socketId !== Array.from(lobby.teamNames.keys())[0]) ||
-                  (!splatoonLobby.rules.coinFlip &&
-                    socketId !== Array.from(lobby.teamNames.keys())[1])
-                ) {
-                  team2SocketId = socketId;
-                  team2Name = teamName;
-                  break;
-                }
-              }
-
-              // Disable Team 1's controls
-              io.to(socket.id).emit("canWorkUpdated", false);
-              io.to(socket.id).emit("canBan", false);
-
-              // Enable Team 2's controls
-              io.to(team2SocketId).emit("canWorkUpdated", true);
-              io.to(team2SocketId).emit("canBan", true);
-              io.to(lobbyId).emit(
-                "gameStateUpdated",
-                `${team2Name} выбирают карту для бана (1/3)`,
-              );
-            }
-          } else {
-            // Subsequent rounds rule: Winning team bans 3, Losing team picks
-            const isWinningTeam = teamName === splatoonLobby.rules.lastWinner;
-
-            if (isWinningTeam) {
-              // Winning team banning
-              const winningTeamBans = splatoonLobby.bannedMaps
-                .filter(
-                  (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
-                )
-                .filter((ban) => ban.teamName === teamName);
-
-              if (winningTeamBans.length < 3) {
-                // Winning team still needs to ban more
-                io.to(socket.id).emit("canWorkUpdated", true);
-                io.to(socket.id).emit("canBan", true);
-                io.to(lobbyId).emit(
-                  "gameStateUpdated",
-                  `${teamName} выбирают карту для бана (${winningTeamBans.length + 1}/3)`,
-                );
-              } else {
-                // Winning team has finished banning, losing team now picks
-                let losingTeam = "";
-                let losingSocketId = "";
-                for (const [socketId, team] of lobby.teamNames.entries()) {
-                  if (team !== teamName) {
-                    losingTeam = team;
-                    losingSocketId = socketId;
+              } else if (isPriorityTeam && priorityTeamBans.length >= 2) {
+                // Priority team has finished their 2 bans, enable other team to ban
+                console.log(`Priority team finished banning, enabling other team to ban`);
+                let otherTeamSocketId = "";
+                let otherTeamName = "";
+                for (const [socketId, teamName] of lobby.teamNames.entries()) {
+                  if (teamName !== splatoonLobby.priorityTeam) {
+                    otherTeamSocketId = socketId;
+                    otherTeamName = teamName;
                     break;
                   }
                 }
 
-                // Disable winning team's controls
+                // Disable priority team's controls
                 io.to(socket.id).emit("canWorkUpdated", false);
                 io.to(socket.id).emit("canBan", false);
 
-                // Enable losing team's controls
-                io.to(losingSocketId).emit("canWorkUpdated", true);
-                io.to(losingSocketId).emit("canPick", true);
+                // Enable other team's controls
+                io.to(otherTeamSocketId).emit("canWorkUpdated", true);
+                io.to(otherTeamSocketId).emit("canBan", true);
                 io.to(lobbyId).emit(
                   "gameStateUpdated",
-                  `${losingTeam} выбирают карту для игры`,
+                  `${otherTeamName} выбирают карту для бана (1/3)`,
                 );
+              }
+            } else {
+              // 4 modes: Original logic
+              // First round rule: Team 1 bans 2, Team 2 bans 3, Team 1 picks
+              // Check if Team 1 (priority team) has completed their 2 bans
+              const isPriorityTeam = teamName === splatoonLobby.priorityTeam;
+              console.log(`4 modes: Is priority team: ${isPriorityTeam}`);
+
+              const priorityTeamBans = splatoonLobby.bannedMaps
+                .filter(
+                  (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                )
+                .filter((ban) => ban.teamName === splatoonLobby.priorityTeam);
+
+              console.log(`Priority team bans in this round: ${priorityTeamBans.length}`);
+
+              if (isPriorityTeam && priorityTeamBans.length < 2) {
+                // Team 1 (with priority) still needs to ban more
+                console.log(`Priority team needs to ban more: ${priorityTeamBans.length + 1}/2`);
+                io.to(socket.id).emit("canWorkUpdated", true);
+                io.to(socket.id).emit("canBan", true);
+                io.to(lobbyId).emit(
+                  "gameStateUpdated",
+                  `${teamName} выбирают карту для бана (${priorityTeamBans.length + 1}/2)`,
+                );
+              } else if (!isPriorityTeam && priorityTeamBans.length >= 2) {
+                // Team 2 can now ban
+                const team2Bans = splatoonLobby.bannedMaps
+                  .filter(
+                    (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                  )
+                  .filter((ban) => ban.teamName === teamName);
+
+                console.log(`Team 2 bans in this round: ${team2Bans.length}`);
+
+                if (team2Bans.length < 3) {
+                  // Team 2 still needs to ban more
+                  console.log(`Team 2 needs to ban more: ${team2Bans.length + 1}/3`);
+                  io.to(socket.id).emit("canWorkUpdated", true);
+                  io.to(socket.id).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${teamName} выбирают карту для бана (${team2Bans.length + 1}/3)`,
+                  );
+                } else {
+                  // Team 2 has finished banning, Team 1 now picks
+                  console.log(`Team 2 finished banning, enabling pick for priority team`);
+                  const priorityTeam = splatoonLobby.priorityTeam;
+                  let priorityTeamSocketId = "";
+                  for (const [socketId, teamName] of lobby.teamNames.entries()) {
+                    if (teamName === priorityTeam) {
+                      priorityTeamSocketId = socketId;
+                      break;
+                    }
+                  }
+
+                  // Disable Team 2's controls
+                  io.to(socket.id).emit("canWorkUpdated", false);
+                  io.to(socket.id).emit("canBan", false);
+
+                  // Enable Team 1's controls
+                  io.to(priorityTeamSocketId).emit("canWorkUpdated", true);
+                  io.to(priorityTeamSocketId).emit("canPick", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${priorityTeam} выбирают карту для игры`,
+                  );
+                }
+              } else if (!isPriorityTeam && priorityTeamBans.length < 2) {
+                // Team 2's turn but Team 1 hasn't finished their bans yet
+                console.log(`Team 2's turn but priority team hasn't finished bans yet`);
+                io.to(socket.id).emit("canWorkUpdated", false);
+                io.to(socket.id).emit("canBan", false);
+                io.to(lobbyId).emit(
+                  "gameStateUpdated",
+                  `Ожидание, пока ${splatoonLobby.priorityTeam} завершат свои баны`,
+                );
+              } else if (isPriorityTeam && priorityTeamBans.length >= 2) {
+                // Team 1 has finished their 2 bans, enable Team 2 to ban
+                console.log(`Priority team finished banning, enabling Team 2 to ban`);
+                let team2SocketId = "";
+                let team2Name = "";
+                for (const [socketId, teamName] of lobby.teamNames.entries()) {
+                  if (teamName !== splatoonLobby.priorityTeam) {
+                    team2SocketId = socketId;
+                    team2Name = teamName;
+                    break;
+                  }
+                }
+
+                // Disable Team 1's controls
+                io.to(socket.id).emit("canWorkUpdated", false);
+                io.to(socket.id).emit("canBan", false);
+
+                // Enable Team 2's controls
+                io.to(team2SocketId).emit("canWorkUpdated", true);
+                io.to(team2SocketId).emit("canBan", true);
+                io.to(lobbyId).emit(
+                  "gameStateUpdated",
+                  `${team2Name} выбирают карту для бана (1/3)`,
+                );
+              }
+            }
+          } else {
+            // Subsequent rounds rule: Different logic for 2 and 4 modes
+            if (splatoonLobby.rules.modesSize === 2) {
+              // 2 modes: Winner bans 2, loser bans 3
+              const isWinningTeam = teamName === splatoonLobby.rules.lastWinner;
+
+              if (isWinningTeam) {
+                // Winning team banning
+                const winningTeamBans = splatoonLobby.bannedMaps
+                  .filter(
+                    (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                  )
+                  .filter((ban) => ban.teamName === teamName);
+
+                if (winningTeamBans.length < 2) {
+                  // Winning team still needs to ban more
+                  io.to(socket.id).emit("canWorkUpdated", true);
+                  io.to(socket.id).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${teamName} выбирают карту для бана (${winningTeamBans.length + 1}/2)`,
+                  );
+                } else {
+                  // Winning team has finished banning, losing team now bans
+                  let losingTeam = "";
+                  let losingSocketId = "";
+                  for (const [socketId, team] of lobby.teamNames.entries()) {
+                    if (team !== teamName) {
+                      losingTeam = team;
+                      losingSocketId = socketId;
+                      break;
+                    }
+                  }
+
+                  // Disable winning team's controls
+                  io.to(socket.id).emit("canWorkUpdated", false);
+                  io.to(socket.id).emit("canBan", false);
+
+                  // Enable losing team's controls
+                  io.to(losingSocketId).emit("canWorkUpdated", true);
+                  io.to(losingSocketId).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${losingTeam} выбирают карту для бана (1/3)`,
+                  );
+                }
+              } else {
+                // Losing team banning
+                const losingTeamBans = splatoonLobby.bannedMaps
+                  .filter(
+                    (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                  )
+                  .filter((ban) => ban.teamName === teamName);
+
+                if (losingTeamBans.length < 3) {
+                  // Losing team still needs to ban more
+                  io.to(socket.id).emit("canWorkUpdated", true);
+                  io.to(socket.id).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${teamName} выбирают карту для бана (${losingTeamBans.length + 1}/3)`,
+                  );
+                } else {
+                  // Losing team has finished banning, winning team now picks
+                  let winningTeam = "";
+                  let winningSocketId = "";
+                  for (const [socketId, team] of lobby.teamNames.entries()) {
+                    if (team === splatoonLobby.rules.lastWinner) {
+                      winningTeam = team;
+                      winningSocketId = socketId;
+                      break;
+                    }
+                  }
+
+                  // Disable losing team's controls
+                  io.to(socket.id).emit("canWorkUpdated", false);
+                  io.to(socket.id).emit("canBan", false);
+
+                  // Enable winning team's controls
+                  io.to(winningSocketId).emit("canWorkUpdated", true);
+                  io.to(winningSocketId).emit("canPick", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${winningTeam} выбирают карту для игры`,
+                  );
+                }
+              }
+            } else {
+              // 4 modes: Original logic - Winning team bans 3, Losing team picks
+              const isWinningTeam = teamName === splatoonLobby.rules.lastWinner;
+
+              if (isWinningTeam) {
+                // Winning team banning
+                const winningTeamBans = splatoonLobby.bannedMaps
+                  .filter(
+                    (ban) => ban.roundNumber === splatoonLobby.rules.roundNumber,
+                  )
+                  .filter((ban) => ban.teamName === teamName);
+
+                if (winningTeamBans.length < 3) {
+                  // Winning team still needs to ban more
+                  io.to(socket.id).emit("canWorkUpdated", true);
+                  io.to(socket.id).emit("canBan", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${teamName} выбирают карту для бана (${winningTeamBans.length + 1}/3)`,
+                  );
+                } else {
+                  // Winning team has finished banning, losing team now picks
+                  let losingTeam = "";
+                  let losingSocketId = "";
+                  for (const [socketId, team] of lobby.teamNames.entries()) {
+                    if (team !== teamName) {
+                      losingTeam = team;
+                      losingSocketId = socketId;
+                      break;
+                    }
+                  }
+
+                  // Disable winning team's controls
+                  io.to(socket.id).emit("canWorkUpdated", false);
+                  io.to(socket.id).emit("canBan", false);
+
+                  // Enable losing team's controls
+                  io.to(losingSocketId).emit("canWorkUpdated", true);
+                  io.to(losingSocketId).emit("canPick", true);
+                  io.to(lobbyId).emit(
+                    "gameStateUpdated",
+                    `${losingTeam} выбирают карту для игры`,
+                  );
+                }
               }
             }
           }
@@ -858,6 +1062,7 @@ io.on("connection", (socket) => {
           io.to(observer).emit("modesUpdated", {
             banned: splatoonLobby.bannedModes,
             active: splatoonLobby.rules.activeModes,
+            modesSize: splatoonLobby.rules.modesSize,
           });
           if (splatoonLobby.pickedMode) {
             io.to(observer).emit("modePicked", {
@@ -905,6 +1110,7 @@ io.on("connection", (socket) => {
         io.to("obs_views").emit("modesUpdated", {
           banned: splatoonLobby.bannedModes,
           active: splatoonLobby.rules.activeModes,
+          modesSize: splatoonLobby.rules.modesSize,
         });
         if (splatoonLobby.pickedMode) {
           console.log("SENT PICKED MODE");
@@ -931,6 +1137,12 @@ io.on("connection", (socket) => {
 
       if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
         console.log(`Lobby ${lobbyId}: ${teamName} banning mode ${mode}`);
+
+        // Safety check: mode banning is not used for 2 modes
+        if (lobby.rules.modesSize === 2) {
+          console.warn("Mode banning called for 2-mode game, this shouldn't happen");
+          return;
+        }
 
         // Add the mode to the banned modes list
         lobby.bannedModes.push({
@@ -1042,6 +1254,7 @@ io.on("connection", (socket) => {
         io.to(lobbyId).emit("modesUpdated", {
           banned: lobby.bannedModes,
           active: lobby.rules.activeModes,
+          modesSize: lobby.rules.modesSize,
         });
       }
     },
@@ -1084,31 +1297,8 @@ io.on("connection", (socket) => {
         io.to(lobbyId).emit("canBan", false);
         io.to(lobbyId).emit("canPick", false);
 
-        // For subsequent rounds, the winning team gets to ban maps first
-        if (lobby.rules.roundNumber > 1) {
-          // Find the winning team's socket ID
-          let winningTeamSocketId = "";
-          let winningTeamName = "";
-          for (const [socketId, team] of lobby.teamNames.entries()) {
-            if (team === lobby.rules.lastWinner) {
-              winningTeamSocketId = socketId;
-              winningTeamName = team;
-              break;
-            }
-          }
-
-          // Enable map banning for the winning team
-          io.to(winningTeamSocketId).emit("canWorkUpdated", true);
-          io.to(winningTeamSocketId).emit("canBan", true);
-          io.to(lobbyId).emit(
-            "gameStateUpdated",
-            `${winningTeamName} выбирают карту для бана (1/${getMaxRounds(lobby.rules.gameType)})`,
-          );
-        } else {
-          // First round logic remains the same
-          // Move to map selection phase
-          startMapSelectionPhase(lobbyId);
-        }
+        // Move to map selection phase
+        startMapSelectionPhase(lobbyId);
 
         // Broadcast updated mode to all clients
         io.to(lobbyId).emit("modePicked", {
@@ -1122,78 +1312,8 @@ io.on("connection", (socket) => {
 
   // Helper function to start map selection phase for Splatoon
   function startMapSelectionPhase(lobbyId: string) {
-    const lobby = lobbies.get(lobbyId) as SplatoonLobby;
-
-    if (lobby && getGameCategory(lobby.rules.gameName) === "splatoon") {
-      // Reset game step to start map selection phase
-      lobby.gameStep = 0;
-
-      // Determine who starts the map ban phase based on round
-      let mapBanTeam = "";
-      let mapBanSocketId = "";
-
-      if (lobby.rules.roundNumber === 1) {
-        // In first round, the team with coin flip advantage starts map bans
-        for (const [socketId, teamName] of lobby.teamNames.entries()) {
-          if (
-            (lobby.rules.coinFlip && !mapBanTeam) ||
-            (!lobby.rules.coinFlip && mapBanTeam)
-          ) {
-            mapBanTeam = teamName;
-            mapBanSocketId = socketId;
-            break;
-          } else {
-            mapBanTeam = teamName;
-            mapBanSocketId = socketId;
-          }
-        }
-      } else {
-        // In subsequent rounds, the winning team starts map bans
-        for (const [socketId, teamName] of lobby.teamNames.entries()) {
-          if (teamName === lobby.rules.lastWinner) {
-            mapBanTeam = teamName;
-            mapBanSocketId = socketId;
-            break;
-          }
-        }
-      }
-
-      // Update UI states
-      io.to(lobbyId).emit("canWorkUpdated", false);
-      io.to(mapBanSocketId).emit("canWorkUpdated", true);
-      io.to(mapBanSocketId).emit("canBan", true);
-
-      // Determine the ban count based on round number and team
-      let banCount = 0;
-      let totalBans = 0;
-
-      if (lobby.rules.roundNumber === 1) {
-        // First round: Team 1 bans 2, Team 2 bans 3
-        const isCoinFlipTeam = lobby.rules.coinFlip
-          ? mapBanTeam === Array.from(lobby.teamNames.values())[0]
-          : mapBanTeam === Array.from(lobby.teamNames.values())[1];
-
-        if (isCoinFlipTeam) {
-          banCount = 1;
-          totalBans = 2;
-        } else {
-          banCount = 1;
-          totalBans = 3;
-        }
-      } else {
-        // Subsequent rounds: Winner bans 3
-        banCount = 1;
-        totalBans = 3;
-      }
-
-      io.to(lobbyId).emit(
-        "gameStateUpdated",
-        `${mapBanTeam} выбирают карту для бана (${banCount}/${totalBans})`,
-      );
-
-      // Send available maps to clients
-      io.to(lobbyId).emit("availableMaps", lobby.rules.mapNames);
-    }
+    // Call the function from splatoon.ts that properly handles priorityTeam
+    Splatoon.startMapSelectionPhase(lobbyId, lobbies as Map<string, SplatoonLobby>, getGameCategory);
   }
 
   socket.on(
@@ -1210,6 +1330,7 @@ io.on("connection", (socket) => {
         io.to(lobbyId).emit("modesUpdated", {
           banned: (lobby as SplatoonLobby).bannedModes,
           active: (lobby as SplatoonLobby).rules.activeModes,
+          modesSize: (lobby as SplatoonLobby).rules.modesSize,
         });
       }
     },
@@ -1270,6 +1391,7 @@ io.on("connection", (socket) => {
           io.to(lobbyId).emit("modesUpdated", {
             banned: (lobby as SplatoonLobby).bannedModes,
             active: (lobby as SplatoonLobby).rules.activeModes,
+            modesSize: (lobby as SplatoonLobby).rules.modesSize,
           });
         } else {
           // If winner was not confirmed, notify only the rejecting team
@@ -1336,6 +1458,7 @@ io.on("connection", (socket) => {
         io.to(lobbyId).emit("modesUpdated", {
           banned: (lobby as SplatoonLobby).bannedModes,
           active: (lobby as SplatoonLobby).rules.activeModes,
+          modesSize: (lobby as SplatoonLobby).rules.modesSize,
         });
       } else {
         // If not confirmed, reset the winner and enable controls for both teams

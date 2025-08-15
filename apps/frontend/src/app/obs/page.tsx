@@ -217,6 +217,7 @@ const ObsPage = () => {
       (data: {
         banned: Array<{ mode: string; teamName: string }>;
         active: string[];
+        modesSize: number;
       }) => {
         console.log("Mode bans updated:", data.banned);
 

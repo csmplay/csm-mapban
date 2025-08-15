@@ -24,10 +24,10 @@ import Image from "next/image";
 type GameMode = "clam" | "rainmaker" | "tower" | "zones";
 
 const modeTranslations: Record<GameMode, string> = {
-  clam: "Устробол",
-  rainmaker: "Мегакарп",
   tower: "Бой за башню",
   zones: "Бой за зоны",
+  clam: "Устробол",
+  rainmaker: "Мегакарп"
 };
 
 // Mode images by name
@@ -54,12 +54,21 @@ export default function SplatoonLobbyPage() {
 
   // Maps and modes lists
   const [mapNames, setMapNames] = useState<string[]>([]);
+  const [modesSize, setModesSize] = useState<number>(4);
   const [availableModes, setAvailableModes] = useState<GameMode[]>([
     "clam",
     "rainmaker",
     "tower",
     "zones",
   ]);
+
+  useEffect(() => {
+    if (modesSize === 2) {
+      setAvailableModes(["clam", "rainmaker"]);
+    } else {
+      setAvailableModes(["clam", "rainmaker", "tower", "zones"]);
+    }
+  }, [modesSize]);
 
   // Overlay states
   const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
@@ -234,22 +243,35 @@ export default function SplatoonLobbyPage() {
       },
     );
 
+    newSocket.on("modesSizeUpdated", (data: {setModesSize: number}) => {
+      setModesSize(data.setModesSize);
+    });
+
     // Handle 'modesUpdated' event
     newSocket.on(
       "modesUpdated",
       (data: {
         banned: Array<{ mode: GameMode; teamName: string }>;
         active: GameMode[];
+        modesSize: number;
       }) => {
         setBannedModes(data.banned);
         setAvailableModes(data.active);
         setActiveMode(null);
+        
+        // Update modesSize based on the number of active modes
+        if (data.modesSize === 2) {
+          setModesSize(2);
+        } else if (data.modesSize === 4) {
+          setModesSize(4);
+        }
+        
         // Reset maps for the new round
         setBannedMaps([]);
         setPickedMaps([]);
 
-        // Update priority based on who banned first
-        if (data.banned.length > 0) {
+        // Update priority based on who banned first (only for 4 modes)
+        if (data.active.length === 4 && data.banned.length > 0) {
           setHasPriority(data.banned[0].teamName === teamName);
         }
       },
@@ -453,7 +475,8 @@ export default function SplatoonLobbyPage() {
   // Handle submit button click
   const handleSubmit = useCallback(() => {
     if (socket) {
-      if (canModeBan && selectedMode) {
+      if (canModeBan && selectedMode && modesSize === 4) {
+        // Mode banning is only available for 4 modes
         socket.emit("lobby.modeBan", {
           lobbyId,
           mode: selectedMode,
@@ -494,6 +517,7 @@ export default function SplatoonLobbyPage() {
     lobbyId,
     teamName,
     mapNames,
+    modesSize,
   ]);
 
   // Handle winner selection
@@ -663,80 +687,94 @@ export default function SplatoonLobbyPage() {
 
         {/* Game Modes */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Режимы</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {Object.entries(modeTranslations).map(([mode, name]) => {
-              const modeKey = mode as GameMode;
-              const isBanned = bannedModes.some(
-                (banned) => banned.mode === modeKey,
-              );
-              const isActive = activeMode === modeKey;
-              const isAvailable =
-                (canModeBan || canModePick) && availableModes.includes(modeKey);
+          <h2 className="text-xl font-semibold mb-4">
+            Режимы {modesSize === 2 ? "(2 режима)" : "(4 режима)"}
+          </h2>
+          <div className={`grid gap-4 ${modesSize === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`}>
+            {(() => {
+              const filteredModes = Object.entries(modeTranslations)
+                .filter(([mode]) => {
+                  if (modesSize === 2) {
+                    return mode === "clam" || mode === "rainmaker";
+                  }
+                  return true;
+                });
+              
+              
+              return filteredModes.map(([mode, name]) => {
+                const modeKey = mode as GameMode;
+                const isBanned = bannedModes.some(
+                  (banned) => banned.mode === modeKey,
+                );
+                const isActive = activeMode === modeKey;
+                const isAvailable =
+                  (canModePick && availableModes.includes(modeKey)) ||
+                  (canModeBan && modesSize === 4 && availableModes.includes(modeKey));
 
-              return (
-                <motion.div
-                  key={mode}
-                  layout
-                  transition={{
-                    layout: { duration: 0.3 },
-                    opacity: { duration: 0.2 },
-                  }}
-                  whileHover={isAvailable ? { scale: 1.05 } : undefined}
-                  whileTap={isAvailable ? { scale: 0.95 } : undefined}
-                  className={`relative overflow-hidden rounded-md ${isBanned ? "opacity-50" : ""}`}
-                >
-                  <Card
-                    className={`relative flex flex-col items-center justify-center border-2 
-                      ${isBanned ? "border-red-500" : isActive ? "border-green-500" : selectedMode === modeKey ? "border-gray-800" : "border-gray-300"}
-                      bg-white p-3 transition-all 
-                      ${isAvailable ? "cursor-pointer hover:shadow-xl" : "cursor-default"}
-                    `}
-                    onClick={() =>
-                      canModeBan && !isBanned
-                        ? handleModeBanClick(modeKey)
-                        : canModePick && !isBanned
-                          ? handleModePickClick(modeKey)
-                          : undefined
-                    }
+                return (
+                  <motion.div
+                    key={mode}
+                    layout
+                    transition={{
+                      layout: { duration: 0.3 },
+                      opacity: { duration: 0.2 },
+                    }}
+                    whileHover={isAvailable ? { scale: 1.05 } : undefined}
+                    whileTap={isAvailable ? { scale: 0.95 } : undefined}
+                    className={`relative overflow-hidden rounded-md ${isBanned ? "opacity-50" : ""}`}
                   >
-                    <div className="relative mb-2 h-12 w-12">
+                    <Card
+                      className={`relative flex flex-col items-center justify-center border-2 
+                        ${isBanned ? "border-red-500" : isActive ? "border-green-500" : selectedMode === modeKey ? "border-gray-800" : "border-gray-300"}
+                        bg-white p-3 transition-all 
+                        ${isAvailable ? "cursor-pointer hover:shadow-xl" : "cursor-default"}
+                      `}
+                      onClick={() =>
+                        (canModeBan && modesSize === 4 && !isBanned)
+                          ? handleModeBanClick(modeKey)
+                          : canModePick && !isBanned
+                            ? handleModePickClick(modeKey)
+                            : undefined
+                      }
+                    >
+                      <div className="relative mb-2 h-12 w-12">
+                        {isBanned && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="absolute h-0.5 w-full rotate-45 transform bg-red-500"></div>
+                            <div className="absolute h-0.5 w-full -rotate-45 transform bg-red-500"></div>
+                          </div>
+                        )}
+                        <Image
+                          src={getModeImagePath(modeKey)}
+                          alt={name}
+                          width={48}
+                          height={48}
+                          className="rounded-md"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{name}</span>
                       {isBanned && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="absolute h-0.5 w-full rotate-45 transform bg-red-500"></div>
-                          <div className="absolute h-0.5 w-full -rotate-45 transform bg-red-500"></div>
-                        </div>
+                        <span className="mt-1 text-xs text-red-500">
+                          Забанено:{" "}
+                          {
+                            bannedModes.find((banned) => banned.mode === modeKey)
+                              ?.teamName
+                          }
+                        </span>
                       )}
-                      <Image
-                        src={getModeImagePath(modeKey)}
-                        alt={name}
-                        width={48}
-                        height={48}
-                        className="rounded-md"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{name}</span>
-                    {isBanned && (
-                      <span className="mt-1 text-xs text-red-500">
-                        Забанено:{" "}
-                        {
-                          bannedModes.find((banned) => banned.mode === modeKey)
-                            ?.teamName
-                        }
-                      </span>
-                    )}
-                    {isActive && (
-                      <span className="mt-1 text-xs text-green-500">
-                        Выбрано для игры
-                      </span>
-                    )}
-                  </Card>
-                </motion.div>
-              );
-            })}
+                      {isActive && (
+                        <span className="mt-1 text-xs text-green-500">
+                          Выбрано для игры
+                        </span>
+                      )}
+                    </Card>
+                  </motion.div>
+                );
+              });
+            })()}
           </div>
         </div>
 
@@ -931,13 +969,13 @@ export default function SplatoonLobbyPage() {
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg text-xl"
                 onClick={handleSubmit}
                 disabled={
-                  (canModeBan && !selectedMode) ||
+                  (canModeBan && modesSize === 4 && !selectedMode) ||
                   (canModePick && !selectedMode) ||
                   (canMapBan && selectedMapIndex === null) ||
                   (canMapPick && selectedMapIndex === null)
                 }
               >
-                {canModeBan
+                {canModeBan && modesSize === 4
                   ? "Забанить режим"
                   : canModePick
                     ? "Выбрать режим"

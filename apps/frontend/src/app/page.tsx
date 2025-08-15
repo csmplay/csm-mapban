@@ -58,7 +58,7 @@ export default function HomePage() {
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
   const [localKnifeDecider, setLocalKnifeDecider] = useState(false);
-  const [localModesSize, setLocalModesSize] = useState(4);
+  const [localModesSize, setLocalModesSize] = useState(2);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
 
   // Map pool related states
@@ -228,6 +228,7 @@ export default function HomePage() {
         socket.emit("createSplatoonLobby", {
           lobbyId,
           gameType: gameType.toLowerCase(),
+          modesSize: localModesSize,
           admin: false,
         });
 
