@@ -3,15 +3,15 @@ Upstream-Name: csm-cs-mapban
 Upstream-Contact: CyberSport Masters <git@csmpro.ru>
 Source: https://git.in.csmpro.ru/CyberSportMasters/csm-cs-mapban
 
-Files: apps/frontend/public/splatoon/maps/*.jpg
+Files: apps/frontend/public/splatoon/maps/*.jpg apps/frontend/public/splatoon/logo.png apps/frontend/public/ssbu/logo.png
 Copyright: Nintendo
 License: LicenseRef-Proprietary
 
-Files: apps/frontend/public/cs2/**.png apps/frontend/public/cs2/**.jpg
+Files: apps/frontend/public/cs2/**.png apps/frontend/public/cs2/**.jpg apps/frontend/public/cs2/logo.png
 Copyright: Valve Corporation
 License: LicenseRef-Proprietary
 
-Files: apps/frontend/public/valorant/maps/*.jpg
+Files: apps/frontend/public/valorant/maps/*.jpg apps/frontend/public/valorant/logo.png
 Copyright: Riot Games
 License: LicenseRef-Proprietary
 
