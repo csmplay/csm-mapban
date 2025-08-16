@@ -243,8 +243,8 @@ export default function SplatoonLobbyPage() {
       },
     );
 
-    newSocket.on("modesSizeUpdated", (data: { setModesSize: number }) => {
-      setModesSize(data.setModesSize);
+    newSocket.on("modesSizeUpdated", (modesSize: number) => {
+      setModesSize(modesSize);
     });
 
     // Handle 'modesUpdated' event
