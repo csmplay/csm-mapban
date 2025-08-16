@@ -64,7 +64,7 @@ export default function SplatoonLobbyPage() {
 
   useEffect(() => {
     if (modesSize === 2) {
-      setAvailableModes(["clam", "rainmaker"]);
+      setAvailableModes(["tower", "zones"]);
     } else {
       setAvailableModes(["clam", "rainmaker", "tower", "zones"]);
     }
@@ -710,7 +710,7 @@ export default function SplatoonLobbyPage() {
               const filteredModes = Object.entries(modeTranslations).filter(
                 ([mode]) => {
                   if (modesSize === 2) {
-                    return mode === "clam" || mode === "rainmaker";
+                    return mode === "tower" || mode === "zones";
                   }
                   return true;
                 },

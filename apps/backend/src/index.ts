@@ -286,7 +286,7 @@ io.on("connection", (socket) => {
             modesRulesList:
               Splatoon.modesRulesLists[gameType].first[modesSize as 2 | 4],
             activeModes:
-              modesSize === 2 ? ["clam", "rainmaker"] : [...Splatoon.gameModes],
+              modesSize === 2 ? ["tower", "zones"] : [...Splatoon.gameModes],
             roundNumber: 1,
             coinFlip: coinFlip ?? globalCoinFlip,
             admin: admin ?? false,

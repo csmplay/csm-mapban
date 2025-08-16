@@ -368,9 +368,15 @@ export default function HomePage() {
     fetch("/version")
       .then((res) => res.text())
       .then((ver) => {
-        setBuildVersion(process.env.NODE_ENV === "development" ? `${ver.trim()}-dev` : ver.trim());
+        setBuildVersion(
+          process.env.NODE_ENV === "development"
+            ? `${ver.trim()}-dev`
+            : ver.trim(),
+        );
       })
-      .catch(() => setBuildVersion(process.env.NODE_ENV === "development" ? "0-dev" : "0"));
+      .catch(() =>
+        setBuildVersion(process.env.NODE_ENV === "development" ? "0-dev" : "0"),
+      );
   }, []);
 
   return (
