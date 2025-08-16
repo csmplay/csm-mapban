@@ -71,11 +71,34 @@ jobs:
       - name: Install bun
         uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
 
-      - name: Install zip
+      - name: Install zip and jq
         run: |
           apt update
-          apt install -y zip
+          apt install -y zip jq
       
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          API_URL="https://${{ env.REPO_URL }}/api/v1"
+          CUR_TAG="${{ github.ref_name }}"
+          CUR_TAG_NO_V=$(echo "$CUR_TAG" | sed 's/^v//')
+          TAGS=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/tags" | jq -r '.[] | "\(.name) \(.commit.sha)"')
+          PREV_TAG=$(echo "$TAGS" | grep -v "$CUR_TAG" | head -n1 | awk '{print $2}')
+          NOTES=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/compare/$PREV_TAG...$CUR_TAG" | jq -r --arg TAG_MSG "$CUR_TAG_NO_V" '.commits[] | select((.commit.message | gsub("\n";"") | ltrimstr(" ") | rtrimstr(" ")) != $TAG_MSG) | "- \(.commit.message | gsub("\n"; "")) \(.sha[0:7]) (@\(.author.login // .commit.author.name))"')
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "### Changelog" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "---" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "The CyberSport Masters and CSM logos are registered trademarks." >> $GITHUB_OUTPUT
+          echo "They may not be used, copied, modified, or distributed without explicit written permission." >> $GITHUB_OUTPUT
+          echo "Detailed rules on trademark usage can be found in the [CyberSport Masters Trademark Policy](https://git.in.csmpro.ru/csmpro/csm-mapban/raw/branch/main/LICENSES/LicenseRef-CyberSportMasters.txt)." >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "Made by [**CSM**](https://csmpro.ru)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$GITHUB_OUTPUT"
+
       - name: Create Release Directory
         run: mkdir release
 
@@ -113,7 +136,7 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
           tag: ${{ github.ref_name }}
           release-dir: release
-          release-notes-assistant: true
+          release-notes: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
 
   trigger-portainer-webhook:
     name: Trigger Portainer webhook
