@@ -366,13 +366,22 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch("/version")
-      .then((res) => res.text())
+      .then((res) => {
+        if ([200, 301, 302].includes(res.status)) {
+          return res.text();
+        }
+        throw new Error("Unexpected response status");
+      })
       .then((ver) => {
-        setBuildVersion(
-          process.env.NODE_ENV === "development"
-            ? `${ver.trim()}-dev`
-            : ver.trim(),
-        );
+        if (/^\d+\.\d+\.\d+$/.test(ver.trim())) {
+          setBuildVersion(
+            process.env.NODE_ENV === "development"
+              ? `${ver.trim()}-dev`
+              : ver.trim(),
+          );
+        } else {
+          throw new Error("Invalid version format");
+        }
       })
       .catch(() =>
         setBuildVersion(process.env.NODE_ENV === "development" ? "0-dev" : "0"),
