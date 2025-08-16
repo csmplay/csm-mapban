@@ -136,9 +136,43 @@ export default function SplatoonLobbyPage() {
   const backendUrl =
     process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
-  // Rules states
-  const [, setModesRulesList] = useState<string[]>([]);
-  const [, setMapRulesList] = useState<string[]>([]);
+  const canMapBanRef = useRef(canMapBan);
+  const canMapPickRef = useRef(canMapPick);
+  const canModeBanRef = useRef(canModeBan);
+  const canModePickRef = useRef(canModePick);
+  const canReportWinnerRef = useRef(canReportWinner);
+  const canWorkRef = useRef(canWork);
+  const hasPriorityRef = useRef(hasPriority);
+  const isWaitingRef = useRef(isWaiting);
+  const teamNameRef = useRef(teamName);
+
+  useEffect(() => {
+    canMapBanRef.current = canMapBan;
+  }, [canMapBan]);
+  useEffect(() => {
+    canMapPickRef.current = canMapPick;
+  }, [canMapPick]);
+  useEffect(() => {
+    canModeBanRef.current = canModeBan;
+  }, [canModeBan]);
+  useEffect(() => {
+    canModePickRef.current = canModePick;
+  }, [canModePick]);
+  useEffect(() => {
+    canReportWinnerRef.current = canReportWinner;
+  }, [canReportWinner]);
+  useEffect(() => {
+    canWorkRef.current = canWork;
+  }, [canWork]);
+  useEffect(() => {
+    hasPriorityRef.current = hasPriority;
+  }, [hasPriority]);
+  useEffect(() => {
+    isWaitingRef.current = isWaiting;
+  }, [isWaiting]);
+  useEffect(() => {
+    teamNameRef.current = teamName;
+  }, [teamName]);
 
   // Socket Calls Handling
   useEffect(() => {
@@ -177,10 +211,7 @@ export default function SplatoonLobbyPage() {
 
     // Handle 'teamNamesUpdated' event
     newSocket.on("teamNamesUpdated", (teamNamesArray: [string, string][]) => {
-      // Only update team names if we're not in the process of submitting a team name
-      if (!isWaiting) {
-        setTeamNames(teamNamesArray);
-      }
+      setTeamNames(teamNamesArray);
     });
 
     // Handle 'startWithoutCoin' event
@@ -202,8 +233,8 @@ export default function SplatoonLobbyPage() {
       setCoinResult(result);
       setIsWaiting(false);
       setIsAnimated(true);
-      setShowTeamNameOverlay(true); // Ensure overlay is shown for animation
-      setGameState("Подбрасываем монетку..."); // Set initial game state
+      setShowTeamNameOverlay(true);
+      setGameState("Подбрасываем монетку...");
       setTimeout(() => {
         setIsAnimated(false);
         setShowTeamNameOverlay(false);
@@ -235,8 +266,6 @@ export default function SplatoonLobbyPage() {
         setPickedMaps(picked);
         setSelectedMapIndex(null);
         setWinnerConfirmed(true);
-
-        // Show winner report overlay when a map is picked
         if (picked.length > 0) {
           setShowWinnerReportOverlay(true);
         }
@@ -258,21 +287,15 @@ export default function SplatoonLobbyPage() {
         setBannedModes(data.banned);
         setAvailableModes(data.active);
         setActiveMode(null);
-
-        // Update modesSize based on the number of active modes
         if (data.modesSize === 2) {
           setModesSize(2);
         } else if (data.modesSize === 4) {
           setModesSize(4);
         }
-
-        // Reset maps for the new round
         setBannedMaps([]);
         setPickedMaps([]);
-
-        // Update priority based on who banned first (only for 4 modes)
         if (data.active.length === 4 && data.banned.length > 0) {
-          setHasPriority(data.banned[0].teamName === teamName);
+          setHasPriority(data.banned[0].teamName === teamNameRef.current);
         }
       },
     );
@@ -289,8 +312,6 @@ export default function SplatoonLobbyPage() {
     newSocket.on("canWorkUpdated", (canWorkState: boolean) => {
       console.log(`canWorkUpdated: ${canWorkState}`);
       setCanWork(canWorkState);
-
-      // If canWork is toggled off, reset all action states
       if (!canWorkState) {
         setCanModeBan(false);
         setCanModePick(false);
@@ -299,21 +320,9 @@ export default function SplatoonLobbyPage() {
       }
     });
 
-    // Handle rules updates
-    newSocket.on(
-      "rulesUpdated",
-      (rules: { modesRulesList: string[]; mapRulesList: string[] }) => {
-        console.log("Rules updated:", rules);
-        setModesRulesList(rules.modesRulesList);
-        setMapRulesList(rules.mapRulesList);
-      },
-    );
-
     newSocket.on("canModeBan", (canModeBanState: boolean) => {
       console.log(`canModeBan: ${canModeBanState}`);
       setCanModeBan(canModeBanState);
-
-      // When enabling mode ban, ensure other options are disabled
       if (canModeBanState) {
         setCanModePick(false);
         setCanMapBan(false);
@@ -325,8 +334,6 @@ export default function SplatoonLobbyPage() {
     newSocket.on("canModePick", (canModePickState: boolean) => {
       console.log(`canModePick: ${canModePickState}`);
       setCanModePick(canModePickState);
-
-      // When enabling mode pick, ensure other options are disabled
       if (canModePickState) {
         setCanModeBan(false);
         setCanMapBan(false);
@@ -338,13 +345,13 @@ export default function SplatoonLobbyPage() {
     newSocket.on("canBan", (canBan: boolean) => {
       console.log(`[canBan] Received canBan event: ${canBan}`);
       console.log(`[canBan] Current state:`, {
-        canWork,
-        canModeBan,
-        canModePick,
+        canWork: canWorkRef.current,
+        canModeBan: canModeBanRef.current,
+        canModePick: canModePickRef.current,
         canMapBan: canBan,
-        canMapPick,
-        canReportWinner,
-        hasPriority,
+        canMapPick: canMapPickRef.current,
+        canReportWinner: canReportWinnerRef.current,
+        hasPriority: hasPriorityRef.current,
       });
       setCanMapBan(canBan);
     });
@@ -352,13 +359,13 @@ export default function SplatoonLobbyPage() {
     newSocket.on("canPick", (canPick: boolean) => {
       console.log(`[canPick] Received canPick event: ${canPick}`);
       console.log(`[canPick] Current state:`, {
-        canWork,
-        canModeBan,
-        canModePick,
-        canMapBan,
+        canWork: canWorkRef.current,
+        canModeBan: canModeBanRef.current,
+        canModePick: canModePickRef.current,
+        canMapBan: canMapBanRef.current,
         canMapPick: canPick,
-        canReportWinner,
-        hasPriority,
+        canReportWinner: canReportWinnerRef.current,
+        hasPriority: hasPriorityRef.current,
       });
       setCanMapPick(canPick);
     });
@@ -371,13 +378,13 @@ export default function SplatoonLobbyPage() {
     newSocket.on("gameStateUpdated", (state: string) => {
       console.log(`[gameStateUpdated] Received game state update: ${state}`);
       console.log(`[gameStateUpdated] Current state:`, {
-        canWork,
-        canModeBan,
-        canModePick,
-        canMapBan,
-        canMapPick,
-        canReportWinner,
-        hasPriority,
+        canWork: canWorkRef.current,
+        canModeBan: canModeBanRef.current,
+        canModePick: canModePickRef.current,
+        canMapBan: canMapBanRef.current,
+        canMapPick: canMapPickRef.current,
+        canReportWinner: canReportWinnerRef.current,
+        hasPriority: hasPriorityRef.current,
       });
       setGameState(state);
       setGameStateHistory((prev) => [...prev, state]);
@@ -397,20 +404,20 @@ export default function SplatoonLobbyPage() {
     newSocket.on(
       "winnerProposed",
       (data: { winnerTeam: string; reportingTeam: string }) => {
-        if (data.reportingTeam !== teamName) {
+        if (data.reportingTeam !== teamNameRef.current) {
           setPendingWinner(data.winnerTeam);
           setReportingTeam(data.reportingTeam);
           setShowWinnerConfirmOverlay(true);
-          setShowWinnerReportOverlay(false); // Hide report overlay when receiving a proposal
+          setShowWinnerReportOverlay(false);
         } else {
-          setShowWinnerReportOverlay(false); // Hide report overlay for the proposing team
+          setShowWinnerReportOverlay(false);
         }
       },
     );
 
     // Handle winner rejection
     newSocket.on("winnerRejected", (data: { rejectingTeam: string }) => {
-      if (data.rejectingTeam === teamName) {
+      if (data.rejectingTeam === teamNameRef.current) {
         setShowWinnerReportOverlay(true);
       }
     });
@@ -422,7 +429,7 @@ export default function SplatoonLobbyPage() {
       setShowWinnerReportOverlay(false);
       setPendingWinner(null);
       setReportingTeam(null);
-      setGameStateHistory([]); // Clear the game state history
+      setGameStateHistory([]);
     });
 
     setSocket(newSocket);

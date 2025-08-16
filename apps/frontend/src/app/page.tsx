@@ -3,7 +3,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
@@ -11,26 +11,13 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import { fetchMapPool } from "@/lib/utils";
 import { GitMerge, FileCheck } from "lucide-react";
-
-// Анимационные варианты
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
-const contentVariants = {
-  hidden: { scale: 0.9, opacity: 0 },
-  visible: { scale: 1, opacity: 1 },
-};
 
 const availableGames = [
   {
@@ -101,8 +88,13 @@ export default function HomePage() {
   const backendUrl =
     process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
+  const defaultMapPoolRef = useRef(defaultMapPool);
+  useEffect(() => {
+    defaultMapPoolRef.current = defaultMapPool;
+  }, [defaultMapPool]);
+
   // Fetch map pool data
-  const fetchMapPoolData = async () => {
+  const fetchMapPoolData = useCallback(async () => {
     try {
       const result = await fetchMapPool(backendUrl);
 
@@ -110,17 +102,17 @@ export default function HomePage() {
         setMapPool(result.mapPool);
         setDefaultMapPool(result.mapPool);
         setAllMapsList(result.mapNamesLists);
-      } else if (Object.keys(defaultMapPool).length > 0) {
+      } else if (Object.keys(defaultMapPoolRef.current).length > 0) {
         // В случае ошибки используем последний известный дефолтный маппул
-        setMapPool({ ...defaultMapPool });
+        setMapPool({ ...defaultMapPoolRef.current });
       }
     } catch (error) {
       console.error("Error in fetchMapPoolData:", error);
-      if (Object.keys(defaultMapPool).length > 0) {
-        setMapPool({ ...defaultMapPool });
+      if (Object.keys(defaultMapPoolRef.current).length > 0) {
+        setMapPool({ ...defaultMapPoolRef.current });
       }
     }
-  };
+  }, [backendUrl]);
 
   useEffect(() => {
     const newSocket = io(backendUrl, {
@@ -176,7 +168,7 @@ export default function HomePage() {
     return () => {
       newSocket.disconnect();
     };
-  }, [backendUrl, router, toast]);
+  }, [backendUrl, router, toast, fetchMapPoolData]);
 
   // Update game type when game changes
   useEffect(() => {

@@ -99,17 +99,20 @@ const ObsPage = () => {
     Array<{ mode: string; teamName: string; translatedMode?: string }>
   >([]);
   const [pattern, setPattern] = useState<string[]>([]);
-  const defaultPickedMode = {
-    mode: "",
-    teamName: "",
-    translatedMode: "",
-  };
+  // Memoize defaultPickedMode to avoid dependency warning
+  const defaultPickedMode = useMemo(
+    () => ({
+      mode: "",
+      teamName: "",
+      translatedMode: "",
+    }),
+    [],
+  );
   const [pickedMode, setPickedMode] = useState<{
     mode: string;
     teamName: string;
     translatedMode: string;
   }>(defaultPickedMode);
-  const [deciderEntries, setDeciderEntries] = useState("");
   const [visibleActionsCount, setVisibleActionsCount] = useState(0);
   const [gameName, setGameName] = useState<string>("0");
   const [cardColors, setCardColors] = useState<CardColors>({
@@ -261,11 +264,6 @@ const ObsPage = () => {
       },
     );
 
-    newSocket.on("deciderUpdated", (decider: string) => {
-      console.log("Decider updated:", decider);
-      setDeciderEntries(decider);
-    });
-
     // Fallback for when modePicked event might be missed
     newSocket.on(
       "currentPickedMode",
@@ -299,7 +297,7 @@ const ObsPage = () => {
       console.log("Cleaning up socket connection...");
       newSocket.disconnect();
     };
-  }, [backendUrl]);
+  }, [backendUrl, defaultPickedMode]);
 
   // Construct the final actions array based on the pattern and the data we have
   const actions: Action[] = useMemo(() => {

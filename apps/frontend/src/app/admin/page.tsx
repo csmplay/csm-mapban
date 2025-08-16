@@ -559,7 +559,13 @@ export default function AdminPage() {
             Копировать OBS ссылку
           </Button>
           <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
-            <Image src="/CSM White.svg" alt="CSM" width={90} height={20} priority={true} />
+            <Image
+              src="/CSM White.svg"
+              alt="CSM"
+              width={90}
+              height={20}
+              priority={true}
+            />
             mapban admin
           </h1>
           <Button
