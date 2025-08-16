@@ -109,8 +109,9 @@ jobs:
           bun run --bun build
           cp ../../README.md dist
           cp ../../LICENSES dist -r
-          tar -czf ../../release/backend-release.tar.gz dist
-          zip -r ../../release/backend-release.zip dist
+          mv dist csm-mapban-backend
+          tar -czf ../../release/backend-release.tar.gz csm-mapban-backend
+          zip -r ../../release/backend-release.zip csm-mapban-backend
 
       - name: Build Frontend release
         run: |
@@ -119,8 +120,10 @@ jobs:
           bun run --bun build
           cp ../../README.md .next/standalone/apps/frontend/
           cp ../../LICENSES .next/standalone/apps/frontend/ -r
-          tar -czf ../../release/frontend-release.tar.gz .next/standalone/apps/frontend/
-          zip -r ../../release/frontend-release.zip .next/standalone/apps/frontend/
+          cd .next/standalone/apps/
+          mv frontend csm-mapban-frontend
+          tar -czf ../../../../../release/frontend-release.tar.gz csm-mapban-frontend
+          zip -r ../../../../../release/frontend-release.zip csm-mapban-frontend
 
       - name: Copy and override docker-compose.yml for release
         run: |
