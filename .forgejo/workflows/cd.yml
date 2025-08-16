@@ -39,16 +39,27 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.RELEASE_TOKEN }}
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
+        with:
+          registry: ghcr.io
+          username: csmplay
+          password: ${{ secrets.GITHUBCOM_TOKEN }}
+
       - name: Build ${{ matrix.service }} Docker Image
         run: |
           IMAGE=${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
+          GHIMAGE=ghcr.io/csmplay/csm-mapban/${{ matrix.service }}
           TAGS="-t ${IMAGE}:${{ github.ref_name }}"
+          GHTAGS="-t ${GHIMAGE}:${{ github.ref_name }}"
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             TAGS="${TAGS} -t ${IMAGE}:latest"
+            GHTAGS="${GHTAGS} -t ${GHIMAGE}:latest"
           fi
           docker build \
             -f apps/${{ matrix.service }}/Dockerfile \
             $TAGS \
+            $GHTAGS \
             --label "org.opencontainers.image.revision=${{ github.sha }}" \
             --label "org.opencontainers.image.version=${{ github.ref_name }}" \
             --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -57,11 +68,14 @@ jobs:
       - name: Push ${{ matrix.service }} Docker Image
         run: |
           docker push --all-tags ${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
+          docker push --all-tags ghcr.io/csmplay/csm-mapban/${{ matrix.service }}
 
   build-and-push:
     name: Build and Push Release
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: node
+    permissions:
+      contents: write
     env:
       REPO_URL: git.in.csmpro.ru
     steps:
@@ -113,6 +127,8 @@ jobs:
           zip -r ../../release/backend-release.zip csm-mapban-backend
 
       - name: Build Frontend release
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
         run: |
           cd apps/frontend
           bun install --frozen-lockfile
@@ -139,6 +155,23 @@ jobs:
           tag: ${{ github.ref_name }}
           release-dir: release
           release-notes: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+      
+      - name: Publish Release to GitHub
+        run: |
+          set -e
+          JSON_DATA=$(jq -n --arg tag "${{ github.ref_name }}" --arg name "${{ github.ref_name }}" --arg body "${{ steps.release_notes.outputs.RELEASE_NOTES }}" \
+          '{tag_name: $tag, name: $name, body: $body}')
+          UPLOAD_URL=$(curl -s -X POST \
+            -H "Authorization: token ${{ secrets.GITHUBCOM_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/csmplay/csm-mapban/releases \
+            -d "$JSON_DATA" | jq -r '.upload_url' | sed -e "s/{?name,label}//")
+          for f in release/*; do
+            curl -s -X POST \
+              -H "Authorization: token ${{ secrets.GITHUBCOM_TOKEN }}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$f" "$UPLOAD_URL?name=$(basename $f)"
+          done
 
   trigger-portainer-webhook:
     name: Trigger Portainer webhook
