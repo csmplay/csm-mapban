@@ -2,6 +2,8 @@ name: "CI"
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -52,4 +54,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build
+        env:
+          DO_NOT_TRACK: 1
         run: bun run --bun build

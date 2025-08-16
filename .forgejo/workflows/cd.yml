@@ -1,8 +1,9 @@
 name: "CD"
 
 on:
-  schedule:
-    - cron: "0 0 * * 1"
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -13,6 +14,11 @@ jobs:
   build-and-push-docker:
     name: Build and Push Docker Images
     runs-on: node
+    env:
+      REGISTRY_URL: git.in.csmpro.ru
+    strategy:
+      matrix:
+        service: [backend, frontend]
 
     steps:
       - name: Checkout Repository
@@ -29,31 +35,93 @@ jobs:
       - name: Log in to Forgejo Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
-          registry: git.in.csmpro.ru
-          username: ${{ forge.repository_owner }}
-          password: ${{ secrets.PACKAGES_TOKEN }}
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.RELEASE_TOKEN }}
 
-      - name: Build Backend Image
+      - name: Build ${{ matrix.service }} Docker Image
         run: |
+          IMAGE=${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
+          TAGS="-t ${IMAGE}:${{ github.ref_name }}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAGS="${TAGS} -t ${IMAGE}:latest"
+          fi
           docker build \
-            -f apps/backend/Dockerfile \
-            -t git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/backend:latest .
+            -f apps/${{ matrix.service }}/Dockerfile \
+            $TAGS \
+            --label "org.opencontainers.image.revision=${{ github.sha }}" \
+            --label "org.opencontainers.image.version=${{ github.ref_name }}" \
+            --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            .
 
-      - name: Push Backend Image
+      - name: Push ${{ matrix.service }} Docker Image
         run: |
-          docker push git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/backend:latest
+          docker push --all-tags ${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
 
-      - name: Build Frontend Image
+  build-and-push:
+    name: Build and Push Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: node
+    env:
+      REPO_URL: git.in.csmpro.ru
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
+      
+      - name: Install bun
+        uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+
+      - name: Install zip
         run: |
-          docker build \
-            -f apps/frontend/Dockerfile \
-            -t git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/frontend:latest .
+          apt update
+          apt install -y zip
+      
+      - name: Create Release Directory
+        run: mkdir release
 
-      - name: Push Frontend Image
+      - name: Build Backend release
         run: |
-          docker push git.in.csmpro.ru/${{ forge.repository_owner }}/csm-mapban/frontend:latest
+          cd apps/backend
+          bun install --frozen-lockfile
+          bun run --bun build
+          cp ../../README.md dist
+          cp ../../LICENSES dist -r
+          tar -czf ../../release/backend-release.tar.gz dist
+          zip -r ../../release/backend-release.zip dist
 
+      - name: Build Frontend release
+        run: |
+          cd apps/frontend
+          bun install --frozen-lockfile
+          bun run --bun build
+          cp ../../README.md .next/standalone/apps/frontend/
+          cp ../../LICENSES .next/standalone/apps/frontend/ -r
+          tar -czf ../../release/frontend-release.tar.gz .next/standalone/apps/frontend/
+          zip -r ../../release/frontend-release.zip .next/standalone/apps/frontend/
+
+      - name: Copy and override docker-compose.yml for release
+        run: |
+          cp docker-compose.yml release/docker-compose.yml
+          sed -i "s/:latest/:${{ github.ref_name }}/g" release/docker-compose.yml
+
+      - name: Publish Release
+        uses: https://code.forgejo.org/actions/forgejo-release@25f6ec3fc275b32766b4051eef2ae0d2a3a1f3ef # v2.7.2
+        with:
+          direction: upload
+          url: https://${{ env.REPO_URL }}
+          repo: ${{ github.repository }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+          tag: ${{ github.ref_name }}
+          release-dir: release
+          release-notes-assistant: true
+
+  trigger-portainer-webhook:
+    name: Trigger Portainer webhook
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-and-push-docker
+    runs-on: node
+    env:
+      PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
+    steps:
       - name: Trigger Portainer webhook
-        env:
-          PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
         run: curl -fsS -m 30 -X POST "$PORTAINER_WEBHOOK_URL"

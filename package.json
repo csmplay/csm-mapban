@@ -15,7 +15,8 @@
     "build": "dotenv -- turbo run build",
     "lint": "dotenv -- turbo run lint",
     "fmt": "prettier --write apps/*/src",
-    "start": "dotenv -- turbo run start"
+    "start": "dotenv -- turbo run start",
+    "version": "npm version"
   },
   "keywords": [],
   "author": "CyberSport Masters",

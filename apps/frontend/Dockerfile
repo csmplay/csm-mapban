@@ -41,3 +41,10 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["bun", "run", "/app/apps/frontend/server.js"]
+
+LABEL org.opencontainers.image.source="https://git.in.csmpro.ru/csmpro/csm-mapban"
+LABEL org.opencontainers.image.url="https://git.in.csmpro.ru/csmpro/csm-mapban"
+LABEL org.opencontainers.image.authors="CyberSport Masters"
+LABEL org.opencontainers.image.title="CSM Mapban Frontend"
+LABEL org.opencontainers.image.description="Modern map veto and pick tool for tournaments."
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only AND CC-BY-SA-4.0 AND LicenseRef-CyberSportMasters AND LicenseRef-Proprietary AND OFL-1.1"
