@@ -26,8 +26,7 @@
     "sharp": "^0.34.3",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^4.0.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss": "^4.0.5"
   },
   "devDependencies": {
     "@eslint/config-array": "0.21.0",

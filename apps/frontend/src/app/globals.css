@@ -4,8 +4,6 @@
 @import "tailwindcss";
 @import "./theme-override.css";
 
-@plugin 'tailwindcss-animate';
-
 @custom-variant dark (&:is(.dark *));
 
 @theme {
