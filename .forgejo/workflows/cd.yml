@@ -81,10 +81,9 @@ jobs:
         run: |
           API_URL="https://${{ env.REPO_URL }}/api/v1"
           CUR_TAG="${{ github.ref_name }}"
-          CUR_TAG_NO_V=$(echo "$CUR_TAG" | sed 's/^v//')
           TAGS=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/tags" | jq -r '.[] | "\(.name) \(.commit.sha)"')
           PREV_TAG=$(echo "$TAGS" | grep -v "$CUR_TAG" | head -n1 | awk '{print $2}')
-          NOTES=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/compare/$PREV_TAG...$CUR_TAG" | jq -r --arg TAG_MSG "$CUR_TAG_NO_V" '.commits[] | select((.commit.message | gsub("\n";"") | ltrimstr(" ") | rtrimstr(" ")) != $TAG_MSG) | "- \(.commit.message | gsub("\n"; "")) \(.sha[0:7]) (@\(.author.login // .commit.author.name))"')
+          NOTES=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/compare/$PREV_TAG...$CUR_TAG" | jq -r --arg TAG_MSG "chore: release $CUR_TAG" '.commits[] | select((.commit.message | gsub("\n";"") | ltrimstr(" ") | rtrimstr(" ")) != $TAG_MSG) | "- \(.commit.message | gsub("\n"; "")) \(.sha[0:7]) (@\(.author.login // .commit.author.name))"')
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
           echo "### Changelog" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT

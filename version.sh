@@ -7,7 +7,7 @@ set -euo pipefail
 
 npm version "$1" || false
 VERSION=$(jq -r '.version' package.json)
-echo "$VERSION" > apps/frontend/public/version || false
+echo "$VERSION" >apps/frontend/public/version || false
 git add apps/frontend/public/version || false
-git commit --amend --no-edit || false
+git commit --amend --no-edit --no-verify -m "chore: release v$VERSION" || false
 git tag -f "v$VERSION" || false
