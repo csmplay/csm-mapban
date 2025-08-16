@@ -138,6 +138,14 @@ io.on("connection", (socket) => {
     if (lobby.rules.gameName === "splatoon") {
       io.to(socket.id).emit("modesSizeUpdated", (lobby as SplatoonLobby).rules.modesSize);
     }
+    if (getGameCategory(lobby.rules.gameName) === "fps") {
+      const fpsLobby = lobby as FPSGames.Lobby;
+      io.to(socket.id).emit("fpsLobbySettings", {
+        gameType: fpsLobby.rules.gameType,
+        mapPoolSize: fpsLobby.rules.mapPoolSize,
+        knifeDecider: fpsLobby.rules.knifeDecider,
+      });
+    }
     io.to(lobbyId).emit("mapNames", lobby.rules.mapNames);
     io.to(lobbyId).emit("gameName", lobby.rules.gameName);
 

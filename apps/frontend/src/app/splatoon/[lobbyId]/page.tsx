@@ -663,6 +663,15 @@ export default function SplatoonLobbyPage() {
             {redTeamName}
           </div>
         </div>
+        {/* Team Color Info */}
+        <div className="flex justify-center items-center mb-4">
+          {teamName === blueTeamName && (
+            <span className="text-blue-500 text-xl font-semibold">Вы - синяя команда</span>
+          )}
+          {teamName === redTeamName && (
+            <span className="text-red-500 text-xl font-semibold">Вы - красная команда</span>
+          )}
+        </div>
 
         <div className="flex justify-center items-center mb-6">
           <AnimatePresence mode="wait">
@@ -1018,6 +1027,15 @@ export default function SplatoonLobbyPage() {
             >
               {!isWaiting && !isUndefined && !isDeleted && !isAnimated && (
                 <div>
+                  {/* Lobby Info */}
+                    <div className="mb-4 text-center">
+                    <div className="text-lg font-semibold text-white">
+                      Игра: <span className="font-bold text-white">Splatoon</span>
+                    </div>
+                    <div className="text-md text-gray-200">
+                      Количество режимов: <span className="font-bold text-white">{modesSize}</span>
+                    </div>
+                    </div>
                   <h2 className="text-2xl font-bold mb-4 text-center">
                     Введите имя команды
                   </h2>

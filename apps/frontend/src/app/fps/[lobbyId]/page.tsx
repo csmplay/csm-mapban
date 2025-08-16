@@ -58,6 +58,10 @@ export default function LobbyPage() {
   const [coinResult, setCoinResult] = useState<number>(0);
   const isCoin = useRef(true);
 
+  const [fpsGameType, setFpsGameType] = useState<string>("");
+  const [fpsMapPoolSize, setFpsMapPoolSize] = useState<number>(0);
+  const [fpsKnifeDecider, setFpsKnifeDecider] = useState<boolean>(false);
+
   // Map data
   const [bannedMaps, setBannedMaps] = useState<
     Array<{ map: string; teamName: string }>
@@ -203,6 +207,12 @@ export default function LobbyPage() {
       setIsWaiting(false);
     });
 
+    newSocket.on("fpsLobbySettings", (settings: { gameType: string; mapPoolSize: number; knifeDecider: boolean }) => {
+      setFpsGameType(settings.gameType);
+      setFpsMapPoolSize(settings.mapPoolSize);
+      setFpsKnifeDecider(settings.knifeDecider);
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -321,6 +331,15 @@ export default function LobbyPage() {
           <div className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-2xl">
             {redTeamName}
           </div>
+        </div>
+        {/* Team Color Info */}
+        <div className="flex justify-center items-center mb-4">
+          {teamName === blueTeamName && (
+            <span className="text-blue-500 text-xl font-semibold">Вы - синяя команда</span>
+          )}
+          {teamName === redTeamName && (
+            <span className="text-red-500 text-xl font-semibold">Вы - красная команда</span>
+          )}
         </div>
 
         <div className="flex justify-center items-center mb-6">
@@ -656,6 +675,28 @@ export default function LobbyPage() {
                 !isDeleted &&
                 !isKnifing && (
                   <div>
+                    {/* Lobby Info */}
+                    <div className="mb-4 text-center">
+                      <div className="text-lg font-semibold text-white">
+                        Игра: <span className="font-bold text-white">{gameName}</span>
+                      </div>
+                        <>
+                          <div className="text-md text-gray-200">
+                            Правила: <span className="font-bold text-white">{fpsGameType}</span>
+                          </div>
+                          <div className="text-md text-gray-400 mt-2">
+                            {(() => {
+                              if (fpsGameType === "bo1" || fpsGameType === "bo2") {
+                                return `Размер маппула: ${fpsMapPoolSize}`;
+                              }
+                              if (fpsGameType === "bo3" || fpsGameType === "bo5") {
+                                return `Десайдер: ${fpsKnifeDecider ? "Вкл" : "Выкл"}`;
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        </>
+                    </div>
                     <h2 className="text-2xl font-bold mb-4 text-center">
                       Введите имя команды
                     </h2>
