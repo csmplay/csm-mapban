@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: csm-cs-mapban
+Upstream-Name: csm-mapban
 Upstream-Contact: CyberSport Masters <git@csmpro.ru>
-Source: https://git.in.csmpro.ru/CyberSportMasters/csm-cs-mapban
+Source: https://git.in.csmpro.ru/csmpro/csm-mapban
 
 Files: apps/frontend/public/splatoon/maps/*.jpg apps/frontend/public/splatoon/logo.png apps/frontend/public/ssbu/logo.png
 Copyright: Nintendo
@@ -23,7 +23,7 @@ Files: apps/frontend/public/splatoon/modes/**.png apps/frontend/public/valorant/
 Copyright: 2025 CyberSport Masters <git@csmpro.ru>
 License: CC-BY-SA-4.0
 
-Files: **/.gitignore .gitignore .envrc assets/screenshot.png package.json .npmrc bun.lock **/package.json turbo.json apps/*/tsconfig.json apps/*/.eslintrc.json apps/frontend/components.json apps/backend/nodemon.json .forgejo/workflows/ci.yml .forgejo/workflows/cd.yml renovate.json flake.nix flake.lock
+Files: **/.gitignore apps/frontend/public/version .gitignore .envrc assets/screenshot.png package.json .npmrc bun.lock **/package.json turbo.json apps/*/tsconfig.json apps/*/.eslintrc.json apps/frontend/components.json apps/backend/nodemon.json .forgejo/workflows/ci.yml .forgejo/workflows/cd.yml renovate.json flake.nix flake.lock
 Copyright: 2024-2025 CyberSport Masters <git@csmpro.ru>
 License: AGPL-3.0-only
 

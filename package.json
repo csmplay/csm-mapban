@@ -16,7 +16,9 @@
     "lint": "dotenv -- turbo run lint",
     "fmt": "prettier --write apps/*/src",
     "start": "dotenv -- turbo run start",
-    "version": "npm version"
+    "patch": "./version.sh patch",
+    "minor": "./version.sh minor",
+    "major": "./version.sh major"
   },
   "keywords": [],
   "author": "CyberSport Masters",

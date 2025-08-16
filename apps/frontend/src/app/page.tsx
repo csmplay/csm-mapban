@@ -96,6 +96,7 @@ export default function HomePage() {
   const [connectionError, setConnectionError] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
   const [showContent, setShowContent] = useState(false);
+  const [buildVersion, setBuildVersion] = useState<string>("");
 
   const backendUrl =
     process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
@@ -362,6 +363,15 @@ export default function HomePage() {
   const selectedGameInfo = availableGames.find(
     (g) => g.prettyName === gameName,
   );
+
+  useEffect(() => {
+    fetch("/version")
+      .then((res) => res.text())
+      .then((ver) => {
+        setBuildVersion(process.env.NODE_ENV === "development" ? `${ver.trim()}-dev` : ver.trim());
+      })
+      .catch(() => setBuildVersion(process.env.NODE_ENV === "development" ? "0-dev" : "0"));
+  }, []);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-6">
@@ -1034,6 +1044,17 @@ export default function HomePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Build version in bottom right corner */}
+      <a
+        href={`https://git.in.csmpro.ru/csmpro/csm-mapban/releases/tag/v${buildVersion.replace(/-dev$/, "")}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-2 right-2 z-50 text-xs text-neutral-400 dark:text-neutral-500 bg-white/80 dark:bg-neutral-900/80 px-2 py-1 rounded shadow cursor-pointer"
+        style={{ pointerEvents: "auto" }}
+      >
+        {buildVersion ? `v${buildVersion}` : ""}
+      </a>
     </div>
   );
 }
