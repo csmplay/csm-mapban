@@ -59,7 +59,6 @@ export function initializeServer() {
   });
 
   // Apply the referrer check middleware to all API routes
-  app.use("/api/mapPool", (req, res, next) => next());
   app.use("/api", checkReferrer);
 
   // Use cors middleware
