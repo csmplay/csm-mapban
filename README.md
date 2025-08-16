@@ -4,6 +4,7 @@
 # CSM Mapban
 
 [![REUSE status](https://api.reuse.software/badge/git.in.csmpro.ru/csmpro/csm-mapban)](https://api.reuse.software/info/git.in.csmpro.ru/csmpro/csm-mapban)
+[![Latest release](https://git.in.csmpro.ru/csmpro/csm-mapban/badges/release.svg)](https://git.in.csmpro.ru/csmpro/csm-mapban/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue?logo=open-source-initiative&logoColor=white)](./LICENSE)
 [![Service status](https://img.shields.io/website?url=https%3A%2F%2Fmapban.csmpro.ru&label=service&up_message=online&down_message=down&up_color=brightgreen&down_color=red&logo=rocket&logoColor=white)](https://mapban.csmpro.ru/)
 [![Source code at CSM Git](https://img.shields.io/badge/source-CSM%20Git-24292e?logo=forgejo&logoColor=white)](https://git.in.csmpro.ru/csmpro/csm-mapban)
@@ -81,7 +82,7 @@ docker run -d git.csmpro.ru/csmpro/csm-mapban/frontend:latest
 Or with docker compose:
 
 ```bash
-wget https://git.csmpro.ru/csmpro/csm-mapban/raw/branch/main/docker-compose.yml
+wget http://git.in.csmpro.ru/csmpro/csm-mapban/releases/download/latest/docker-compose.yml
 docker compose up -d
 ```
 
