@@ -207,11 +207,18 @@ export default function LobbyPage() {
       setIsWaiting(false);
     });
 
-    newSocket.on("fpsLobbySettings", (settings: { gameType: string; mapPoolSize: number; knifeDecider: boolean }) => {
-      setFpsGameType(settings.gameType);
-      setFpsMapPoolSize(settings.mapPoolSize);
-      setFpsKnifeDecider(settings.knifeDecider);
-    });
+    newSocket.on(
+      "fpsLobbySettings",
+      (settings: {
+        gameType: string;
+        mapPoolSize: number;
+        knifeDecider: boolean;
+      }) => {
+        setFpsGameType(settings.gameType);
+        setFpsMapPoolSize(settings.mapPoolSize);
+        setFpsKnifeDecider(settings.knifeDecider);
+      },
+    );
 
     setSocket(newSocket);
 
@@ -335,10 +342,14 @@ export default function LobbyPage() {
         {/* Team Color Info */}
         <div className="flex justify-center items-center mb-4">
           {teamName === blueTeamName && (
-            <span className="text-blue-500 text-xl font-semibold">Вы - синяя команда</span>
+            <span className="text-blue-500 text-xl font-semibold">
+              Вы - синяя команда
+            </span>
           )}
           {teamName === redTeamName && (
-            <span className="text-red-500 text-xl font-semibold">Вы - красная команда</span>
+            <span className="text-red-500 text-xl font-semibold">
+              Вы - красная команда
+            </span>
           )}
         </div>
 
@@ -678,24 +689,34 @@ export default function LobbyPage() {
                     {/* Lobby Info */}
                     <div className="mb-4 text-center">
                       <div className="text-lg font-semibold text-white">
-                        Игра: <span className="font-bold text-white">{gameName}</span>
+                        Игра:{" "}
+                        <span className="font-bold text-white">{gameName}</span>
                       </div>
-                        <>
-                          <div className="text-md text-gray-200">
-                            Правила: <span className="font-bold text-white">{fpsGameType}</span>
-                          </div>
-                          <div className="text-md text-gray-400 mt-2">
-                            {(() => {
-                              if (fpsGameType === "bo1" || fpsGameType === "bo2") {
-                                return `Размер маппула: ${fpsMapPoolSize}`;
-                              }
-                              if (fpsGameType === "bo3" || fpsGameType === "bo5") {
-                                return `Десайдер: ${fpsKnifeDecider ? "Вкл" : "Выкл"}`;
-                              }
-                              return null;
-                            })()}
-                          </div>
-                        </>
+                      <>
+                        <div className="text-md text-gray-200">
+                          Правила:{" "}
+                          <span className="font-bold text-white">
+                            {fpsGameType}
+                          </span>
+                        </div>
+                        <div className="text-md text-gray-400 mt-2">
+                          {(() => {
+                            if (
+                              fpsGameType === "bo1" ||
+                              fpsGameType === "bo2"
+                            ) {
+                              return `Размер маппула: ${fpsMapPoolSize}`;
+                            }
+                            if (
+                              fpsGameType === "bo3" ||
+                              fpsGameType === "bo5"
+                            ) {
+                              return `Десайдер: ${fpsKnifeDecider ? "Вкл" : "Выкл"}`;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </>
                     </div>
                     <h2 className="text-2xl font-bold mb-4 text-center">
                       Введите имя команды

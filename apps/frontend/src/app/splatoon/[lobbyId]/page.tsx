@@ -27,7 +27,7 @@ const modeTranslations: Record<GameMode, string> = {
   tower: "Бой за башню",
   zones: "Бой за зоны",
   clam: "Устробол",
-  rainmaker: "Мегакарп"
+  rainmaker: "Мегакарп",
 };
 
 // Mode images by name
@@ -243,7 +243,7 @@ export default function SplatoonLobbyPage() {
       },
     );
 
-    newSocket.on("modesSizeUpdated", (data: {setModesSize: number}) => {
+    newSocket.on("modesSizeUpdated", (data: { setModesSize: number }) => {
       setModesSize(data.setModesSize);
     });
 
@@ -258,14 +258,14 @@ export default function SplatoonLobbyPage() {
         setBannedModes(data.banned);
         setAvailableModes(data.active);
         setActiveMode(null);
-        
+
         // Update modesSize based on the number of active modes
         if (data.modesSize === 2) {
           setModesSize(2);
         } else if (data.modesSize === 4) {
           setModesSize(4);
         }
-        
+
         // Reset maps for the new round
         setBannedMaps([]);
         setPickedMaps([]);
@@ -666,10 +666,14 @@ export default function SplatoonLobbyPage() {
         {/* Team Color Info */}
         <div className="flex justify-center items-center mb-4">
           {teamName === blueTeamName && (
-            <span className="text-blue-500 text-xl font-semibold">Вы - синяя команда</span>
+            <span className="text-blue-500 text-xl font-semibold">
+              Вы - синяя команда
+            </span>
           )}
           {teamName === redTeamName && (
-            <span className="text-red-500 text-xl font-semibold">Вы - красная команда</span>
+            <span className="text-red-500 text-xl font-semibold">
+              Вы - красная команда
+            </span>
           )}
         </div>
 
@@ -699,17 +703,19 @@ export default function SplatoonLobbyPage() {
           <h2 className="text-xl font-semibold mb-4">
             Режимы {modesSize === 2 ? "(2 режима)" : "(4 режима)"}
           </h2>
-          <div className={`grid gap-4 ${modesSize === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`}>
+          <div
+            className={`grid gap-4 ${modesSize === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`}
+          >
             {(() => {
-              const filteredModes = Object.entries(modeTranslations)
-                .filter(([mode]) => {
+              const filteredModes = Object.entries(modeTranslations).filter(
+                ([mode]) => {
                   if (modesSize === 2) {
                     return mode === "clam" || mode === "rainmaker";
                   }
                   return true;
-                });
-              
-              
+                },
+              );
+
               return filteredModes.map(([mode, name]) => {
                 const modeKey = mode as GameMode;
                 const isBanned = bannedModes.some(
@@ -718,7 +724,9 @@ export default function SplatoonLobbyPage() {
                 const isActive = activeMode === modeKey;
                 const isAvailable =
                   (canModePick && availableModes.includes(modeKey)) ||
-                  (canModeBan && modesSize === 4 && availableModes.includes(modeKey));
+                  (canModeBan &&
+                    modesSize === 4 &&
+                    availableModes.includes(modeKey));
 
                 return (
                   <motion.div
@@ -739,7 +747,7 @@ export default function SplatoonLobbyPage() {
                         ${isAvailable ? "cursor-pointer hover:shadow-xl" : "cursor-default"}
                       `}
                       onClick={() =>
-                        (canModeBan && modesSize === 4 && !isBanned)
+                        canModeBan && modesSize === 4 && !isBanned
                           ? handleModeBanClick(modeKey)
                           : canModePick && !isBanned
                             ? handleModePickClick(modeKey)
@@ -769,8 +777,9 @@ export default function SplatoonLobbyPage() {
                         <span className="mt-1 text-xs text-red-500">
                           Забанено:{" "}
                           {
-                            bannedModes.find((banned) => banned.mode === modeKey)
-                              ?.teamName
+                            bannedModes.find(
+                              (banned) => banned.mode === modeKey,
+                            )?.teamName
                           }
                         </span>
                       )}
@@ -1028,14 +1037,16 @@ export default function SplatoonLobbyPage() {
               {!isWaiting && !isUndefined && !isDeleted && !isAnimated && (
                 <div>
                   {/* Lobby Info */}
-                    <div className="mb-4 text-center">
+                  <div className="mb-4 text-center">
                     <div className="text-lg font-semibold text-white">
-                      Игра: <span className="font-bold text-white">Splatoon</span>
+                      Игра:{" "}
+                      <span className="font-bold text-white">Splatoon</span>
                     </div>
                     <div className="text-md text-gray-200">
-                      Количество режимов: <span className="font-bold text-white">{modesSize}</span>
+                      Количество режимов:{" "}
+                      <span className="font-bold text-white">{modesSize}</span>
                     </div>
-                    </div>
+                  </div>
                   <h2 className="text-2xl font-bold mb-4 text-center">
                     Введите имя команды
                   </h2>

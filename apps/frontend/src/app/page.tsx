@@ -33,10 +33,31 @@ const contentVariants = {
 };
 
 const availableGames = [
-  { id: "cs2", prettyName: "Counter-Strike 2", type: "fps", developer: "Valve" },
-  { id: "valorant", prettyName: "Valorant", type: "fps", developer: "Riot Games" },
-  { id: "splatoon", prettyName: "Splatoon 3", type: "splatoon", developer: "Nintendo" },
-  { id: "ssbu", prettyName: "SSBU (скоро)", type: "other", developer: "Nintendo", disabled: true },
+  {
+    id: "cs2",
+    prettyName: "Counter-Strike 2",
+    type: "fps",
+    developer: "Valve",
+  },
+  {
+    id: "valorant",
+    prettyName: "Valorant",
+    type: "fps",
+    developer: "Riot Games",
+  },
+  {
+    id: "splatoon",
+    prettyName: "Splatoon 3",
+    type: "splatoon",
+    developer: "Nintendo",
+  },
+  {
+    id: "ssbu",
+    prettyName: "SSBU (скоро)",
+    type: "other",
+    developer: "Nintendo",
+    disabled: true,
+  },
 ];
 const availableFormats = [
   { id: "BO1", name: "BO1" },
@@ -47,7 +68,8 @@ const availableFormats = [
 
 export default function HomePage() {
   const [lobbyId, setLobbyId] = useState("");
-  const [showGameSelectionOverlay, setShowGameSelectionOverlay] = useState(false);
+  const [showGameSelectionOverlay, setShowGameSelectionOverlay] =
+    useState(false);
   const [showSettingsOverlay, setShowSettingsOverlay] = useState(false);
   const [showMapPoolOverlay, setShowMapPoolOverlay] = useState(false);
   const router = useRouter();
@@ -79,26 +101,25 @@ export default function HomePage() {
     process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
 
   // Fetch map pool data
- 	  const fetchMapPoolData = async () => {
-	    try {
-	      const result = await fetchMapPool(backendUrl);
-	
-	      if (result.success) {
-	        setMapPool(result.mapPool);
-	        setDefaultMapPool(result.mapPool);
-	        setAllMapsList(result.mapNamesLists);
-	      } else if (Object.keys(defaultMapPool).length > 0) {
-        // В случае ошибки используем последний известный дефолтный маппул
-	        setMapPool({ ...defaultMapPool });
-	      }
-	    } catch (error) {
-	      console.error("Error in fetchMapPoolData:", error);
-	      if (Object.keys(defaultMapPool).length > 0) {
-	        setMapPool({ ...defaultMapPool });
-	      }
-	    }
-	  };
+  const fetchMapPoolData = async () => {
+    try {
+      const result = await fetchMapPool(backendUrl);
 
+      if (result.success) {
+        setMapPool(result.mapPool);
+        setDefaultMapPool(result.mapPool);
+        setAllMapsList(result.mapNamesLists);
+      } else if (Object.keys(defaultMapPool).length > 0) {
+        // В случае ошибки используем последний известный дефолтный маппул
+        setMapPool({ ...defaultMapPool });
+      }
+    } catch (error) {
+      console.error("Error in fetchMapPoolData:", error);
+      if (Object.keys(defaultMapPool).length > 0) {
+        setMapPool({ ...defaultMapPool });
+      }
+    }
+  };
 
   useEffect(() => {
     const newSocket = io(backendUrl, {
@@ -338,12 +359,16 @@ export default function HomePage() {
   };
 
   // Helper to get selected game info
-  const selectedGameInfo = availableGames.find(g => g.prettyName === gameName);
+  const selectedGameInfo = availableGames.find(
+    (g) => g.prettyName === gameName,
+  );
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-6">
-      <AnimatePresence mode="wait">        {/* Loading State */}
-        {(connectionError || (!showContent || isConnecting)) && (
+      <AnimatePresence mode="wait">
+        {" "}
+        {/* Loading State */}
+        {(connectionError || !showContent || isConnecting) && (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
@@ -354,14 +379,18 @@ export default function HomePage() {
           >
             {/* Logo with pulsing animation */}
             <motion.div
-              animate={!connectionError ? {
-                scale: [1, 1.1, 1],
-                opacity: [0.6, 0.9, 0.6]
-              } : {}}
+              animate={
+                !connectionError
+                  ? {
+                      scale: [1, 1.1, 1],
+                      opacity: [0.6, 0.9, 0.6],
+                    }
+                  : {}
+              }
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
             >
               <Image
@@ -373,13 +402,15 @@ export default function HomePage() {
                 unoptimized
               />
             </motion.div>
-            
+
             {/* Loading status or error */}
             <div className="flex flex-col items-center space-y-4">
               {connectionError ? (
                 <div className="flex flex-col items-center space-y-4">
                   <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                    <span className="text-red-600 dark:text-red-400 text-xl">⚠</span>
+                    <span className="text-red-600 dark:text-red-400 text-xl">
+                      ⚠
+                    </span>
                   </div>
                   <div className="text-center space-y-3">
                     <div>
@@ -405,24 +436,27 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : null}
-              
+
               {!connectionError && (
                 <div className="text-center">
                   <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    {isConnecting ? "Подключение к серверу..." : "Загрузка данных..."}
+                    {isConnecting
+                      ? "Подключение к серверу..."
+                      : "Загрузка данных..."}
                   </p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
-                    {isConnecting ? "Установка соединения" : "Пожалуйста, подождите"}
+                    {isConnecting
+                      ? "Установка соединения"
+                      : "Пожалуйста, подождите"}
                   </p>
                 </div>
               )}
             </div>
           </motion.div>
         )}
-
         {/* Main Content */}
         {showContent && !isConnecting && !connectionError && (
-          <motion.div 
+          <motion.div
             key="main-content"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -430,111 +464,111 @@ export default function HomePage() {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="w-full max-w-sm"
           >
-        {/* Logo and Title */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="text-center mb-12"
-        >
-          <Image
-            src="/CSM White.svg"
-            alt="CSM"
-            width={120}
-            height={32}
-            className="mx-auto mb-6 opacity-90 cursor-pointer hover:opacity-100 transition-opacity duration-200"
-            onClick={() => {
-              toast({
-                title: "Разрабочики",
-                description: "Сервис разработали GooseMooz и ch4og из CSM",
-                duration: 4000,
-              });
-            }}
-            unoptimized
-          />
-          <h1 className="text-3xl font-light text-neutral-900 dark:text-neutral-100 mb-3 tracking-tight">
-            Map Ban
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-500 text-sm font-normal">
-            Присоединитесь к лобби или создайте новое
-          </p>
-        </motion.div>
-
-        {/* Main Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm"
-        >
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                Код лобби
-              </label>
-              <div className="flex justify-center">
-                <InputOTP
-                  maxLength={4}
-                  pattern={REGEXP_ONLY_DIGITS}
-                  value={lobbyId}
-                  onChange={(value) => setLobbyId(value)}
-                >
-                  <InputOTPGroup className="gap-2">
-                    {[0, 1, 2, 3].map((index) => (
-                      <InputOTPSlot 
-                        key={index}
-                        index={index} 
-                        className="w-12 h-12 text-lg font-medium border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 rounded-xl focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors duration-200" 
-                      />
-                    ))}
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-              
-              <Button
-                onClick={() => {
-                  if (lobbyId.length !== 4) {
-                    toast({
-                      description: "Введите код лобби",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  handleJoinLobby();
-                }}
-                className={`w-full h-11 rounded-2xl font-medium transition-all duration-200 ${
-                  lobbyId.length === 4 
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200" 
-                    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
-                }`}
-                disabled={lobbyId.length !== 4}
-              >
-                Присоединиться к лобби
-              </Button>
-            </div>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white dark:bg-neutral-900 px-3 py-1 text-xs text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider">
-                  или
-                </span>
-              </div>
-            </div>
-
-            {/* Create Lobby Button */}
-            <Button
-              onClick={() => setShowGameSelectionOverlay(true)}
-              className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all duration-200"
+            {/* Logo and Title */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="text-center mb-12"
             >
-              Создать своё лобби
-            </Button>
-          </div>
-        </motion.div>
-      </motion.div>
+              <Image
+                src="/CSM White.svg"
+                alt="CSM"
+                width={120}
+                height={32}
+                className="mx-auto mb-6 opacity-90 cursor-pointer hover:opacity-100 transition-opacity duration-200"
+                onClick={() => {
+                  toast({
+                    title: "Разрабочики",
+                    description: "Сервис разработали GooseMooz и ch4og из CSM",
+                    duration: 4000,
+                  });
+                }}
+                unoptimized
+              />
+              <h1 className="text-3xl font-light text-neutral-900 dark:text-neutral-100 mb-3 tracking-tight">
+                Map Ban
+              </h1>
+              <p className="text-neutral-500 dark:text-neutral-500 text-sm font-normal">
+                Присоединитесь к лобби или создайте новое
+              </p>
+            </motion.div>
+
+            {/* Main Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm"
+            >
+              <div className="space-y-5">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                    Код лобби
+                  </label>
+                  <div className="flex justify-center">
+                    <InputOTP
+                      maxLength={4}
+                      pattern={REGEXP_ONLY_DIGITS}
+                      value={lobbyId}
+                      onChange={(value) => setLobbyId(value)}
+                    >
+                      <InputOTPGroup className="gap-2">
+                        {[0, 1, 2, 3].map((index) => (
+                          <InputOTPSlot
+                            key={index}
+                            index={index}
+                            className="w-12 h-12 text-lg font-medium border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 rounded-xl focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors duration-200"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      if (lobbyId.length !== 4) {
+                        toast({
+                          description: "Введите код лобби",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      handleJoinLobby();
+                    }}
+                    className={`w-full h-11 rounded-2xl font-medium transition-all duration-200 ${
+                      lobbyId.length === 4
+                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200"
+                        : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
+                    }`}
+                    disabled={lobbyId.length !== 4}
+                  >
+                    Присоединиться к лобби
+                  </Button>
+                </div>
+
+                {/* Divider */}
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white dark:bg-neutral-900 px-3 py-1 text-xs text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider">
+                      или
+                    </span>
+                  </div>
+                </div>
+
+                {/* Create Lobby Button */}
+                <Button
+                  onClick={() => setShowGameSelectionOverlay(true)}
+                  className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all duration-200"
+                >
+                  Создать своё лобби
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -549,7 +583,9 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="flex items-center gap-2 text-sm"
-            onClick={() => window.open("https://git.csmpro.ru/csmpro/csm-mapban", "_blank")}
+            onClick={() =>
+              window.open("https://git.csmpro.ru/csmpro/csm-mapban", "_blank")
+            }
           >
             <GitMerge className="w-4 h-4" />
             Git
@@ -557,7 +593,12 @@ export default function HomePage() {
           <Button
             variant="outline"
             className="flex items-center gap-2 text-sm"
-            onClick={() => window.open("https://git.in.csmpro.ru/csmpro/csm-mapban#license-and-trademark-notice", "_blank")}
+            onClick={() =>
+              window.open(
+                "https://git.in.csmpro.ru/csmpro/csm-mapban#license-and-trademark-notice",
+                "_blank",
+              )
+            }
           >
             <FileCheck className="w-4 h-4" />
             Licences
@@ -586,41 +627,42 @@ export default function HomePage() {
               <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
                 Выберите игру
               </h2>
-              
+
               <div className="space-y-4">
                 {/* Expanded Game Selection */}
                 <div className="grid grid-cols-2 gap-3">
-                  {
-                    availableGames
-                      .map((game) => (
-                      <Button
-                        key={game.id}
-                        onClick={() => {
-                          setGame(game.prettyName);
-                          setShowGameSelectionOverlay(false);
-                          setTimeout(() => {
-                            setShowSettingsOverlay(true);
-                          }, 200);
-                        }}
-                        // for disabled games we need to disable the button
-                        disabled={game.disabled}
-                        className="h-20 rounded-2xl font-medium transition-all duration-200 flex flex-col items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
-                      >
-                        <Image
-                          src={`/${game.id}/logo.png`}
-                          alt={game.prettyName}
-                          width={28}
-                          height={28}
-                          className="opacity-90"
-                          unoptimized
-                        />
-                        <div className="text-center">
-                          <div className="text-sm font-medium">{game.prettyName}</div>
-                          <div className="text-xs opacity-60">{game.developer}</div>
+                  {availableGames.map((game) => (
+                    <Button
+                      key={game.id}
+                      onClick={() => {
+                        setGame(game.prettyName);
+                        setShowGameSelectionOverlay(false);
+                        setTimeout(() => {
+                          setShowSettingsOverlay(true);
+                        }, 200);
+                      }}
+                      // for disabled games we need to disable the button
+                      disabled={game.disabled}
+                      className="h-20 rounded-2xl font-medium transition-all duration-200 flex flex-col items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                    >
+                      <Image
+                        src={`/${game.id}/logo.png`}
+                        alt={game.prettyName}
+                        width={28}
+                        height={28}
+                        className="opacity-90"
+                        unoptimized
+                      />
+                      <div className="text-center">
+                        <div className="text-sm font-medium">
+                          {game.prettyName}
                         </div>
-                      </Button>
-                    ))
-                  }
+                        <div className="text-xs opacity-60">
+                          {game.developer}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
                 </div>
 
                 {/* Action button */}
@@ -657,7 +699,7 @@ export default function HomePage() {
               <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
                 Настройки для {gameName}
               </h2>
-              
+
               <div className="space-y-4">
                 {/* Game Format for non-Splatoon games */}
                 {selectedGameInfo?.type !== "splatoon" && (
@@ -666,28 +708,30 @@ export default function HomePage() {
                       Формат игры
                     </h3>
                     <div className="grid grid-cols-4 gap-2">
-                      {
-                        availableFormats.map((format) => (
-                          <Button
-                            key={format.id}
-                            onClick={() => {
-                              setGameType(format.id);
-                              if (["bo1", "bo2"].includes(format.id.toLowerCase())) {
-                                setLocalKnifeDecider(false);
-                              } else if (["bo3", "bo5"].includes(format.id.toLowerCase())) {
-                                setMapPoolSize(7);
-                              }
-                            }}
-                            className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
-                              gameType === format.id
-                                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
-                                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
-                            }`}
-                          >
-                            {format.name}
-                          </Button>
-                        ))
-                      }
+                      {availableFormats.map((format) => (
+                        <Button
+                          key={format.id}
+                          onClick={() => {
+                            setGameType(format.id);
+                            if (
+                              ["bo1", "bo2"].includes(format.id.toLowerCase())
+                            ) {
+                              setLocalKnifeDecider(false);
+                            } else if (
+                              ["bo3", "bo5"].includes(format.id.toLowerCase())
+                            ) {
+                              setMapPoolSize(7);
+                            }
+                          }}
+                          className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                            gameType === format.id
+                              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                          }`}
+                        >
+                          {format.name}
+                        </Button>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -717,55 +761,57 @@ export default function HomePage() {
                 )}
 
                 {/* Map pool size for BO1 and BO2 */}
-                {["BO1", "BO2"].includes(gameType) && selectedGameInfo?.type !== "splatoon" && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">
-                      Размер маппула
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[4, 7].map((size) => (
-                        <Button
-                          key={size}
-                          onClick={() => setMapPoolSize(size)}
-                          className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
-                            mapPoolSize === size
-                              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
-                              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
-                          }`}
-                        >
-                          {size} карт
-                        </Button>
-                      ))}
+                {["BO1", "BO2"].includes(gameType) &&
+                  selectedGameInfo?.type !== "splatoon" && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">
+                        Размер маппула
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[4, 7].map((size) => (
+                          <Button
+                            key={size}
+                            onClick={() => setMapPoolSize(size)}
+                            className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                              mapPoolSize === size
+                                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                            }`}
+                          >
+                            {size} карт
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Decider for BO3 and BO5 */}
-                {["BO3", "BO5"].includes(gameType) && selectedGameInfo?.type !== "splatoon" && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">
-                      Десайдер
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { label: "Выкл", value: false },
-                        { label: "Вкл", value: true },
-                      ].map((option) => (
-                        <Button
-                          key={option.label}
-                          onClick={() => setLocalKnifeDecider(option.value)}
-                          className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
-                            localKnifeDecider === option.value
-                              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
-                              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
-                          }`}
-                        >
-                          {option.label}
-                        </Button>
-                      ))}
+                {["BO3", "BO5"].includes(gameType) &&
+                  selectedGameInfo?.type !== "splatoon" && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">
+                        Десайдер
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: "Выкл", value: false },
+                          { label: "Вкл", value: true },
+                        ].map((option) => (
+                          <Button
+                            key={option.label}
+                            onClick={() => setLocalKnifeDecider(option.value)}
+                            className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                              localKnifeDecider === option.value
+                                ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                            }`}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Map pool editor for FPS games */}
                 {selectedGameInfo?.type === "fps" && (
@@ -777,7 +823,9 @@ export default function HomePage() {
                         : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
                     }`}
                   >
-                    {useCustomMapPool ? "Маппул изменен ✓" : "Редактировать маппул"}
+                    {useCustomMapPool
+                      ? "Маппул изменен ✓"
+                      : "Редактировать маппул"}
                   </Button>
                 )}
 
@@ -831,7 +879,8 @@ export default function HomePage() {
               {/* Info banner */}
               <div className="mb-4 p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
                 <p className="text-xs text-neutral-600 dark:text-neutral-400 text-center">
-                  При выборе пула из 4 карт используются только первые 4 карты в списке
+                  При выборе пула из 4 карт используются только первые 4 карты в
+                  списке
                 </p>
               </div>
 
@@ -875,14 +924,17 @@ export default function HomePage() {
                           sizes="(max-width: 768px) 50vw, 25vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder.jpg";
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-2">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, "cs2")}
+                          onChange={(e) =>
+                            handleSelectChange(index, e.target.value, "cs2")
+                          }
                           className="w-full bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors duration-200"
                         >
                           <option value="" disabled>
@@ -916,14 +968,21 @@ export default function HomePage() {
                           sizes="(max-width: 768px) 50vw, 25vw"
                           className="object-cover"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/placeholder.jpg";
+                            (e.target as HTMLImageElement).src =
+                              "/placeholder.jpg";
                           }}
                         />
                       </div>
                       <div className="p-2">
                         <select
                           value={value}
-                          onChange={(e) => handleSelectChange(index, e.target.value, "valorant")}
+                          onChange={(e) =>
+                            handleSelectChange(
+                              index,
+                              e.target.value,
+                              "valorant",
+                            )
+                          }
                           className="w-full bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-xs font-medium focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors duration-200"
                         >
                           <option value="" disabled>

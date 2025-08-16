@@ -274,7 +274,9 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
   const lobby = lobbies.get(lobbyId);
   if (!lobby) return;
 
-  console.log(`Starting Splatoon game in lobby ${lobbyId} with ${lobby.rules.modesSize} modes`);
+  console.log(
+    `Starting Splatoon game in lobby ${lobbyId} with ${lobby.rules.modesSize} modes`,
+  );
 
   // Initialize game state
   lobby.rules.roundNumber = 1;
@@ -283,9 +285,10 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
   lobby.gameStep = 0;
 
   // Set rules for first round based on modesSize
-  const rules = gameRules[lobby.rules.gameType].first;
-  lobby.rules.modesRulesList = modesRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
-  lobby.rules.mapRulesList = mapRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
+  lobby.rules.modesRulesList =
+    modesRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
+  lobby.rules.mapRulesList =
+    mapRulesLists[lobby.rules.gameType].first[lobby.rules.modesSize as 2 | 4];
 
   // Emit startWithoutCoin to hide the team name overlay
   io.to(lobbyId).emit("startWithoutCoin");
@@ -299,7 +302,9 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
         (Math.random() > 0.5 ? 1 : 0);
       io.to(lobbyId).emit("coinFlip", result);
 
-      console.log(`Coin flip result: ${result} (0 = first team, 1 = second team)`);
+      console.log(
+        `Coin flip result: ${result} (0 = first team, 1 = second team)`,
+      );
 
       // Wait for coin flip animation to complete
       setTimeout(() => {
@@ -324,9 +329,9 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
           // For 2 modes: priority team picks mode directly
           io.to(entry[0]).emit("canWorkUpdated", true);
           io.to(entry[0]).emit("canModePick", true);
-          
+
           console.log(`Enabled mode pick for priority team: ${entry[1]}`);
-          
+
           io.to(lobbyId).emit(
             "gameStateUpdated",
             `${entry[1]} выбирают режим для игры`,
@@ -369,8 +374,10 @@ export function startGame(lobbyId: string, lobbies: Map<string, Lobby>) {
       const firstTeamName = firstTeam[1];
       // Set the priority team (first team when no coin flip)
       lobby.priorityTeam = firstTeamName;
-      console.log(`No coin flip: Priority team set to first team: ${firstTeamName}`);
-      
+      console.log(
+        `No coin flip: Priority team set to first team: ${firstTeamName}`,
+      );
+
       if (lobby.rules.modesSize === 2) {
         io.to(lobbyId).emit(
           "gameStateUpdated",
@@ -446,8 +453,14 @@ export function startNextRound(lobbyId: string, lobbies: Map<string, Lobby>) {
   lobby.priorityTeam = winningTeamName;
 
   // Set rules for subsequent rounds based on modesSize
-  lobby.rules.modesRulesList = modesRulesLists[lobby.rules.gameType].subsequent[lobby.rules.modesSize as 2 | 4];
-  lobby.rules.mapRulesList = mapRulesLists[lobby.rules.gameType].subsequent[lobby.rules.modesSize as 2 | 4];
+  lobby.rules.modesRulesList =
+    modesRulesLists[lobby.rules.gameType].subsequent[
+      lobby.rules.modesSize as 2 | 4
+    ];
+  lobby.rules.mapRulesList =
+    mapRulesLists[lobby.rules.gameType].subsequent[
+      lobby.rules.modesSize as 2 | 4
+    ];
 
   if (lobby.rules.modesSize === 2) {
     // For 2 modes: losing team picks mode directly
@@ -574,7 +587,7 @@ export function startMapSelectionPhase(
     console.log(`Round number: ${lobby.rules.roundNumber}`);
     console.log(`Priority team: ${lobby.priorityTeam}`);
     console.log(`Coin flip enabled: ${lobby.rules.coinFlip}`);
-    console.log(`Teams: ${Array.from(lobby.teamNames.values()).join(', ')}`);
+    console.log(`Teams: ${Array.from(lobby.teamNames.values()).join(", ")}`);
 
     // Reset game step to start map selection phase
     lobby.gameStep = 0;
@@ -594,14 +607,18 @@ export function startMapSelectionPhase(
             break;
           }
         }
-        console.log(`First round: Priority team is ${mapBanTeam} (from lobby.priorityTeam)`);
+        console.log(
+          `First round: Priority team is ${mapBanTeam} (from lobby.priorityTeam)`,
+        );
         console.log(`Map ban team: ${mapBanTeam} (socket: ${mapBanSocketId})`);
       } else {
         // Fallback: use first team if priorityTeam is not set
         const firstTeam = Array.from(lobby.teamNames.entries())[0];
         mapBanTeam = firstTeam[1];
         mapBanSocketId = firstTeam[0];
-        console.log(`First round: Fallback to first team ${mapBanTeam} (socket: ${mapBanSocketId})`);
+        console.log(
+          `First round: Fallback to first team ${mapBanTeam} (socket: ${mapBanSocketId})`,
+        );
       }
     } else {
       // In subsequent rounds, the winning team starts map bans
@@ -612,7 +629,9 @@ export function startMapSelectionPhase(
           break;
         }
       }
-      console.log(`Subsequent round: Winner team starts map bans: ${mapBanTeam} (socket: ${mapBanSocketId})`);
+      console.log(
+        `Subsequent round: Winner team starts map bans: ${mapBanTeam} (socket: ${mapBanSocketId})`,
+      );
     }
 
     // Update UI states
