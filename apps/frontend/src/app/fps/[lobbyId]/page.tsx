@@ -643,6 +643,7 @@ export default function LobbyPage() {
                 <Image
                   src={`/${gameName}/ct.jpg`}
                   alt="CT Icon"
+                  priority={true}
                   width={100}
                   height={100}
                   className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
@@ -653,6 +654,7 @@ export default function LobbyPage() {
                   alt="T Icon"
                   width={100}
                   height={100}
+                  priority={true}
                   className="cursor-pointer hover:opacity-80 transition-opacity rounded-full"
                   onClick={() => handlePromptClick("t")}
                 />

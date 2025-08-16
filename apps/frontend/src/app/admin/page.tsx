@@ -559,7 +559,7 @@ export default function AdminPage() {
             Копировать OBS ссылку
           </Button>
           <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
-            <Image src="/CSM White.svg" alt="CSM" width={90} height={20} />
+            <Image src="/CSM White.svg" alt="CSM" width={90} height={20} priority={true} />
             mapban admin
           </h1>
           <Button
@@ -1026,6 +1026,7 @@ export default function AdminPage() {
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
+                          priority={true}
                           className="object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
@@ -1071,6 +1072,7 @@ export default function AdminPage() {
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
                           className="object-cover"
+                          priority={true}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";

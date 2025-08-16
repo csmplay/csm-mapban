@@ -87,6 +87,7 @@ export default function AnimatedBanModeCard({
                   src={`/${gameName}/modes/${mode.mode.toLowerCase()}.png`}
                   alt={mode.translatedMode}
                   draggable={false}
+                  priority={true}
                   width={220}
                   height={220}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

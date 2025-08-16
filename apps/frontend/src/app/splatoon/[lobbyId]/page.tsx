@@ -767,6 +767,7 @@ export default function SplatoonLobbyPage() {
                           width={48}
                           height={48}
                           className="rounded-md"
+                          priority={true}
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
                           }}

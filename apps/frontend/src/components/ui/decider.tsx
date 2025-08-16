@@ -74,6 +74,7 @@ export default function AnimatedDeciderCard({
                 src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
                 alt={mapName}
                 draggable={false}
+                priority={true}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 style={{

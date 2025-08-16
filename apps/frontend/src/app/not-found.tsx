@@ -34,6 +34,7 @@ export default function NotFound() {
             alt="CSM"
             width={120}
             height={32}
+            priority={true}
             className="mx-auto mb-6 opacity-90"
           />
         </motion.div>

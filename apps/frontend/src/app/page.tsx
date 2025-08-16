@@ -424,7 +424,7 @@ export default function HomePage() {
                 width={80}
                 height={21}
                 className="opacity-60"
-                unoptimized
+                priority={true}
               />
             </motion.div>
 
@@ -501,6 +501,7 @@ export default function HomePage() {
                 alt="CSM"
                 width={120}
                 height={32}
+                priority={true}
                 className="mx-auto mb-6 opacity-90 cursor-pointer hover:opacity-100 transition-opacity duration-200"
                 onClick={() => {
                   toast({
@@ -509,7 +510,6 @@ export default function HomePage() {
                     duration: 4000,
                   });
                 }}
-                unoptimized
               />
               <h1 className="text-3xl font-light text-neutral-900 dark:text-neutral-100 mb-3 tracking-tight">
                 Map Ban
@@ -676,7 +676,7 @@ export default function HomePage() {
                         width={28}
                         height={28}
                         className="opacity-90"
-                        unoptimized
+                        priority={true}
                       />
                       <div className="text-center">
                         <div className="text-sm font-medium">
@@ -948,6 +948,7 @@ export default function HomePage() {
                           fill
                           sizes="(max-width: 768px) 50vw, 25vw"
                           className="object-cover"
+                          priority={true}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
@@ -992,6 +993,7 @@ export default function HomePage() {
                           fill
                           sizes="(max-width: 768px) 50vw, 25vw"
                           className="object-cover"
+                          priority={true}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
                               "/placeholder.jpg";
