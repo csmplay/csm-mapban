@@ -60,13 +60,14 @@ export const mapNamesLists = {
     "Piazza",
     "Split",
     "Sunset",
+    "Corrode"
   ],
 };
 
 // Default map pools for each game
 export const startMapPool = {
   cs2: ["Dust 2", "Mirage", "Inferno", "Nuke", "Ancient", "Anubis", "Train"],
-  valorant: ["Ascent", "Bind", "Pearl", "Haven", "Abyss", "Sunset", "Split"],
+  valorant: ["Corrode", "Bind", "Pearl", "Haven", "Abyss", "Sunset", "Split"],
 };
 
 export const startGame = (lobbyId: string, lobbies: Map<string, Lobby>) => {
