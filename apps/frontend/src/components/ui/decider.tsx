@@ -71,7 +71,7 @@ export default function AnimatedDeciderCard({
               className={`absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden ${getHighlightClass("base")}`}
             >
               <Image
-                src={`/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
+                src={`https://cdn.csmpro.ru/mapban/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
                 alt={mapName}
                 draggable={false}
                 priority={true}

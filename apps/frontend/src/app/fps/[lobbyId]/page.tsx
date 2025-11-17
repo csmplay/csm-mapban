@@ -422,7 +422,7 @@ export default function LobbyPage() {
                   onClick={() => !isDisabled && handleCardClick(index)}
                 >
                   <Image
-                    src={`/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                    src={`https://cdn.csmpro.ru/mapban/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
                     alt={mapName}
                     draggable={false}
                     fill
@@ -499,7 +499,7 @@ export default function LobbyPage() {
                               className="relative flex items-center justify-center"
                             >
                               <Image
-                                src={`/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
+                                src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
                                 alt={`${pickSide === "ct" ? "ct" : "t"}`}
                                 draggable={false}
                                 width={80}
@@ -522,7 +522,7 @@ export default function LobbyPage() {
                               className="relative flex items-center justify-center"
                             >
                               <Image
-                                src={`/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
+                                src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
                                 alt={`${pickSide === "ct" ? "t" : "ct"}`}
                                 draggable={false}
                                 width={80}
@@ -641,7 +641,7 @@ export default function LobbyPage() {
               </h2>
               <div className="flex justify-center space-x-4">
                 <Image
-                  src={`/${gameName}/ct.jpg`}
+                  src={`https://cdn.csmpro.ru/mapban/${gameName}/ct.jpg`}
                   alt="CT Icon"
                   priority={true}
                   width={100}
@@ -650,7 +650,7 @@ export default function LobbyPage() {
                   onClick={() => handlePromptClick("ct")}
                 />
                 <Image
-                  src={`/${gameName}/t.jpg`}
+                  src={`https://cdn.csmpro.ru/mapban/${gameName}/t.jpg`}
                   alt="T Icon"
                   width={100}
                   height={100}
@@ -813,7 +813,7 @@ export default function LobbyPage() {
                     Подбрасываем монетку...
                   </h2>
                   <video
-                    src={`/coin_${coinResult}.webm`}
+                    src={`https://cdn.csmpro.ru/mapban/coin_${coinResult}.webm`}
                     preload={"high"}
                     autoPlay
                     muted

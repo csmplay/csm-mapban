@@ -129,21 +129,3 @@ The **CyberSport Masters** and **CSM** logos are registered trademarks. They may
 not be used, copied, modified, or distributed without explicit written
 permission. Detailed rules on trademark usage can be found in the
 [CyberSport Masters Trademark Policy](./LICENSES/LicenseRef-CyberSportMasters.txt).
-
-### Third-Party Intellectual Property
-
-This project incorporates certain game assets (such as maps, icons, and logos)
-that are the intellectual property of their respective owners.
-
-All such assets remain the property of their respective owners.\
-Their inclusion is solely for purposes of identification, commentary, and
-integration into new, transformative works that add significant value beyond the
-original context. Such use is believed to constitute **fair use** under
-applicable copyright law.
-
-Use of these materials is subject to the rights and policies of the respective
-companies. CyberSport Masters does **not** claim ownership of or affiliation
-with these companies.
-
-If you have any questions or concerns regarding the use of third-party assets,
-please contact us at [git@csmpro.ru](mailto:git@csmpro.ru).

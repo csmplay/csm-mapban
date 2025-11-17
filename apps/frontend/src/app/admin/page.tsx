@@ -560,7 +560,7 @@ export default function AdminPage() {
           </Button>
           <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
             <Image
-              src="/CSM White.svg"
+              src="https://cdn.csmpro.ru/CSM_white.svg"
               alt="CSM"
               width={90}
               height={20}
@@ -1028,7 +1028,7 @@ export default function AdminPage() {
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`https://cdn.csmpro.ru/mapban/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"
@@ -1073,7 +1073,7 @@ export default function AdminPage() {
                     >
                       <div className="relative w-full pt-[75%]">
                         <Image
-                          src={`/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`https://cdn.csmpro.ru/mapban/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 33vw"

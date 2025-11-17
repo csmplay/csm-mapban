@@ -92,7 +92,7 @@ export default function AnimatedPickModeCard({
             >
               <div className="w-full h-full flex items-center justify-center">
                 <Image
-                  src={`/${gameName}/modes/${mode.mode.toLowerCase()}.png`}
+                  src={`https://cdn.csmpro.ru/mapban/${gameName}/modes/${mode.mode.toLowerCase()}.png`}
                   alt={mode.translatedMode}
                   draggable={false}
                   priority={true}

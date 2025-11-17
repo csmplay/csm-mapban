@@ -411,7 +411,7 @@ export default function HomePage() {
               }}
             >
               <Image
-                src="/CSM White.svg"
+                src="https://cdn.csmpro.ru/CSM_white.svg"
                 alt="CSM"
                 width={80}
                 height={21}
@@ -489,7 +489,7 @@ export default function HomePage() {
               className="text-center mb-12"
             >
               <Image
-                src="/CSM White.svg"
+                src="https://cdn.csmpro.ru/CSM_white.svg"
                 alt="CSM"
                 width={120}
                 height={32}
@@ -663,7 +663,7 @@ export default function HomePage() {
                       className="h-20 rounded-2xl font-medium transition-all duration-200 flex flex-col items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
                     >
                       <Image
-                        src={`/${game.id}/logo.png`}
+                        src={`https://cdn.csmpro.ru/mapban/${game.id}/logo.png`}
                         alt={game.prettyName}
                         width={28}
                         height={28}
@@ -935,7 +935,7 @@ export default function HomePage() {
                     >
                       <div className="relative w-full pt-[70%] overflow-hidden">
                         <Image
-                          src={`/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`https://cdn.csmpro.ru/mapban/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 25vw"
@@ -980,7 +980,7 @@ export default function HomePage() {
                     >
                       <div className="relative w-full pt-[70%] overflow-hidden">
                         <Image
-                          src={`/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
+                          src={`https://cdn.csmpro.ru/mapban/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
                           alt={value}
                           fill
                           sizes="(max-width: 768px) 50vw, 25vw"
