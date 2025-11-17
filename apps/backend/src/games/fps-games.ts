@@ -35,7 +35,7 @@ export const mapNamesLists = {
   cs2: [
     "Ancient",
     "Anubis",
-    "Dust 2",
+    "Dust II",
     "Inferno",
     "Mirage",
     "Nuke",
@@ -66,7 +66,7 @@ export const mapNamesLists = {
 
 // Default map pools for each game
 export const startMapPool = {
-  cs2: ["Dust 2", "Mirage", "Inferno", "Nuke", "Ancient", "Overpass", "Train"],
+  cs2: ["Dust II", "Mirage", "Inferno", "Nuke", "Ancient", "Overpass", "Train"],
   valorant: ["Corrode", "Bind", "Pearl", "Haven", "Abyss", "Sunset", "Split"],
 };
 
