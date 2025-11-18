@@ -2,26 +2,24 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 FROM oven/bun:alpine@sha256:5ade1ec6fc2b74f825d48d33d98d7450fb960426d5d0df9a8f27b419da832012 AS base
+RUN apk add --no-cache libc6-compat
 
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-COPY package.json bun.lock ./
-COPY apps/frontend/package.json ./apps/frontend/package.json
-COPY apps/backend/package.json ./apps/backend/package.json
-RUN bun install --frozen-lockfile
+COPY bun.lock ./bun.lock
+COPY apps/frontend/package.json ./package.json
+RUN bun install
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-
+ENV PATH=/app/node_modules/.bin:$PATH
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app/apps/frontend
-RUN bun run --bun build
+RUN bun run build
 
 FROM base AS runner
 WORKDIR /app
@@ -40,7 +38,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["bun", "run", "/app/apps/frontend/server.js"]
+CMD ["bun", "/app/apps/frontend/server.js"]
 
 LABEL org.opencontainers.image.source="https://git.in.csmpro.ru/csmpro/csm-mapban"
 LABEL org.opencontainers.image.url="https://git.in.csmpro.ru/csmpro/csm-mapban"

@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+# SPDX-License-Identifier: AGPL-3.0-only
+
+node_modules
+**/node_modules
+bun.lockb
+
+**/dist
+**/.next
+**/out
+**/build
+
+.git
+.gitignore
+
+.vscode
+.idea
+*.swp
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+**/*.log
+
+.DS_Store
+Thumbs.db
+
+.env*
+.envrc
