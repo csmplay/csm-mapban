@@ -140,7 +140,7 @@ jobs:
           sed -i "s/:latest/:${{ github.ref_name }}/g" release/docker-compose.yml
 
       - name: Publish Release
-        uses: https://code.forgejo.org/actions/forgejo-release@25f6ec3fc275b32766b4051eef2ae0d2a3a1f3ef # v2.7.2
+        uses: https://code.forgejo.org/actions/forgejo-release@fc0488c944626f9265d87fbc4dd6c08f78014c63 # v2.7.3
         with:
           direction: upload
           url: https://${{ env.REPO_URL }}
