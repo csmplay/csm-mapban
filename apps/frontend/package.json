@@ -32,7 +32,7 @@
     "@eslint/config-array": "0.21.0",
     "@eslint/object-schema": "3.0.0",
     "@tailwindcss/postcss": "4.1.12",
-    "@types/node": "24.3.0",
+    "@types/node": "24.10.1",
     "@types/react": "19.2.6",
     "@types/react-dom": "19.2.3",
     "eslint": "9.33.0",
