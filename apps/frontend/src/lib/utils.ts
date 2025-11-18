@@ -15,7 +15,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export async function fetchMapPool(backendUrl: string) {
   try {
-    const response = await fetch(`${backendUrl}/api/mapPool`);
+    const response = await fetch(`${backendUrl.endsWith("/") ? backendUrl : backendUrl + "/"}api/mapPool`);
     const data: {
       mapPool: {
         fps: Record<string, string[]>;
