@@ -22,16 +22,6 @@ export default function LobbyPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const router = useRouter();
 
-  // Check if this is a Splatoon lobby code (starting with 8) and redirect if needed
-  useEffect(() => {
-    if (lobbyId && typeof lobbyId === "string" && lobbyId.startsWith("8")) {
-      console.log(
-        "Detected Splatoon lobby code in FPS lobby path, redirecting...",
-      );
-      router.push(`/splatoon/${lobbyId}`);
-    }
-  }, [lobbyId, router]);
-
   // Maps list
   const [mapNames, setMapNames] = useState<string[]>([]);
 
