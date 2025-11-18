@@ -38,7 +38,7 @@ app.get("/api/lobbies", (_req, res) => {
   );
 });
 
-app.get("/mapPool", (_req, res) => {
+app.get("/api/mapPool", (_req, res) => {
   res.json({
     mapPool: { fps: mapPool.fps, splatoon: mapPool.splatoon },
     mapNamesLists: { fps: FPSGames.mapNamesLists },
