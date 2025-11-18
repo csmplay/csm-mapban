@@ -3,7 +3,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import {
@@ -52,6 +52,7 @@ const availableGames = [
 
 export default function HomePage() {
   const [lobbyId, setLobbyId] = useState("");
+  const otpWrapperRef = useRef<HTMLDivElement | null>(null);
   type Overlay = "none" | "game" | "settings" | "mapPool";
   const [overlay, setOverlay] = useState<Overlay>("none");
   const router = useRouter();
@@ -343,6 +344,18 @@ export default function HomePage() {
       );
   }, []);
 
+  useEffect(() => {
+    if (!isConnecting && !connectionError) {
+      const id = setTimeout(() => {
+        const el = otpWrapperRef.current?.querySelector(
+          'input, [contenteditable="true"]',
+        ) as HTMLInputElement | null;
+        el?.focus();
+      }, 0);
+      return () => clearTimeout(id);
+    }
+  }, [isConnecting, connectionError]);
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center p-6">
       <AnimatePresence mode="wait">
@@ -435,13 +448,13 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-sm"
+            className="w-full max-w-md"
           >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="text-center mb-12"
+              className="text-center mb-10"
             >
               <Image
                 src="https://cdn.csmpro.ru/CSM_white.svg"
@@ -457,11 +470,13 @@ export default function HomePage() {
                   });
                 }}
               />
-              <h1 className="text-3xl font-light text-neutral-900 dark:text-neutral-100 mb-3 tracking-tight">
+              <h1
+                className="text-4xl md:text-5xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-neutral-50 dark:to-neutral-400 mb-5 -mt-3"
+              >
                 Map Ban
               </h1>
-              <p className="text-neutral-500 dark:text-neutral-500 text-sm font-normal">
-                Присоединитесь к лобби или создайте новое
+              <p className="text-neutral-600 dark:text-neutral-400 text-sm md:text-base font-normal max-w-md mx-auto -mb-3">
+                Присоединяйтесь к лобби по коду или создайте своё
               </p>
             </motion.div>
 
@@ -469,31 +484,47 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm"
+              className="backdrop-blur-sm bg-white/70 dark:bg-neutral-900/60 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
             >
               <div className="space-y-5">
                 <div className="space-y-3">
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Код лобби
                   </label>
-                  <div className="flex justify-center">
+                  <div className="flex justify-center" ref={otpWrapperRef}>
                     <InputOTP
                       maxLength={4}
                       pattern={REGEXP_ONLY_DIGITS}
                       value={lobbyId}
                       onChange={(value) => setLobbyId(value)}
+                      autoFocus
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" && lobbyId.length === 4) {
+                          handleJoinLobby();
+                        }
+                      }}
                     >
                       <InputOTPGroup className="gap-2">
                         {[0, 1, 2, 3].map((index) => (
                           <InputOTPSlot
                             key={index}
                             index={index}
-                            className="w-12 h-12 text-lg font-medium border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 rounded-xl focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors duration-200"
+                            className="w-12 h-12 md:w-14 md:h-14 text-xl font-semibold border border-neutral-300/80 dark:border-neutral-700/80 bg-neutral-50/80 dark:bg-neutral-800/70 rounded-2xl focus:border-transparent ring-1 ring-transparent focus:ring-neutral-900/30 dark:focus:ring-neutral-100/30 transition-colors duration-200"
                           />
                         ))}
                       </InputOTPGroup>
                     </InputOTP>
                   </div>
+
+                  {lobbyId.length === 4 ? (
+                    <p className="text-xs text-neutral-500 dark:text-neutral-500 text-center">
+                      Нажмите Enter, чтобы присоединиться
+                    </p>
+                  ) : (
+                    <p className="text-xs text-neutral-500 dark:text-neutral-500 text-center">
+                      Введите 4-значный код
+                    </p>
+                  )}
 
                   <Button
                     onClick={() => {
@@ -508,8 +539,8 @@ export default function HomePage() {
                     }}
                     className={`w-full h-11 rounded-2xl font-medium transition-all duration-200 ${
                       lobbyId.length === 4
-                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200"
-                        : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
+                        ? "bg-gradient-to-b from-neutral-900 to-neutral-800 dark:from-neutral-100 dark:to-neutral-200 text-white dark:text-neutral-900 shadow-sm hover:opacity-95"
+                        : "bg-neutral-200/80 dark:bg-neutral-800/70 text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
                     }`}
                     disabled={lobbyId.length !== 4}
                   >
@@ -519,10 +550,10 @@ export default function HomePage() {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800"></div>
+                    <div className="w-full h-px bg-neutral-200/70 dark:bg-neutral-800/70"></div>
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white dark:bg-neutral-900 px-3 py-1 text-xs text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider">
+                    <span className="bg-white/70 dark:bg-neutral-900/60 backdrop-blur px-3 py-1 text-[11px] text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider rounded-md border border-neutral-200/60 dark:border-neutral-800/60">
                       или
                     </span>
                   </div>
@@ -530,7 +561,7 @@ export default function HomePage() {
 
                 <Button
                   onClick={() => setOverlay("game")}
-                  className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all duration-200"
+                  className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/70 transition-all duration-200"
                   disabled={!socket?.connected}
                 >
                   Создать своё лобби
