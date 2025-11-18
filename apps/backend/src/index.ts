@@ -45,6 +45,10 @@ app.get("/api/mapPool", (_req, res) => {
   });
 });
 
+app.get("/api/coinFlip", (_req, res) => {
+  res.json({ coinFlip: globalCoinFlip });
+});
+
 const startGame = (lobbyId: string) => {
   const lobby = lobbies.get(lobbyId);
   if (lobby) {
@@ -240,6 +244,7 @@ io.on("connection", (socket) => {
 
         lobbies.set(lobbyId, lobby);
         io.to(socket.id).emit("lobbyCreated", lobbyId);
+        io.emit("lobbiesUpdated");
       }
     },
   );
@@ -289,6 +294,7 @@ io.on("connection", (socket) => {
 
         lobbies.set(lobbyId, lobby);
         io.to(socket.id).emit("lobbyCreated", lobbyId);
+        io.emit("lobbiesUpdated");
       }
     },
   );
@@ -300,6 +306,7 @@ io.on("connection", (socket) => {
   socket.on("admin.coinFlipUpdate", (coinFlip: boolean) => {
     globalCoinFlip = coinFlip;
     console.log("Coin Flip globally updated to " + coinFlip);
+    io.emit("coinFlipUpdated", coinFlip);
   });
 
   socket.on("obs.getPatternList", (lobbyId: string) => {
@@ -1083,6 +1090,7 @@ io.on("connection", (socket) => {
       lobbies.delete(lobbyId);
 
       console.log(`Lobby ${lobbyId} has been deleted`);
+      io.emit("lobbiesUpdated");
     }
   });
 
@@ -1550,6 +1558,7 @@ io.on("connection", (socket) => {
         if (lobby.members.size === 0 && !lobby.rules.admin) {
           lobbies.delete(lobbyId);
           console.log(`Lobby ${lobbyId} deleted as it has no more members`);
+          io.emit("lobbiesUpdated");
         } else {
           // Broadcast the updated team names to all lobby members
           io.to(lobbyId).emit(

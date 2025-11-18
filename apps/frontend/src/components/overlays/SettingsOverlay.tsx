@@ -24,6 +24,10 @@ export type SettingsOverlayProps = {
   creating: boolean;
   disabled?: boolean;
   mapPoolChanged?: boolean;
+  // Optional admin-only controls
+  showCoinFlip?: boolean;
+  coinFlip?: boolean;
+  setCoinFlip?: (v: boolean) => void;
 };
 
 const availableFormats = [
@@ -51,6 +55,9 @@ export function SettingsOverlay(props: SettingsOverlayProps) {
     creating,
     disabled,
     mapPoolChanged,
+    showCoinFlip,
+    coinFlip,
+    setCoinFlip,
   } = props;
 
   return (
@@ -166,6 +173,32 @@ export function SettingsOverlay(props: SettingsOverlayProps) {
           >
             {mapPoolChanged ? "Маппул изменён" : "Редактировать маппул"}
           </Button>
+        )}
+
+        {showCoinFlip && setCoinFlip && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">
+              Монетка в начале игры
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Выкл", value: false },
+                { label: "Вкл", value: true },
+              ].map((option) => (
+                <Button
+                  key={option.label}
+                  onClick={() => setCoinFlip(option.value)}
+                  className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                    coinFlip === option.value
+                      ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                  }`}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className="flex gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">

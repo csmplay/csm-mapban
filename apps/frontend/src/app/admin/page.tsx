@@ -4,6 +4,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import {
   Card,
@@ -37,6 +38,12 @@ import AnimatedDeciderCard from "@/components/ui/decider";
 import Image from "next/image";
 import { fetchMapPool } from "@/lib/utils";
 import AnimatedBanModeCard from "@/components/ui/ban_mode";
+import { GameSelectionOverlay } from "@/components/overlays/GameSelectionOverlay";
+import { SettingsOverlay } from "@/components/overlays/SettingsOverlay";
+import { MapPoolEditorOverlay } from "@/components/overlays/MapPoolEditorOverlay";
+import { FooterBar } from "@/components/ui/footer-bar";
+import { OverlayShell } from "@/components/ui/overlay-shell";
+import { MapTile } from "@/components/ui/map-tile";
 
 // Define the CardColors interface for both ban and pick cards.
 interface CardColors {
@@ -107,11 +114,6 @@ const overlayVariants = {
   visible: { opacity: 1 },
 };
 
-const contentVariants = {
-  hidden: { scale: 0.9, opacity: 0 },
-  visible: { scale: 1, opacity: 1 },
-};
-
 // Initialize with an empty (but typed) object—colors will be fetched from the backend.
 const initialCardColors: CardColors = {
   ban: { text: [], bg: [] },
@@ -122,6 +124,7 @@ const initialCardColors: CardColors = {
 };
 
 export default function AdminPage() {
+  const router = useRouter();
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
   const localCoinFlip = useRef(true);
@@ -134,8 +137,18 @@ export default function AdminPage() {
   const [sourceMapPool, setSourceMapPool] = useState<Record<string, string[]>>(
     {},
   );
-  const [adminOverlay, setAdminOverlay] = useState(false);
-  const [editMapPool, setEditMapPool] = useState(false);
+  // Modern overlay flow states
+  type Overlay = "none" | "game" | "settings" | "mapPool";
+  const [overlay, setOverlay] = useState<Overlay>("none");
+  const [selectedGameId, setSelectedGameId] = useState<string>("cs2");
+  const [creatingLobby, setCreatingLobby] = useState(false);
+  const [localModesSizeAdmin, setLocalModesSizeAdmin] = useState(2);
+  const [overlayGlobal, setOverlayGlobal] = useState<"none" | "mapPool">(
+    "none",
+  );
+  const [globalMapPoolGameId, setGlobalMapPoolGameId] = useState<
+    "cs2" | "valorant"
+  >("cs2");
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
   const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
@@ -152,6 +165,8 @@ export default function AdminPage() {
   } | null>(null);
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [buildVersion, setBuildVersion] = useState<string>("");
 
   const backendUrl =
     process.env.NODE_ENV === "development" ? "http://localhost:4000/" : "/";
@@ -168,23 +183,13 @@ export default function AdminPage() {
   }, [gameName]);
 
   // Define fetchMapPoolData using useCallback to avoid recreating it on every render
-  const fetchMapPoolData = useCallback(async () => {
-    try {
-      const result = await fetchMapPool(backendUrl);
-      if (result.success) {
-        setMapPool(result.mapPool);
-        setAllMapsList(result.mapNamesLists);
-      }
-    } catch (error) {
-      console.error("Error in fetchMapPoolData:", error);
-    }
-  }, [backendUrl]);
-
+  // Single fetch for map pool that sets both source and editable states
   const fetchSourceMapPoolData = useCallback(async () => {
     try {
       const result = await fetchMapPool(backendUrl);
       if (result.success) {
         setSourceMapPool(result.mapPool);
+        setMapPool(result.mapPool); // keep editable pool in sync initially
         setAllMapsList(result.mapNamesLists);
       }
     } catch (error) {
@@ -192,8 +197,44 @@ export default function AdminPage() {
     }
   }, [backendUrl]);
 
+  // Fetch version for footer display (same logic as index page)
+  useEffect(() => {
+    fetch("/version")
+      .then((res) => {
+        if ([200, 301, 302].includes(res.status)) {
+          return res.text();
+        }
+        throw new Error("Unexpected response status");
+      })
+      .then((ver) => {
+        if (/^\d+\.\d+\.\d+$/.test(ver.trim())) {
+          setBuildVersion(
+            process.env.NODE_ENV === "development"
+              ? `${ver.trim()}-dev`
+              : ver.trim(),
+          );
+        } else {
+          throw new Error("Invalid version format");
+        }
+      })
+      .catch(() =>
+        setBuildVersion(
+          process.env.NODE_ENV === "development" ? "0-dev" : "0",
+        ),
+      );
+  }, []);
+
   useEffect(() => {
     socketRef.current = io(backendUrl);
+    const s = socketRef.current;
+
+    const onConnect = () => setSocketConnected(true);
+    const onDisconnect = () => setSocketConnected(false);
+    const onConnectError = () => setSocketConnected(false);
+
+    s.on("connect", onConnect);
+    s.on("disconnect", onDisconnect);
+    s.on("connect_error", onConnectError);
 
     const fetchLobbies = async () => {
       try {
@@ -211,15 +252,17 @@ export default function AdminPage() {
       .then((data: CardColors) => setCardColors(data))
       .catch((err) => console.error("Error fetching card colors:", err));
 
+    fetch(`${backendUrl}api/coinFlip`)
+      .then((res) => res.json())
+      .then((data: { coinFlip: boolean }) => setGlobalCoinFlip(data.coinFlip))
+      .catch((err) => console.error("Error fetching coin flip:", err));
+
     (async () => {
       await fetchLobbies();
       await fetchSourceMapPoolData();
-      await fetchMapPoolData();
     })();
 
-    // Polling every 5 seconds to update the lobby list
-    const interval = setInterval(fetchLobbies, 500);
-    const interval2 = setInterval(fetchSourceMapPoolData, 500);
+  const interval = setInterval(fetchLobbies, 5000);
 
     if (socketRef.current) {
       // Define the event handlers to be able to remove them later
@@ -239,7 +282,7 @@ export default function AdminPage() {
 
       const handleLobbyCreationError = (errorMessage: string) => {
         toast({
-          title: "Ошибка создания лобби",
+          title: "lobby creation error",
           description: errorMessage,
           variant: "destructive",
         });
@@ -250,29 +293,43 @@ export default function AdminPage() {
       socketRef.current.on("cardColorsUpdated", handleCardColorsUpdated);
       socketRef.current.on("coinFlipUpdated", handleCoinFlipUpdated);
       socketRef.current.on("lobbyCreationError", handleLobbyCreationError);
+      socketRef.current.on("lobbyCreated", () => {
+        fetchLobbies();
+      });
+      socketRef.current.on("lobbiesUpdated", () => {
+        fetchLobbies();
+      });
 
       // Clean up function to remove event listeners
       return () => {
-        clearInterval(interval);
-        clearInterval(interval2);
+  clearInterval(interval);
         if (socketRef.current) {
           socketRef.current.off("lobbyDeleted", handleLobbyDeleted);
           socketRef.current.off("cardColorsUpdated", handleCardColorsUpdated);
           socketRef.current.off("coinFlipUpdated", handleCoinFlipUpdated);
           socketRef.current.off("lobbyCreationError", handleLobbyCreationError);
+          socketRef.current.off("lobbyCreated");
+          socketRef.current.off("lobbiesUpdated");
+          socketRef.current.off("connect", onConnect);
+          socketRef.current.off("disconnect", onDisconnect);
+          socketRef.current.off("connect_error", onConnectError);
           socketRef.current.disconnect();
         }
       };
     }
 
     return () => {
-      clearInterval(interval);
-      clearInterval(interval2);
+  clearInterval(interval);
       if (socketRef.current) {
+        socketRef.current.off("lobbyCreated");
+        socketRef.current.off("lobbiesUpdated");
+        socketRef.current.off("connect", onConnect);
+        socketRef.current.off("disconnect", onDisconnect);
+        socketRef.current.off("connect_error", onConnectError);
         socketRef.current.disconnect();
       }
     };
-  }, [backendUrl, toast, fetchMapPoolData, fetchSourceMapPoolData]);
+  }, [backendUrl, toast, fetchSourceMapPoolData]);
 
   const handleDeleteLobby = (lobbyId: string) => {
     if (socketRef.current && socketRef.current.connected) {
@@ -289,12 +346,12 @@ export default function AdminPage() {
     navigator.clipboard.writeText(obsUrl).then(
       () => {
         toast({
-          description: "Ссылка для OBS скопирована в буфер обмена",
+          description: "obs url copied to clipboard",
         });
       },
       () => {
         toast({
-          description: "Не получилось :(",
+          description: "failed to copy url",
         });
       },
     );
@@ -324,40 +381,46 @@ export default function AdminPage() {
   };
 
   const handleAdminLobby = () => {
-    if (socketRef.current && socketRef.current.connected) {
-      const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
+    const s = socketRef.current;
+    if (!s || !s.connected) return;
+    const lobbyId = `${Math.floor(1000 + Math.random() * 9000).toString()}`;
 
-      if (gameName === "Splatoon") {
-        // Create Splatoon lobby
-        socketRef.current.emit("createSplatoonLobby", {
-          lobbyId,
-          gameType: "bo3", // Default game type for Splatoon
-          coinFlip: localCoinFlip.current,
-          admin: true,
-        });
-      } else {
-        // Create FPS lobby (CS2 or Valorant)
-        socketRef.current.emit("createFPSLobby", {
-          lobbyId,
-          gameName: gameName.toLowerCase(),
-          gameType: gameType.toLowerCase(),
-          coinFlip: localCoinFlip.current,
-          knifeDecider: localKnifeDecider,
-          mapPoolSize,
-          admin: true,
-        });
-      }
-      setAdminOverlay(false);
+    if (selectedGameId === "splatoon") {
+      s.emit("createSplatoonLobby", {
+        lobbyId,
+        gameType: "bo3",
+        admin: true,
+        coinFlip: localCoinFlipState,
+        modesSize: localModesSizeAdmin,
+      });
+      s.once("lobbyCreated", () => {
+        setCreatingLobby(false);
+        setOverlay("none");
+        // Admin opens OBS/management, we don't navigate
+      });
+    } else {
+      const effectivePoolSize = ["BO3", "BO5"].includes(gameType) ? 7 : mapPoolSize;
+      s.emit("createFPSLobby", {
+        lobbyId,
+        gameName: selectedGameId,
+        gameType: gameType.toLowerCase(),
+        knifeDecider: localKnifeDecider,
+        mapPoolSize: effectivePoolSize,
+        admin: true,
+        coinFlip: localCoinFlipState,
+        customMapPool: null,
+      });
+      s.once("lobbyCreated", () => {
+        setCreatingLobby(false);
+        setOverlay("none");
+      });
     }
   };
 
   const handleMapPoolButton = () => {
     setShowSettingsModal(false);
-
-    setTimeout(() => {
-      setMapPool(sourceMapPool);
-      setEditMapPool(true);
-    }, 300);
+    setMapPool(sourceMapPool);
+    setOverlayGlobal("mapPool");
   };
   const handleSelectChange = (
     index: number,
@@ -381,32 +444,52 @@ export default function AdminPage() {
       uniqueValuesZero.size !== mapPool["cs2"].length ||
       uniqueValuesOne.size !== mapPool["valorant"].length
     ) {
-      toast({ description: "Карты не должны повторяться!" });
+      toast({ description: "maps must be unique" });
     } else {
       if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit("admin.editFPSMapPool", mapPool);
-        toast({ description: "Маппул сохранен" });
+        toast({ description: "mappool saved" });
       }
     }
-    setEditMapPool(false);
-    setActiveTab(0);
-
-    setTimeout(() => {
-      setShowSettingsModal(true);
-    }, 300);
+    setOverlayGlobal("none");
+    setShowSettingsModal(true);
   };
 
   const handleResetMapPool = () => {
     if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.editFPSMapPool");
-      toast({ description: "Маппул сброшен" });
+      toast({ description: "mappool reset" });
     }
-    setEditMapPool(false);
-    setActiveTab(0);
+    setOverlayGlobal("none");
+    setShowSettingsModal(true);
+  };
 
-    setTimeout(() => {
-      setShowSettingsModal(true);
-    }, 300);
+  // Overlay-specific map pool actions (do not touch legacy modals)
+  const handleResetMapPoolOverlay = () => {
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("admin.editFPSMapPool");
+      toast({ description: "mappool reset" });
+      // refresh map pool from server
+      fetchSourceMapPoolData();
+    }
+    setOverlay("settings");
+  };
+
+  const handleSaveMapPoolOverlay = () => {
+    const uniqueValuesZero = new Set(mapPool["cs2"] || []);
+    const uniqueValuesOne = new Set(mapPool["valorant"] || []);
+    if (
+      uniqueValuesZero.size !== (mapPool["cs2"] || []).length ||
+      uniqueValuesOne.size !== (mapPool["valorant"] || []).length
+    ) {
+      toast({ description: "maps must be unique", variant: "destructive" });
+      return;
+    }
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("admin.editFPSMapPool", mapPool);
+      toast({ description: "mappool saved" });
+    }
+    setOverlay("settings");
   };
 
   const handleOpenEditModal = () => {
@@ -422,7 +505,7 @@ export default function AdminPage() {
   const handleSaveCardColors = () => {
     if (socketRef.current && socketRef.current.connected && editingCardColors) {
       socketRef.current.emit("admin.editCardColors", editingCardColors);
-      toast({ description: "Цвета карточек сохранены" });
+      toast({ description: "card colors saved" });
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
@@ -435,7 +518,7 @@ export default function AdminPage() {
   const handleResetCardColors = () => {
     if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit("admin.editCardColors");
-      toast({ description: "Цвета карточек сброшены" });
+      toast({ description: "card colors reset" });
     }
     setEditCardColorsModal(false);
     setEditingCardColors(null);
@@ -550,58 +633,48 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="relative max-w-7xl mx-auto mb-8">
-          <Button
-            onClick={() => handleCopyLink()}
-            variant="outline"
-            className="absolute top-0 left-0"
-          >
-            <Copy className="w-4 h-4 mr-2" />
-            Копировать OBS ссылку
-          </Button>
-          <h1 className="text-4xl font-bold text-center text-foreground flex items-center justify-center gap-4">
-            <Image
-              src="https://cdn.csmpro.ru/CSM_white.svg"
-              alt="CSM"
-              width={90}
-              height={20}
-              priority={true}
-            />
-            mapban admin
+        {/* Hero */}
+        <div className="text-center mb-10">
+          <Image
+            src="https://cdn.csmpro.ru/CSM_white.svg"
+            alt="CSM"
+            width={120}
+            height={32}
+            priority={true}
+            className="mx-auto mb-6 opacity-90 cursor-pointer hover:opacity-100 transition-opacity duration-200"
+            onClick={() => {
+              router.push("/");
+            }}
+          />
+          <h1 className="text-1xl md:text-2xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-neutral-50 dark:to-neutral-400 -mb-7 -mt-5">
+            map ban admin
           </h1>
+        </div>
+
+        {/* Action bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-10">
           <Button
-            onClick={() => setAdminOverlay(true)}
-            variant="outline"
-            className="absolute top-0 right-0"
+            onClick={() => setOverlay("game")}
+            className="w-full h-11 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200 transition-all duration-200"
+            disabled={!socketConnected}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Создать OBS лобби
+            new obs lobby
           </Button>
-        </div>
-        <div className="flex justify-center items-center mb-6">
           <Button
             onClick={() => setShowSettingsModal(true)}
-            variant="outline"
-            className="w-full max-w-md mx-auto bg-card shadow-lg mb-8 py-6"
+            className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/70 transition-all duration-200"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="lucide lucide-settings mr-2"
-            >
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            Настройки игры
+            settings
+          </Button>
+          <Button
+            onClick={() => handleCopyLink()}
+            className="w-full h-11 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0 transition-all duration-200"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            copy obs url
           </Button>
         </div>
         {lobbies.length > 0 ? (
@@ -609,12 +682,12 @@ export default function AdminPage() {
             {lobbies.map((lobby) => (
               <Card
                 key={lobby.lobbyId}
-                className="w-full bg-card shadow-lg hover:shadow-xl transition-shadow duration-300"
+                className="w-full bg-white/70 dark:bg-neutral-900/60 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-xl transition-shadow duration-300"
               >
-                <CardHeader className="bg-card border-b">
-                  <CardTitle className="text-xl text-foreground flex items-center justify-between">
+                <CardHeader className="border-b border-neutral-200/60 dark:border-neutral-800/60 rounded-t-3xl">
+                  <CardTitle className="text-lg md:text-xl text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="truncate">Лобби: {lobby.lobbyId}</span>
+                      <span className="truncate">{lobby.lobbyId}</span>
                       <Badge variant="outline" className="ml-2">
                         {lobby.rules.gameName.toUpperCase()}
                       </Badge>
@@ -629,11 +702,10 @@ export default function AdminPage() {
                     {lobby.rules.admin && (
                       <Button
                         onClick={() => handleStartGame(lobby.lobbyId)}
-                        variant="outline"
-                        className="flex-1"
+                        className="w-20 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200"
                         disabled={lobby.teamNames.length !== 2}
                       >
-                        Старт
+                        start
                       </Button>
                     )}
                   </CardTitle>
@@ -642,8 +714,8 @@ export default function AdminPage() {
                   <ScrollArea className="h-90 pr-4">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="font-semibold text-foreground mb-2">
-                          Команды:
+                        <h3 className="font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                          teams:
                         </h3>
                         <div className="space-y-1">
                           <div className="flex items-center justify-start gap-4">
@@ -669,43 +741,17 @@ export default function AdminPage() {
                       <div className="space-y-2">
                         <details className="cursor-pointer">
                           <summary className="font-semibold text-foreground mb-2">
-                            Данные о лобби
+                            Lobby Rules
                           </summary>
-                          <div className="text-sm text-foreground">
-                            Game Type:{" "}
-                            {lobby.rules.gameType === "BO1"
-                              ? "BO1"
-                              : lobby.rules.gameType === "BO3"
-                                ? "BO3"
-                                : "BO5"}
-                          </div>
-                          <div className="text-sm text-foreground">
-                            Coin Flip: {lobby.rules.coinFlip ? "Yes" : "No"}
-                          </div>
-                          <div className="text-sm text-foreground">
-                            Current Game Step:{" "}
-                            {lobby.rules.mapPoolSize == 4
-                              ? lobby.gameStep - 3
-                              : lobby.gameStep}
-                            /{lobby.rules.mapPoolSize}
-                          </div>
-                          <div className="text-sm text-foreground">
-                            {lobby.rules.gameName.toLowerCase() ===
-                            "splatoon" ? (
-                              <>Round Number: {lobby.rules.roundNumber || 0}</>
-                            ) : (
-                              <>
-                                Knife Decider:{" "}
-                                {lobby.rules.knifeDecider ? "Skip" : "No"}
-                              </>
-                            )}
-                          </div>
+                            <pre className="whitespace-pre-wrap break-words">
+                              {JSON.stringify(lobby.rules, null, 2)}
+                            </pre>
                         </details>
                       </div>
                       <Separator />
                       <div>
-                        <h3 className="font-semibold text-foreground mb-2">
-                          Пики:
+                        <h3 className="font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                          picks:
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {lobby.rules.gameName.toLowerCase() === "splatoon" &&
@@ -715,7 +761,7 @@ export default function AdminPage() {
                                 (round: RoundHistory, roundIndex: number) => (
                                   <div key={roundIndex} className="w-full">
                                     <div className="text-sm font-medium text-muted-foreground mb-1">
-                                      Раунд {round.roundNumber}
+                                      round {round.roundNumber}
                                       {round.pickedMode &&
                                         ` - ${round.pickedMode.translatedMode.toUpperCase()}`}
                                     </div>
@@ -766,8 +812,8 @@ export default function AdminPage() {
                       </div>
                       <Separator />
                       <div>
-                        <h3 className="font-semibold text-foreground mb-2">
-                          Баны:
+                        <h3 className="font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                          bans:
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {lobby.bannedMaps.map((item, index) => (
@@ -780,40 +826,36 @@ export default function AdminPage() {
                     </div>
                   </ScrollArea>
                 </CardContent>
-                <CardFooter className="bg-card border-t p-4 flex flex-wrap gap-2">
+                <CardFooter className="border-t border-neutral-200/60 dark:border-neutral-800/60 p-4 flex flex-wrap gap-2 rounded-b-3xl">
                   <div className="flex justify-center w-full">
                     <Button
                       onClick={() => handleSetObsLobby(lobby.lobbyId)}
-                      variant="outline"
-                      className="flex-1"
+                      className="flex-1 h-9 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/70 transition-all duration-200"
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Показать OBS
+                      show in obs
                     </Button>
                     <Button
                       onClick={() => handleClear(lobby.lobbyId)}
-                      variant="outline"
-                      className="flex-1"
+                      className="flex-1 h-9 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/70 transition-all duration-200"
                     >
                       <Droplet className="w-4 h-4 mr-2" />
-                      Очистить OBS
+                      clear obs
                     </Button>
                   </div>
                   <Button
                     onClick={() => handleConnectToLobby(lobby.lobbyId)}
-                    variant="outline"
-                    className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                    className="flex-1 h-9 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200 transition-all duration-200"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    Подключиться
+                    join
                   </Button>
                   <Button
                     onClick={() => setLobbyToDelete(lobby.lobbyId)}
-                    variant="destructive"
-                    className="flex-1"
+                    className="flex-1 h-9 rounded-2xl font-medium bg-red-600 dark:bg-red-400 text-white dark:text-neutral-900 hover:bg-red-700 dark:hover:bg-red-300 transition-all duration-200"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Удалить лобби
+                    delete
                   </Button>
                 </CardFooter>
               </Card>
@@ -822,13 +864,70 @@ export default function AdminPage() {
         ) : (
           <Card className="w-full max-w-md mx-auto bg-card">
             <CardContent className="p-6 text-center text-foreground">
-              <p className="text-xl">Ничего нет...</p>
+              <p className="text-xl">nothing here...</p>
             </CardContent>
           </Card>
         )}
       </div>
-      <AnimatePresence>
-        {adminOverlay && (
+  <AnimatePresence>
+        {overlay === "game" && (
+          <GameSelectionOverlay
+            games={[
+              { id: "cs2", prettyName: "Counter-Strike 2", type: "fps", developer: "Valve" },
+              { id: "valorant", prettyName: "Valorant", type: "fps", developer: "Riot Games" },
+              { id: "splatoon", prettyName: "Splatoon 3", type: "splatoon", developer: "Nintendo" },
+            ]}
+            onSelect={(id) => {
+              setSelectedGameId(id);
+              setGame(id === "splatoon" ? "Splatoon" : id === "valorant" ? "Valorant" : "CS2");
+              setOverlay("settings");
+            }}
+            onCancel={() => setOverlay("none")}
+          />
+        )}
+        {overlay === "settings" && (
+          <SettingsOverlay
+            gamePrettyName={gameName}
+            gameType={gameType}
+            setGameType={setGameType}
+            localModesSize={localModesSizeAdmin}
+            setLocalModesSize={setLocalModesSizeAdmin}
+            localKnifeDecider={localKnifeDecider}
+            setLocalKnifeDecider={setLocalKnifeDecider}
+            mapPoolSize={mapPoolSize}
+            setMapPoolSize={setMapPoolSize}
+            type={selectedGameId === "splatoon" ? "splatoon" : "fps"}
+            onBack={() => setOverlay("game")}
+            onOpenMapPool={() => setOverlay("mapPool")}
+            onCreate={() => {
+              if (creatingLobby) return;
+              setCreatingLobby(true);
+              handleAdminLobby();
+            }}
+            creating={creatingLobby}
+            disabled={!socketConnected}
+            mapPoolChanged={false}
+            showCoinFlip
+            coinFlip={localCoinFlipState}
+            setCoinFlip={(v) => {
+              localCoinFlip.current = v;
+              setLocalCoinFlipState(v);
+            }}
+          />
+        )}
+        {overlay === "mapPool" && (
+          <MapPoolEditorOverlay
+            gameId={selectedGameId === "valorant" ? "valorant" : "cs2"}
+            gamePrettyName={gameName}
+            mapPool={mapPool}
+            allMapsList={allMapsList}
+            onChange={handleSelectChange}
+            onBack={() => setOverlay("settings")}
+            onReset={handleResetMapPoolOverlay}
+            onSave={handleSaveMapPoolOverlay}
+          />
+        )}
+        {overlayGlobal === "mapPool" && (
           <motion.div
             initial="hidden"
             animate="visible"
@@ -837,386 +936,120 @@ export default function AdminPage() {
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           >
-            <motion.div
-              variants={contentVariants}
-              transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
-            >
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Выберите правила игры
+            <OverlayShell motionKey="global-map-pool" size="md">
+              <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
+                global fps map pool editor
               </h2>
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold mb-2 text-center">Игра</h3>
-                <div className="flex justify-center space-x-4">
-                  {["CS2", "Valorant", "Splatoon"].map((game) => (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {(
+                    [
+                      { id: "cs2", name: "Counter-Strike 2" },
+                      { id: "valorant", name: "Valorant" },
+                    ] as const
+                  ).map((g) => (
                     <Button
-                      key={game}
-                      variant={gameName === game ? "default" : "outline"}
-                      onClick={() => setGame(game)}
-                      className="w-20"
+                      key={g.id}
+                      onClick={() => setGlobalMapPoolGameId(g.id)}
+                      className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                        globalMapPoolGameId === g.id
+                          ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                      }`}
                     >
-                      {game}
+                      {g.name}
                     </Button>
                   ))}
                 </div>
 
-                {gameName !== "Splatoon" && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-2 text-center">
-                      Формат игры
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      {["BO1", "BO2", "BO3", "BO5"].map((type) => (
-                        <Button
-                          key={type}
-                          variant={gameType === type ? "default" : "outline"}
-                          onClick={() => {
-                            setGameType(type);
-                            if (["BO1", "BO2"].includes(type)) {
-                              setLocalKnifeDecider(false);
-                            } else {
-                              setMapPoolSize(7);
-                            }
-                          }}
-                          className="w-20"
-                        >
-                          {type}
-                        </Button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {/* Отображаем размер маппула только для BO1 и BO2 */}
-                {["BO1", "BO2"].includes(gameType) &&
-                  gameName !== "Splatoon" && (
-                    <>
-                      <h3 className="text-lg font-semibold mb-2 text-center">
-                        Размер маппула
-                      </h3>
-                      <div className="flex justify-center space-x-4">
-                        {[4, 7].map((size) => (
-                          <Button
-                            key={size}
-                            variant={
-                              mapPoolSize === size ? "default" : "outline"
-                            }
-                            onClick={() => setMapPoolSize(size)}
-                            className="w-20"
-                          >
-                            {size} карт
-                          </Button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                {/* Отображаем десайдер только для BO1, BO3 и BO5 */}
-                {["BO1", "BO3", "BO5"].includes(gameType) &&
-                  gameName !== "Splatoon" && (
-                    <>
-                      <h3 className="text-lg font-semibold mb-2 text-center">
-                        Десайдер
-                      </h3>
-                      <div className="flex justify-center space-x-4">
-                        {[
-                          { label: "Рандом", value: false },
-                          { label: "Авто (пропуск)", value: true },
-                        ].map((option) => (
-                          <Button
-                            key={option.label}
-                            variant={
-                              localKnifeDecider === option.value
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() => setLocalKnifeDecider(option.value)}
-                            className="w-30"
-                          >
-                            {option.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                <div className="pt-6 ml-10 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
-                  <AnimatedCheckbox
-                    id="localCoinFlip"
-                    checked={localCoinFlipState}
-                    onCheckedChange={(checked) => {
-                      const v = Boolean(checked);
-                      localCoinFlip.current = v;
-                      setLocalCoinFlipState(v);
-                    }}
-                    variants={checkboxVariants}
-                    animate={localCoinFlipState ? "checked" : "unchecked"}
-                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                  />
-                  <Label htmlFor="localCoinFlip">
-                    Подбросить монетку в начале игры
-                  </Label>
-                </div>
-                <div className="flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setAdminOverlay(false)}
-                  >
-                    Назад
-                  </Button>
-                  <Button type="button" onClick={handleAdminLobby}>
-                    Создать лобби
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-        {editMapPool && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={overlayVariants}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          >
-            <motion.div
-              variants={contentVariants}
-              transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto text-card-foreground"
-            >
-              <h2 className="text-3xl font-bold mb-6 text-center">
-                Редактирование маппула
-              </h2>
-
-              {/* Информация о маппуле */}
-              {
-                <div className="mb-4 p-3 bg-muted rounded-md text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Внимание! При выборе пула из 4 карт используются только
-                    первые 4 карты в списке.
+                <div className="mb-2 p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 text-center">
+                    in 4 maps mode only the first 4 maps are used
                   </p>
                 </div>
-              }
 
-              {/* Tabs */}
-              <div className="flex border-b mb-6">
-                <button
-                  onClick={() => setActiveTab(0)}
-                  className={`px-4 py-2 text-lg font-medium ${
-                    activeTab === 0
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-muted-foreground hover:text-foreground transition-colors"
-                  }`}
-                >
-                  CS2
-                </button>
-                <button
-                  onClick={() => setActiveTab(1)}
-                  className={`px-4 py-2 text-lg font-medium ${
-                    activeTab === 1
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-muted-foreground hover:text-foreground transition-colors"
-                  }`}
-                >
-                  VALORANT
-                </button>
-              </div>
-
-              {/* CS2 Maps Tab */}
-              {activeTab === 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool["cs2"].map((value, index) => (
-                    <div
-                      key={index}
-                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                    >
-                      <div className="relative w-full pt-[75%]">
-                        <Image
-                          src={`https://cdn.csmpro.ru/mapban/cs2/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
-                          alt={value}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          priority={true}
-                          className="object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "/placeholder.jpg";
-                          }}
-                        />
-                      </div>
-                      <div className="p-3">
-                        <select
-                          value={value}
-                          onChange={(e) =>
-                            handleSelectChange(index, e.target.value, "cs2")
-                          }
-                          className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value="" disabled>
-                            Выберите карту
-                          </option>
-                          {allMapsList["cs2"].map((refValue, refIndex) => (
-                            <option key={refIndex} value={refValue}>
-                              {refValue}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {(mapPool[globalMapPoolGameId] || []).map((value, index) => (
+                    <MapTile
+                      key={`${globalMapPoolGameId}-${index}`}
+                      gameId={globalMapPoolGameId}
+                      value={value}
+                      index={index}
+                      allMaps={allMapsList[globalMapPoolGameId] || []}
+                      onChange={(i, v) =>
+                        handleSelectChange(i, v, globalMapPoolGameId)
+                      }
+                    />
                   ))}
                 </div>
-              )}
 
-              {/* VALORANT Maps Tab */}
-              {activeTab === 1 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {mapPool["valorant"].map((value, index) => (
-                    <div
-                      key={index}
-                      className="bg-muted rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                    >
-                      <div className="relative w-full pt-[75%]">
-                        <Image
-                          src={`https://cdn.csmpro.ru/mapban/valorant/maps/${value.toLowerCase().replace(/ /g, "")}.jpg`}
-                          alt={value}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover"
-                          priority={true}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "/placeholder.jpg";
-                          }}
-                        />
-                      </div>
-                      <div className="p-3">
-                        <select
-                          value={value}
-                          onChange={(e) =>
-                            handleSelectChange(
-                              index,
-                              e.target.value,
-                              "valorant",
-                            )
-                          }
-                          className="w-full bg-background border border-input rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        >
-                          <option value="" disabled>
-                            Выберите карту
-                          </option>
-                          {allMapsList["valorant"].map((refValue, refIndex) => (
-                            <option key={refIndex} value={refValue}>
-                              {refValue}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                  <Button
+                    type="button"
+                    onClick={() => setOverlayGlobal("none")}
+                    className="h-10 px-6 rounded-2xl font-medium bg-neutral-100 dark:bg-red-400 text-neutral-600 dark:text-neutral-900 hover:bg-red-200 dark:hover:bg-red-300 border-0 transition-all duration-200"
+                  >
+                    back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleResetMapPool}
+                    className="h-10 px-6 rounded-2xl font-medium bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30 border-0 transition-all duration-200"
+                  >
+                    reset
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleEditMapPool}
+                    className="flex-1 h-10 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200 transition-all duration-200"
+                  >
+                    save
+                  </Button>
                 </div>
-              )}
-
-              <div className="flex justify-between mt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditMapPool(false);
-                    setActiveTab(0);
-
-                    setTimeout(() => {
-                      setShowSettingsModal(true);
-                    }, 300);
-                  }}
-                  className="px-6 border-white text-white hover:bg-white/10"
-                >
-                  Назад
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleResetMapPool}
-                  className="px-6"
-                >
-                  Сбросить
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleEditMapPool}
-                  className="px-6"
-                >
-                  Сохранить
-                </Button>
               </div>
-            </motion.div>
+            </OverlayShell>
           </motion.div>
         )}
         {editCardColorsModal && editingCardColors && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={overlayVariants}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          >
-            <motion.div
-              variants={contentVariants}
-              transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-5xl w-full overflow-y-auto text-card-foreground"
-            >
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Редактировать цвета карточек
-              </h2>
+          <OverlayShell motionKey="edit-card-colors" size="xl">
+            <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
+              card colors editor
+            </h2>
 
-              {/* Tabs */}
-              <div className="flex border-b mb-6">
-                <button
-                  onClick={() => setActiveTab(0)}
-                  className={`px-4 py-2 text-lg font-medium ${
-                    activeTab === 0
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-muted-foreground hover:text-foreground transition-colors"
+            {/* Tabs */}
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              {[
+                { id: 0, label: "maps" },
+                { id: 1, label: "decider" },
+                { id: 2, label: "modes" },
+              ].map((tab) => (
+                <Button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`h-9 rounded-2xl font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
                   }`}
                 >
-                  Карты
-                </button>
-                <button
-                  onClick={() => setActiveTab(1)}
-                  className={`px-4 py-2 text-lg font-medium ${
-                    activeTab === 1
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-muted-foreground hover:text-foreground transition-colors"
-                  }`}
-                >
-                  Десайдер
-                </button>
-                <button
-                  onClick={() => setActiveTab(2)}
-                  className={`px-4 py-2 text-lg font-medium ${
-                    activeTab === 2
-                      ? "border-b-2 border-primary text-primary"
-                      : "text-muted-foreground hover:text-foreground transition-colors"
-                  }`}
-                >
-                  Режимы
-                </button>
-              </div>
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
 
-              {/* Maps Tab (BAN & PICK) */}
+            {/* Maps Tab (BAN & PICK) */}
               {activeTab === 0 && (
                 <div className="grid grid-cols-2 gap-8">
                   {/* BAN Colors Section */}
                   <div className="bg-card/50 p-6 rounded-lg">
                     <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">
-                      BAN
+                      ban
                     </h2>
 
                     {/* BAN Text Colors */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Текст
+                        text
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-3 gap-6">
@@ -1258,11 +1091,11 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Команда"
+                                    ? "team"
                                     : index === 1
-                                      ? "Действие"
+                                      ? "action"
                                       : index === 2
-                                        ? "Карта"
+                                        ? "map"
                                         : ""}
                                 </span>
                               </div>
@@ -1275,7 +1108,7 @@ export default function AdminPage() {
                     {/* BAN Background Colors */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Фон
+                        bg
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-2 gap-6">
@@ -1317,13 +1150,13 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Верх"
+                                    ? "top"
                                     : index === 1
-                                      ? "Подложка"
+                                      ? "base"
                                       : index === 2
-                                        ? "Низ"
+                                        ? "bottom"
                                         : index === 3
-                                          ? "Полоска"
+                                          ? "stripe"
                                           : ""}
                                 </span>
                               </div>
@@ -1343,7 +1176,7 @@ export default function AdminPage() {
                     {/* PICK Text Colors */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Текст
+                        text
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-3 gap-6">
@@ -1385,11 +1218,11 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Команда"
+                                    ? "team"
                                     : index === 1
-                                      ? "Действие"
+                                      ? "action"
                                       : index === 2
-                                        ? "Карта"
+                                        ? "map"
                                         : ""}
                                 </span>
                               </div>
@@ -1402,7 +1235,7 @@ export default function AdminPage() {
                     {/* PICK Background Colors */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Фон
+                        bg
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-2 gap-6">
@@ -1446,13 +1279,13 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Верх"
+                                    ? "top"
                                     : index === 1
-                                      ? "Подложка"
+                                      ? "base"
                                       : index === 2
-                                        ? "Низ"
+                                        ? "bottom"
                                         : index === 3
-                                          ? "Полоска"
+                                          ? "stripe"
                                           : ""}
                                 </span>
                               </div>
@@ -1470,13 +1303,13 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 gap-8">
                   <div className="bg-card/50 p-6 rounded-lg">
                     <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">
-                      DECIDER
+                      decider
                     </h2>
 
                     {/* DECIDER Text Colors */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Текст
+                        text
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-3 gap-6">
@@ -1518,11 +1351,11 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Команда"
+                                    ? "team"
                                     : index === 1
-                                      ? "Действие"
+                                      ? "action"
                                       : index === 2
-                                        ? "Карта"
+                                        ? "map"
                                         : ""}
                                 </span>
                               </div>
@@ -1535,7 +1368,7 @@ export default function AdminPage() {
                     {/* DECIDER Background Colors */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Фон
+                        bg
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-2 gap-6">
@@ -1579,13 +1412,13 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Верх"
+                                    ? "top"
                                     : index === 1
-                                      ? "Подложка"
+                                      ? "base"
                                       : index === 2
-                                        ? "Низ"
+                                        ? "bottom"
                                         : index === 3
-                                          ? "Полоска"
+                                          ? "stripe"
                                           : ""}
                                 </span>
                               </div>
@@ -1604,13 +1437,13 @@ export default function AdminPage() {
                   {/* MODE BAN Colors Section */}
                   <div className="bg-card/50 p-6 rounded-lg">
                     <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">
-                      MODE BAN
+                      mode ban
                     </h2>
 
                     {/* MODE BAN Text Colors */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Текст
+                        text
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-3 gap-6">
@@ -1652,11 +1485,11 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Команда"
+                                    ? "team"
                                     : index === 1
-                                      ? "Действие"
+                                      ? "action"
                                       : index === 2
-                                        ? "Режим"
+                                        ? "mode"
                                         : ""}
                                 </span>
                               </div>
@@ -1669,7 +1502,7 @@ export default function AdminPage() {
                     {/* MODE BAN Background Colors */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Фон
+                        bg
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-2 gap-6">
@@ -1713,13 +1546,13 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Верх"
+                                    ? "top"
                                     : index === 1
-                                      ? "Подложка"
+                                      ? "base"
                                       : index === 2
-                                        ? "Низ"
+                                        ? "bottom"
                                         : index === 3
-                                          ? "Полоска"
+                                          ? "stripe"
                                           : ""}
                                 </span>
                               </div>
@@ -1733,13 +1566,13 @@ export default function AdminPage() {
                   {/* MODE PICK Colors Section */}
                   <div className="bg-card/50 p-6 rounded-lg">
                     <h2 className="text-2xl font-bold mb-6 text-center border-b pb-2">
-                      MODE PICK
+                      mode pick
                     </h2>
 
                     {/* MODE PICK Text Colors */}
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Текст
+                        text
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-3 gap-6">
@@ -1781,11 +1614,11 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Команда"
+                                    ? "team"
                                     : index === 1
-                                      ? "Действие"
+                                      ? "action"
                                       : index === 2
-                                        ? "Режим"
+                                        ? "mode"
                                         : ""}
                                 </span>
                               </div>
@@ -1798,7 +1631,7 @@ export default function AdminPage() {
                     {/* MODE PICK Background Colors */}
                     <div>
                       <h3 className="text-lg font-semibold mb-4 text-center">
-                        Фон
+                        bg
                       </h3>
                       <div className="flex flex-col items-center space-y-4">
                         <div className="grid grid-cols-2 gap-6">
@@ -1842,13 +1675,13 @@ export default function AdminPage() {
                                 />
                                 <span className="text-sm text-center font-medium">
                                   {index === 0
-                                    ? "Верх"
+                                    ? "top"
                                     : index === 1
-                                      ? "Подложка"
+                                      ? "base"
                                       : index === 2
-                                        ? "Низ"
+                                        ? "bottom"
                                         : index === 3
-                                          ? "Полоска"
+                                          ? "stripe"
                                           : ""}
                                 </span>
                               </div>
@@ -1861,34 +1694,37 @@ export default function AdminPage() {
                 </div>
               )}
 
-              <div className="flex justify-between mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditCardColorsModal(false);
-                    setEditingCardColors(null);
+            <div className="flex gap-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <Button
+                type="button"
+                onClick={() => {
+                  setEditCardColorsModal(false);
+                  setEditingCardColors(null);
 
-                    setTimeout(() => {
-                      setShowSettingsModal(true);
-                    }, 300);
-                  }}
-                >
-                  Назад
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleResetCardColors}
-                >
-                  Сбросить
-                </Button>
-                <Button type="button" onClick={handleSaveCardColors}>
-                  Сохранить
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
+                  setTimeout(() => {
+                    setShowSettingsModal(true);
+                  }, 300);
+                }}
+                className="h-10 px-6 rounded-2xl font-medium bg-neutral-100 dark:bg-red-400 text-neutral-600 dark:text-neutral-900 hover:bg-red-200 dark:hover:bg-red-300 border-0 transition-all duration-200"
+              >
+                back
+              </Button>
+              <Button
+                type="button"
+                onClick={handleResetCardColors}
+                className="h-10 px-6 rounded-2xl font-medium bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/30 border-0 transition-all duration-200"
+              >
+                reset
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveCardColors}
+                className="flex-1 h-10 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200 transition-all duration-200"
+              >
+                save
+              </Button>
+            </div>
+          </OverlayShell>
         )}
         {showSettingsModal && (
           <motion.div
@@ -1899,16 +1735,13 @@ export default function AdminPage() {
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           >
-            <motion.div
-              variants={contentVariants}
-              transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
-            >
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Настройки игры
+            <OverlayShell motionKey="admin-settings" size="md">
+              <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
+                admin settings
               </h2>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 justify-center p-4 bg-muted rounded-lg">
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-3 p-3 rounded-2xl bg-neutral-100 dark:bg-neutral-800">
                   <AnimatedCheckbox
                     id="coinFlip"
                     checked={globalCoinFlip}
@@ -1919,50 +1752,45 @@ export default function AdminPage() {
                     animate={globalCoinFlip ? "checked" : "unchecked"}
                     transition={{ type: "spring", stiffness: 300, damping: 10 }}
                   />
-                  <Label htmlFor="coinFlip" className="text-foreground">
-                    Подбросить монетку в начале игры
+                  <Label htmlFor="coinFlip" className="text-neutral-700 dark:text-neutral-300">
+                    global coin flip selector
                   </Label>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <Button
-                    onClick={handleMapPoolButton}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <PenBox className="w-4 h-4 mr-2" />
-                    Редактировать маппул
-                  </Button>
+                <Button
+                  onClick={handleMapPoolButton}
+                  className="w-full h-10 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                >
+                  <PenBox className="w-4 h-4 mr-2" />
+                  edit global map pool
+                </Button>
 
-                  <Button
-                    onClick={handleOpenEditModal}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <PenBox className="w-4 h-4 mr-2" />
-                    Редактировать цвета карточек
-                  </Button>
+                <Button
+                  onClick={handleOpenEditModal}
+                  className="w-full h-10 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                >
+                  <PenBox className="w-4 h-4 mr-2" />
+                  edit card colors
+                </Button>
 
-                  <Button
-                    onClick={handleCreatePreviewLobby}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Отобразить все карточки в OBS
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleCreatePreviewLobby}
+                  className="w-full h-10 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  preview all cards in obs
+                </Button>
 
-                <div className="pt-4 flex justify-end">
+                <div className="flex pt-4 border-t border-neutral-200 dark:border-neutral-800">
                   <Button
                     onClick={() => setShowSettingsModal(false)}
-                    variant="outline"
+                    className="w-full h-10 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0 transition-all duration-200"
                   >
-                    Закрыть
+                    close
                   </Button>
                 </div>
               </div>
-            </motion.div>
+            </OverlayShell>
           </motion.div>
         )}
         {lobbyToDelete && (
@@ -1974,35 +1802,30 @@ export default function AdminPage() {
             transition={{ duration: 0.3 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           >
-            <motion.div
-              variants={contentVariants}
-              transition={{ duration: 0.3 }}
-              className="bg-card p-6 rounded-lg shadow-xl max-w-md w-full text-card-foreground"
-            >
-              <h2 className="text-2xl font-bold mb-4 text-center">
-                Удалить лобби
+            <OverlayShell motionKey="confirm-delete" size="md">
+              <h2 className="text-xl font-light text-neutral-900 dark:text-neutral-100 text-center mb-5">
+                delete lobby {lobbyToDelete}?
               </h2>
-              <p className="text-center mb-6">
-                Вы уверены, что хотите удалить это лобби? Это действие нельзя
-                отменить.
+              <p className="text-center text-neutral-600 dark:text-neutral-400 mb-5">
+                this action cannot be undone
               </p>
-              <div className="flex justify-between">
+              <div className="flex gap-3">
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => setLobbyToDelete(null)}
+                  className="h-10 px-6 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0 transition-all duration-200"
                 >
-                  Отменить
+                  cancel
                 </Button>
                 <Button
                   type="button"
-                  variant="destructive"
                   onClick={() => handleDeleteLobby(lobbyToDelete)}
+                  className="flex-1 h-10 rounded-2xl font-medium bg-red-600 dark:bg-red-400 text-white dark:text-neutral-900 hover:bg-red-700 dark:hover:bg-red-300 transition-all duration-200"
                 >
-                  Удалить
+                  delete
                 </Button>
               </div>
-            </motion.div>
+            </OverlayShell>
           </motion.div>
         )}
       </AnimatePresence>
@@ -2098,6 +1921,11 @@ export default function AdminPage() {
           </motion.div>
         </>
       )}
+      <FooterBar
+        repoUrl="https://git.in.csmpro.ru/csmpro/csm-mapban"
+        licenseUrl="https://git.in.csmpro.ru/csmpro/csm-mapban#license-and-trademark-notice"
+        version={buildVersion}
+      />
     </div>
   );
 }
