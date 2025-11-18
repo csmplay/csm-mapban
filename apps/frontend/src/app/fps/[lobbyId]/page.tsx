@@ -710,6 +710,7 @@ export default function LobbyPage() {
                               return `Размер маппула: ${fpsMapPoolSize}`;
                             }
                             if (
+                              fpsGameType === "bo1" ||
                               fpsGameType === "bo3" ||
                               fpsGameType === "bo5"
                             ) {

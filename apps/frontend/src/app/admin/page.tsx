@@ -907,8 +907,8 @@ export default function AdminPage() {
                       </div>
                     </>
                   )}
-                {/* Отображаем десайдер только для BO3 и BO5 */}
-                {["BO3", "BO5"].includes(gameType) &&
+                {/* Отображаем десайдер только для BO1, BO3 и BO5 */}
+                {["BO1", "BO3", "BO5"].includes(gameType) &&
                   gameName !== "Splatoon" && (
                     <>
                       <h3 className="text-lg font-semibold mb-2 text-center">
