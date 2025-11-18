@@ -856,14 +856,14 @@ export default function HomePage() {
                         setShowGameSelectionOverlay(true);
                       }, 200);
                     }}
-                    className="h-10 px-6 rounded-2xl font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0 transition-all duration-200"
+                    className="h-10 px-6 rounded-2xl font-medium bg-neutral-100 dark:bg-red-400 text-neutral-600 dark:text-neutral-900 hover:bg-red-200 dark:hover:bg-red-300 border-0 transition-all duration-200"
                   >
                     Назад
                   </Button>
                   <Button
                     type="button"
                     onClick={handleCreateLobby}
-                    className="flex-1 h-10 rounded-2xl font-medium bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all duration-200"
+                    className="flex-1 h-10 rounded-2xl font-medium bg-neutral-900 dark:bg-green-300 text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-green-200 transition-all duration-200"
                   >
                     Создать
                   </Button>
