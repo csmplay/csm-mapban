@@ -13,7 +13,7 @@ permissions:
 jobs:
   build-and-push-docker:
     name: Build and Push Docker Images
-    runs-on: node
+    runs-on: ubuntu-latest
     env:
       REGISTRY_URL: git.in.csmpro.ru
     strategy:
@@ -26,11 +26,6 @@ jobs:
 
       - name: Install bun
         uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
-
-      - name: Install Docker
-        run: |
-          apt update
-          apt install -y docker.io
 
       - name: Log in to Forgejo Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
@@ -73,7 +68,7 @@ jobs:
   build-and-push:
     name: Build and Push Release
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: node
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
@@ -172,14 +167,3 @@ jobs:
               -H "Content-Type: application/octet-stream" \
               --data-binary @"$f" "$UPLOAD_URL?name=$(basename $f)"
           done
-
-  trigger-portainer-webhook:
-    name: Trigger Portainer webhook
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build-and-push-docker
-    runs-on: node
-    env:
-      PORTAINER_WEBHOOK_URL: ${{ secrets.PORTAINER_WEBHOOK_URL }}
-    steps:
-      - name: Trigger Portainer webhook
-        run: curl -fsS -m 30 -X POST "$PORTAINER_WEBHOOK_URL"
