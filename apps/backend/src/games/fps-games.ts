@@ -60,7 +60,7 @@ export const mapNamesLists = {
     "Piazza",
     "Split",
     "Sunset",
-    "Corrode"
+    "Corrode",
   ],
 };
 
