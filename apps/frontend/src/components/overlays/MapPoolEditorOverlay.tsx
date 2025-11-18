@@ -20,7 +20,16 @@ export type MapPoolEditorOverlayProps = {
 };
 
 export function MapPoolEditorOverlay(props: MapPoolEditorOverlayProps) {
-  const { gameId, gamePrettyName, mapPool, allMapsList, onChange, onBack, onReset, onSave } = props;
+  const {
+    gameId,
+    gamePrettyName,
+    mapPool,
+    allMapsList,
+    onChange,
+    onBack,
+    onReset,
+    onSave,
+  } = props;
 
   const currentPool = mapPool[gameId] || [];
   const currentAllMaps = allMapsList[gameId] || [];
@@ -34,7 +43,8 @@ export function MapPoolEditorOverlay(props: MapPoolEditorOverlayProps) {
       <div className="space-y-4">
         <div className="mb-2 p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
           <p className="text-xs text-neutral-600 dark:text-neutral-400 text-center">
-            При выборе пула из 4 карт используются только первые 4 карты в списке
+            При выборе пула из 4 карт используются только первые 4 карты в
+            списке
           </p>
         </div>
 

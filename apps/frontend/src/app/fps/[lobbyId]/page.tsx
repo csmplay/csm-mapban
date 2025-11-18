@@ -42,7 +42,9 @@ export default function LobbyPage() {
   // Lobby data
   const [teamName, setTeamName] = useState("");
   const [teamNames, setTeamNames] = useState<[string, string][]>([]);
-  const [teamColorByName, setTeamColorByName] = useState<Record<string, 'blue' | 'red'>>({});
+  const [teamColorByName, setTeamColorByName] = useState<
+    Record<string, "blue" | "red">
+  >({});
   const [gameState, setGameState] = useState<string>("Игра начинается...");
   const [gameStateHistory, setGameStateHistory] = useState<string[]>([]);
   const [canPick, setCanPick] = useState(false);
@@ -114,11 +116,11 @@ export default function LobbyPage() {
           if (!next[name]) {
             const colorsTaken = new Set(Object.values(next));
             if (colorsTaken.size === 0) {
-              next[name] = idx === 0 ? 'blue' : 'red';
+              next[name] = idx === 0 ? "blue" : "red";
             } else if (colorsTaken.size === 1) {
-              if (!colorsTaken.has('blue')) next[name] = 'blue';
-              else if (!colorsTaken.has('red')) next[name] = 'red';
-              else next[name] = idx === 0 ? 'blue' : 'red'; // fallback
+              if (!colorsTaken.has("blue")) next[name] = "blue";
+              else if (!colorsTaken.has("red")) next[name] = "red";
+              else next[name] = idx === 0 ? "blue" : "red"; // fallback
             }
           }
         });
@@ -484,94 +486,101 @@ export default function LobbyPage() {
                       >
                         {(() => {
                           const pickingColor = pickTeamColor;
-                          const opponentColor = pickingColor === 'red'
-                            ? 'blue'
-                            : pickingColor === 'blue'
-                              ? 'red'
-                              : null;
+                          const opponentColor =
+                            pickingColor === "red"
+                              ? "blue"
+                              : pickingColor === "blue"
+                                ? "red"
+                                : null;
 
-                          const sideDeciderColor = fpsGameType === 'bo1' ? pickingColor : opponentColor;
-                          const otherIconColor = fpsGameType === 'bo1' ? opponentColor : pickingColor;
+                          const sideDeciderColor =
+                            fpsGameType === "bo1"
+                              ? pickingColor
+                              : opponentColor;
+                          const otherIconColor =
+                            fpsGameType === "bo1"
+                              ? opponentColor
+                              : pickingColor;
                           return (
                             <>
-                        {pickEntry.side === "DECIDER" && (
-                          <motion.div
-                            initial={{ y: 100, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="absolute inset-0 flex items-center justify-center"
-                          >
-                            <div
-                              className={`transform text-white
+                              {pickEntry.side === "DECIDER" && (
+                                <motion.div
+                                  initial={{ y: 100, opacity: 0 }}
+                                  animate={{ y: 0, opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="absolute inset-0 flex items-center justify-center"
+                                >
+                                  <div
+                                    className={`transform text-white
                                                         px-4 py-1 font-bold text-xl`}
-                              style={{
-                                position: "absolute",
-                                top: "80%",
-                                width: "150%",
-                                height: "150%",
-                                textAlign: "center",
-                                opacity: 0.8,
-                                backgroundColor: "#000000",
-                              }}
-                            >
-                              DECIDER
-                            </div>
-                          </motion.div>
-                        )}
-                        {pickEntry.side !== "DECIDER" && (
-                          <>
-                            {/* Left Image (picked side) */}
-                            <motion.div
-                              initial={{ y: 100, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="relative flex items-center justify-center"
-                            >
-                              <Image
-                                src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
-                                alt={`${pickSide === "ct" ? "ct" : "t"}`}
-                                draggable={false}
-                                width={80}
-                                height={80}
-                                priority={true}
-                                className={`rounded-full border-4 ${
-                                  sideDeciderColor === 'red'
-                                    ? 'border-red-500'
-                                    : sideDeciderColor === 'blue'
-                                      ? 'border-blue-500'
-                                      : 'border-neutral-400'
-                                }`}
-                              />
-                            </motion.div>
+                                    style={{
+                                      position: "absolute",
+                                      top: "80%",
+                                      width: "150%",
+                                      height: "150%",
+                                      textAlign: "center",
+                                      opacity: 0.8,
+                                      backgroundColor: "#000000",
+                                    }}
+                                  >
+                                    DECIDER
+                                  </div>
+                                </motion.div>
+                              )}
+                              {pickEntry.side !== "DECIDER" && (
+                                <>
+                                  {/* Left Image (picked side) */}
+                                  <motion.div
+                                    initial={{ y: 100, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="relative flex items-center justify-center"
+                                  >
+                                    <Image
+                                      src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
+                                      alt={`${pickSide === "ct" ? "ct" : "t"}`}
+                                      draggable={false}
+                                      width={80}
+                                      height={80}
+                                      priority={true}
+                                      className={`rounded-full border-4 ${
+                                        sideDeciderColor === "red"
+                                          ? "border-red-500"
+                                          : sideDeciderColor === "blue"
+                                            ? "border-blue-500"
+                                            : "border-neutral-400"
+                                      }`}
+                                    />
+                                  </motion.div>
 
-                            {/* Right Image (opposite side) */}
-                            <motion.div
-                              initial={{ y: 100, opacity: 0 }}
-                              animate={{ y: 0, opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="relative flex items-center justify-center"
-                            >
-                              <Image
-                                src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
-                                alt={`${pickSide === "ct" ? "t" : "ct"}`}
-                                draggable={false}
-                                width={80}
-                                height={80}
-                                priority={true}
-                                className={`rounded-full border-4 ${
-                                  otherIconColor === 'red'
-                                    ? 'border-red-500'
-                                    : otherIconColor === 'blue'
-                                      ? 'border-blue-500'
-                                      : 'border-neutral-400'
-                                }`}
-                              />
-                            </motion.div>
-                          </>
-                        )}
+                                  {/* Right Image (opposite side) */}
+                                  <motion.div
+                                    initial={{ y: 100, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="relative flex items-center justify-center"
+                                  >
+                                    <Image
+                                      src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
+                                      alt={`${pickSide === "ct" ? "t" : "ct"}`}
+                                      draggable={false}
+                                      width={80}
+                                      height={80}
+                                      priority={true}
+                                      className={`rounded-full border-4 ${
+                                        otherIconColor === "red"
+                                          ? "border-red-500"
+                                          : otherIconColor === "blue"
+                                            ? "border-blue-500"
+                                            : "border-neutral-400"
+                                      }`}
+                                    />
+                                  </motion.div>
+                                </>
+                              )}
                             </>
                           );
                         })()}
@@ -723,7 +732,8 @@ export default function LobbyPage() {
               </h2>
               {typeof pickMapId === "number" && mapNames[pickMapId] && (
                 <p className="text-center text-neutral-600 mb-4">
-                  Карта: <span className="font-semibold">{mapNames[pickMapId]}</span>
+                  Карта:{" "}
+                  <span className="font-semibold">{mapNames[pickMapId]}</span>
                 </p>
               )}
             </motion.div>
@@ -763,7 +773,7 @@ export default function LobbyPage() {
                             Игра
                           </span>
                           <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                            { gameName.toUpperCase() }
+                            {gameName.toUpperCase()}
                           </span>
                         </div>
                         <div className="flex items-center justify-between py-1">
@@ -784,7 +794,9 @@ export default function LobbyPage() {
                             </span>
                           </div>
                         )}
-                        {(fpsGameType === "bo1" || fpsGameType === "bo3" || fpsGameType === "bo5") && (
+                        {(fpsGameType === "bo1" ||
+                          fpsGameType === "bo3" ||
+                          fpsGameType === "bo5") && (
                           <div className="flex items-center justify-between py-1">
                             <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                               Десайдер

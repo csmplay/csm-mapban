@@ -12,7 +12,11 @@ export type OverlayShellProps = {
   children: React.ReactNode;
 };
 
-export function OverlayShell({ motionKey, size = "md", children }: OverlayShellProps) {
+export function OverlayShell({
+  motionKey,
+  size = "md",
+  children,
+}: OverlayShellProps) {
   return (
     <motion.div
       key={motionKey}

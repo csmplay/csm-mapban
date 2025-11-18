@@ -28,7 +28,7 @@ export function FooterBar({ repoUrl, licenseUrl, version }: FooterBarProps) {
           >
             GooseMooz
           </a>
-          <span>  &  </span>
+          <span> & </span>
           <a
             href="https://github.com/ch4og"
             target="_blank"

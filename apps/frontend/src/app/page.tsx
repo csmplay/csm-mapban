@@ -69,7 +69,9 @@ export default function HomePage() {
   // removed activeTab since map pool editor now only shows selected game's maps
   const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
   const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
-  const [mapPoolDraft, setMapPoolDraft] = useState<Record<string, string[]>>({});
+  const [mapPoolDraft, setMapPoolDraft] = useState<Record<string, string[]>>(
+    {},
+  );
   const [defaultMapPool, setDefaultMapPool] = useState<
     Record<string, string[]>
   >({});
@@ -183,8 +185,7 @@ export default function HomePage() {
         // Determine route based on payload
         let routeBase = "/lobby";
         const lower =
-          typeof category === "string"
-            ? category.toLowerCase() : "fps";
+          typeof category === "string" ? category.toLowerCase() : "fps";
         if (lower === "fps") routeBase = "/fps";
         if (lower === "splatoon") routeBase = "/splatoon";
         router.push(`${routeBase}/${lobbyId}`);
@@ -247,7 +248,11 @@ export default function HomePage() {
     if (!useCustomMapPool) {
       await fetchMapPoolData();
     }
-    setMapPoolDraft({ ...mapPool, cs2: [...(mapPool.cs2 || [])], valorant: [...(mapPool.valorant || [])] });
+    setMapPoolDraft({
+      ...mapPool,
+      cs2: [...(mapPool.cs2 || [])],
+      valorant: [...(mapPool.valorant || [])],
+    });
     setOverlay("mapPool");
   };
 
@@ -260,9 +265,15 @@ export default function HomePage() {
     const newPoolForGame = [...source];
     newPoolForGame[index] = value;
     if (gameName === "cs2") {
-      setMapPoolDraft({ cs2: newPoolForGame, valorant: mapPoolDraft["valorant"] || [] });
+      setMapPoolDraft({
+        cs2: newPoolForGame,
+        valorant: mapPoolDraft["valorant"] || [],
+      });
     } else {
-      setMapPoolDraft({ cs2: mapPoolDraft["cs2"] || [], valorant: newPoolForGame });
+      setMapPoolDraft({
+        cs2: mapPoolDraft["cs2"] || [],
+        valorant: newPoolForGame,
+      });
     }
   };
 
@@ -283,7 +294,10 @@ export default function HomePage() {
   };
 
   const handleSaveMapPool = () => {
-    if (!Array.isArray(mapPoolDraft["cs2"]) || !Array.isArray(mapPoolDraft["valorant"])) {
+    if (
+      !Array.isArray(mapPoolDraft["cs2"]) ||
+      !Array.isArray(mapPoolDraft["valorant"])
+    ) {
       toast({ description: "Маппул не загружен", variant: "destructive" });
       return;
     }
@@ -308,13 +322,17 @@ export default function HomePage() {
 
     const differs = (a: string[] = [], b: string[] = []) =>
       a.length !== b.length || a.some((v, i) => v !== b[i]);
-    const changed = differs(mapPoolDraft.cs2, defaultMapPool.cs2) || differs(mapPoolDraft.valorant, defaultMapPool.valorant);
+    const changed =
+      differs(mapPoolDraft.cs2, defaultMapPool.cs2) ||
+      differs(mapPoolDraft.valorant, defaultMapPool.valorant);
     setUseCustomMapPool(changed);
 
     setOverlay("settings");
 
     toast({
-      description: changed ? "Изменения маппула сохранены" : "Используется стандартный маппул",
+      description: changed
+        ? "Изменения маппула сохранены"
+        : "Используется стандартный маппул",
     });
   };
 
@@ -470,9 +488,7 @@ export default function HomePage() {
                   });
                 }}
               />
-              <h1
-                className="text-4xl md:text-5xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-neutral-50 dark:to-neutral-400 mb-5 -mt-3"
-              >
+              <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-neutral-50 dark:to-neutral-400 mb-5 -mt-3">
                 Map Ban
               </h1>
               <p className="text-neutral-600 dark:text-neutral-400 text-sm md:text-base font-normal max-w-md mx-auto -mb-3">

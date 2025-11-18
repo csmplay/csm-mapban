@@ -14,7 +14,13 @@ export type MapTileProps = {
   onChange: (idx: number, next: string) => void;
 };
 
-export function MapTile({ gameId, value, index, allMaps, onChange }: MapTileProps) {
+export function MapTile({
+  gameId,
+  value,
+  index,
+  allMaps,
+  onChange,
+}: MapTileProps) {
   const slug = (value || "").toLowerCase().replace(/ /g, "");
   const imgSrc = `https://cdn.csmpro.ru/mapban/${gameId}/maps/${slug}.jpg`;
   return (
