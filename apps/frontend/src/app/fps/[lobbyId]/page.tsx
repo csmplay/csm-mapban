@@ -689,37 +689,45 @@ export default function LobbyPage() {
                 !isKnifing && (
                   <div>
                     {/* Lobby Info */}
-                    <div className="mb-4 text-center">
-                      <div className="text-lg font-semibold text-white">
-                        Игра:{" "}
-                        <span className="font-bold text-white">{gameName}</span>
-                      </div>
-                      <>
-                        <div className="text-md text-gray-200">
-                          Правила:{" "}
-                          <span className="font-bold text-white">
-                            {fpsGameType}
+                    <div className="mb-4 ml-5 mr-5">
+                      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-4 py-3">
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                            Игра
+                          </span>
+                          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                            { gameName.toUpperCase() }
                           </span>
                         </div>
-                        <div className="text-md text-gray-400 mt-2">
-                          {(() => {
-                            if (
-                              fpsGameType === "bo1" ||
-                              fpsGameType === "bo2"
-                            ) {
-                              return `Размер маппула: ${fpsMapPoolSize}`;
-                            }
-                            if (
-                              fpsGameType === "bo1" ||
-                              fpsGameType === "bo3" ||
-                              fpsGameType === "bo5"
-                            ) {
-                              return `Десайдер: ${fpsKnifeDecider ? "Вкл" : "Выкл"}`;
-                            }
-                            return null;
-                          })()}
+                        <div className="flex items-center justify-between py-1">
+                          <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                            Правила
+                          </span>
+                          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                            {fpsGameType?.toUpperCase()}
+                          </span>
                         </div>
-                      </>
+                        {(fpsGameType === "bo1" || fpsGameType === "bo2") && (
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                              Размер маппула
+                            </span>
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                              {fpsMapPoolSize}
+                            </span>
+                          </div>
+                        )}
+                        {(fpsGameType === "bo1" || fpsGameType === "bo3" || fpsGameType === "bo5") && (
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                              Десайдер
+                            </span>
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                              {fpsKnifeDecider ? "Вкл" : "Выкл"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <h2 className="text-2xl font-bold mb-4 text-center">
                       Введите имя команды
