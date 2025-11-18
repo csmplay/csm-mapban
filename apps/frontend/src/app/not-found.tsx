@@ -30,7 +30,7 @@ export default function NotFound() {
           }}
         >
           <Image
-            src="/CSM White.svg"
+            src="https://cdn.csmpro.ru/CSM_white.svg"
             alt="CSM"
             width={120}
             height={32}

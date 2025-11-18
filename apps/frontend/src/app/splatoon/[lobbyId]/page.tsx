@@ -33,7 +33,7 @@ const modeTranslations: Record<GameMode, string> = {
 // Mode images by name
 const getModeImagePath = (modeName: string): string => {
   const filename = modeName.toLowerCase();
-  return `/splatoon/modes/${filename}.png`;
+  return `https://cdn.csmpro.ru/mapban/splatoon/modes/${filename}.png`;
 };
 
 // Map images by name
@@ -42,7 +42,7 @@ const getMapImagePath = (mapName: string): string => {
     .toLowerCase()
     .replace(/\s+/g, "")
     .replace(/["«»]/g, "");
-  return `/splatoon/maps/${filename}.jpg`;
+  return `https://cdn.csmpro.ru/mapban/splatoon/maps/${filename}.jpg`;
 };
 
 export default function SplatoonLobbyPage() {
@@ -1108,7 +1108,7 @@ export default function SplatoonLobbyPage() {
                     Подбрасываем монетку...
                   </h2>
                   <video
-                    src={`/coin_${coinResult}.webm`}
+                    src={`https://cdn.csmpro.ru/mapban/coin_${coinResult}.webm`}
                     preload="high"
                     autoPlay
                     muted
