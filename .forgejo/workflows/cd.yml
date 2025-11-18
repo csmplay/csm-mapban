@@ -151,18 +151,34 @@ jobs:
           release-notes: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
       
       - name: Publish Release to GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUBCOM_TOKEN }}
         run: |
-          set -e
-          JSON_DATA=$(jq -n --arg tag "${{ github.ref_name }}" --arg name "${{ github.ref_name }}" --arg body "${{ steps.release_notes.outputs.RELEASE_NOTES }}" \
-          '{tag_name: $tag, name: $name, body: $body}')
-          UPLOAD_URL=$(curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUBCOM_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/csmplay/csm-mapban/releases \
-            -d "$JSON_DATA" | jq -r '.upload_url' | sed -e "s/{?name,label}//")
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          API_BASE="https://api.github.com/repos/csmplay/csm-mapban"
+          BODY_FILE="release_notes.txt"
+          # Write raw release notes to a file to avoid shell quoting issues (commit messages may contain double quotes)
+          printf '%s' '${{ steps.release_notes.outputs.RELEASE_NOTES }}' > "$BODY_FILE"
+          # Try to get existing release by tag (avoid 422 if already exists)
+          EXISTING=$(curl -s -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/releases/tags/$TAG" || true)
+          UPLOAD_URL=$(echo "$EXISTING" | jq -r '.upload_url // empty' | sed -e "s/{?name,label}//")
+          if [ -z "$UPLOAD_URL" ]; then
+            # Create new release; use --rawfile so jq treats file contents as a string safely
+            JSON_DATA=$(jq -n --arg tag "$TAG" --arg name "$TAG" --rawfile body "$BODY_FILE" '{tag_name:$tag,name:$name,body:$body}')
+            CREATE=$(curl -s -X POST -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/releases" -d "$JSON_DATA")
+            UPLOAD_URL=$(echo "$CREATE" | jq -r '.upload_url' | sed -e "s/{?name,label}//")
+          fi
+          if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
+            echo "Failed to obtain upload_url for release $TAG" >&2
+            exit 1
+          fi
+          # Upload each artifact
           for f in release/*; do
+            [ -f "$f" ] || continue
             curl -s -X POST \
-              -H "Authorization: token ${{ secrets.GITHUBCOM_TOKEN }}" \
+              -H "Authorization: token $GH_TOKEN" \
               -H "Content-Type: application/octet-stream" \
-              --data-binary @"$f" "$UPLOAD_URL?name=$(basename $f)"
+              --data-binary @"$f" "$UPLOAD_URL?name=$(basename "$f")" >/dev/null
+            echo "Uploaded $(basename "$f")"
           done
