@@ -40,6 +40,7 @@ export default function LobbyPage() {
   // Lobby data
   const [teamName, setTeamName] = useState("");
   const [teamNames, setTeamNames] = useState<[string, string][]>([]);
+  const [teamColorByName, setTeamColorByName] = useState<Record<string, 'blue' | 'red'>>({});
   const [gameState, setGameState] = useState<string>("Игра начинается...");
   const [gameStateHistory, setGameStateHistory] = useState<string[]>([]);
   const [canPick, setCanPick] = useState(false);
@@ -104,6 +105,22 @@ export default function LobbyPage() {
     // Handle 'teamNamesUpdated' event
     newSocket.on("teamNamesUpdated", (teamNamesArray: [string, string][]) => {
       setTeamNames(teamNamesArray);
+      setTeamColorByName((prev) => {
+        const next = { ...prev };
+        teamNamesArray.forEach(([, name], idx) => {
+          if (!next[name]) {
+            const colorsTaken = new Set(Object.values(next));
+            if (colorsTaken.size === 0) {
+              next[name] = idx === 0 ? 'blue' : 'red';
+            } else if (colorsTaken.size === 1) {
+              if (!colorsTaken.has('blue')) next[name] = 'blue';
+              else if (!colorsTaken.has('red')) next[name] = 'red';
+              else next[name] = idx === 0 ? 'blue' : 'red'; // fallback
+            }
+          }
+        });
+        return next;
+      });
     });
 
     newSocket.on("startWithoutCoin", () => {
@@ -296,6 +313,11 @@ export default function LobbyPage() {
   const blueTeamName = blueTeamEntry ? blueTeamEntry[1] : "Team Blue";
   const redTeamName = redTeamEntry ? redTeamEntry[1] : "Team Red";
 
+  const getTeamColor = (name: string | undefined | null) => {
+    if (!name) return null;
+    return teamColorByName[name] || null;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8 relative">
       <div className="max-w-6xl mx-auto">
@@ -373,20 +395,11 @@ export default function LobbyPage() {
             const isSelected = selectedMapIndex === index;
 
             const banEntry = bannedMaps.find((ban) => ban.map === mapName);
-            const banTeamColor =
-              banEntry && banEntry.teamName === blueTeamName
-                ? "blue"
-                : banEntry && banEntry.teamName === redTeamName
-                  ? "red"
-                  : null;
+            const banTeamColor = getTeamColor(banEntry?.teamName);
 
             const pickEntry = pickedMaps.find((pick) => pick.map === mapName);
             const pickSide = pickEntry ? pickEntry.side : null;
-            const pickTeamColor = pickEntry
-              ? pickEntry.teamName === redTeamName
-                ? "red"
-                : "blue"
-              : null;
+            const pickTeamColor = getTeamColor(pickEntry?.teamName);
 
             return (
               <motion.div
@@ -453,6 +466,18 @@ export default function LobbyPage() {
                           },
                         }}
                       >
+                        {(() => {
+                          const pickingColor = pickTeamColor;
+                          const opponentColor = pickingColor === 'red'
+                            ? 'blue'
+                            : pickingColor === 'blue'
+                              ? 'red'
+                              : null;
+
+                          const sideDeciderColor = fpsGameType === 'bo1' ? pickingColor : opponentColor;
+                          const otherIconColor = fpsGameType === 'bo1' ? opponentColor : pickingColor;
+                          return (
+                            <>
                         {pickEntry.side === "DECIDER" && (
                           <motion.div
                             initial={{ y: 100, opacity: 0 }}
@@ -496,9 +521,11 @@ export default function LobbyPage() {
                                 height={80}
                                 priority={true}
                                 className={`rounded-full border-4 ${
-                                  pickTeamColor === "red"
-                                    ? "border-red-500"
-                                    : "border-blue-500"
+                                  sideDeciderColor === 'red'
+                                    ? 'border-red-500'
+                                    : sideDeciderColor === 'blue'
+                                      ? 'border-blue-500'
+                                      : 'border-neutral-400'
                                 }`}
                               />
                             </motion.div>
@@ -519,14 +546,19 @@ export default function LobbyPage() {
                                 height={80}
                                 priority={true}
                                 className={`rounded-full border-4 ${
-                                  pickTeamColor === "red"
-                                    ? "border-blue-500"
-                                    : "border-red-500"
+                                  otherIconColor === 'red'
+                                    ? 'border-red-500'
+                                    : otherIconColor === 'blue'
+                                      ? 'border-blue-500'
+                                      : 'border-neutral-400'
                                 }`}
                               />
                             </motion.div>
                           </>
                         )}
+                            </>
+                          );
+                        })()}
                       </motion.div>
                     )}
 
