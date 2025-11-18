@@ -4,7 +4,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import AnimatedBanCard from "@/components/ui/ban";
 import AnimatedPickCard from "@/components/ui/pick";
 import AnimatedBanModeCard from "@/components/ui/ban_mode";
@@ -80,7 +80,6 @@ interface CardColors {
 }
 
 const ObsPage = () => {
-  const [, setSocket] = useState<Socket | null>(null);
   const [, setSelectedLobbyId] = useState<string | null>(null);
 
   const [pickedEntries, setPickedEntries] = useState<
@@ -137,7 +136,6 @@ const ObsPage = () => {
   useEffect(() => {
     console.log("Initializing socket connection...");
     const newSocket = io(backendUrl);
-    setSocket(newSocket);
 
     newSocket.on("connect", () => {
       console.log("Connected to Socket.IO server");
@@ -390,16 +388,21 @@ const ObsPage = () => {
     // If the new actions array is shorter than what we have revealed, it's a reset scenario
     if (actions.length < visibleActionsCount) {
       console.log("Resetting visible actions count");
-      setVisibleActionsCount(0);
-    } else if (actions.length > visibleActionsCount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional reset when action list shrinks
+      setVisibleActionsCount(() => 0);
+      return;
+    }
+    
+    if (actions.length > visibleActionsCount) {
       // There are new actions to reveal
-      let currentIndex = visibleActionsCount;
       const intervalId = setInterval(() => {
-        currentIndex += 1;
-        setVisibleActionsCount(currentIndex);
-        if (currentIndex >= actions.length) {
-          clearInterval(intervalId);
-        }
+        setVisibleActionsCount((prev) => {
+          if (prev + 1 > actions.length) {
+            clearInterval(intervalId);
+            return prev;
+          }
+          return prev + 1;
+        });
       }, 3000);
 
       return () => clearInterval(intervalId);

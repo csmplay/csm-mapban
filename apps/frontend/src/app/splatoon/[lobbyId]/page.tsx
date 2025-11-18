@@ -49,26 +49,21 @@ export default function SplatoonLobbyPage() {
   // Core variables and states
   const { lobbyId } = useParams();
   const { toast } = useToast();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
 
   // Maps and modes lists
   const [mapNames, setMapNames] = useState<string[]>([]);
   const [modesSize, setModesSize] = useState<number>(4);
-  const [availableModes, setAvailableModes] = useState<GameMode[]>([
-    "clam",
-    "rainmaker",
-    "tower",
-    "zones",
-  ]);
-
-  useEffect(() => {
-    if (modesSize === 2) {
-      setAvailableModes(["tower", "zones"]);
-    } else {
-      setAvailableModes(["clam", "rainmaker", "tower", "zones"]);
-    }
-  }, [modesSize]);
+  const [activeModes, setActiveModes] = useState<GameMode[] | null>(null);
+  
+  // Derive available modes from modesSize or use server-provided active modes
+  const availableModes: GameMode[] = useMemo(() => {
+    if (activeModes !== null) return activeModes;
+    return modesSize === 2
+      ? ["tower", "zones"]
+      : ["clam", "rainmaker", "tower", "zones"];
+  }, [modesSize, activeModes]);
 
   // Overlay states
   const [showTeamNameOverlay, setShowTeamNameOverlay] = useState(true);
@@ -285,7 +280,7 @@ export default function SplatoonLobbyPage() {
         modesSize: number;
       }) => {
         setBannedModes(data.banned);
-        setAvailableModes(data.active);
+        setActiveModes(data.active);
         setActiveMode(null);
         if (data.modesSize === 2) {
           setModesSize(2);
@@ -432,7 +427,7 @@ export default function SplatoonLobbyPage() {
       setGameStateHistory([]);
     });
 
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     return () => {
       newSocket.disconnect();
@@ -481,6 +476,7 @@ export default function SplatoonLobbyPage() {
 
   // Handle submit button click
   const handleSubmit = useCallback(() => {
+    const socket = socketRef.current;
     if (socket) {
       if (canModeBan && selectedMode && modesSize === 4) {
         // Mode banning is only available for 4 modes
@@ -514,7 +510,6 @@ export default function SplatoonLobbyPage() {
       }
     }
   }, [
-    socket,
     canModeBan,
     canModePick,
     canMapBan,
@@ -530,6 +525,7 @@ export default function SplatoonLobbyPage() {
   // Handle winner selection
   const handleReportWinner = useCallback(
     (winnerTeam: string) => {
+      const socket = socketRef.current;
       if (socket) {
         socket.emit("lobby.proposeWinner", {
           lobbyId,
@@ -539,12 +535,13 @@ export default function SplatoonLobbyPage() {
         setShowWinnerReportOverlay(false);
       }
     },
-    [socket, lobbyId, teamName],
+    [lobbyId, teamName],
   );
 
   // Handle winner confirmation
   const handleConfirmWinner = useCallback(
     (confirmed: boolean) => {
+      const socket = socketRef.current;
       if (socket && pendingWinner) {
         socket.emit("lobby.confirmWinner", {
           lobbyId,
@@ -562,11 +559,12 @@ export default function SplatoonLobbyPage() {
         }
       }
     },
-    [socket, pendingWinner, lobbyId, teamName],
+    [pendingWinner, lobbyId, teamName],
   );
 
   const handleTeamNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const socket = socketRef.current;
     if (teamName.trim() && socket) {
       console.log(`Submitting team name: ${teamName}`);
       setIsWaiting(true);

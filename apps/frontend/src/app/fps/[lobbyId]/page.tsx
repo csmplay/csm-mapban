@@ -19,7 +19,7 @@ export default function LobbyPage() {
   // Core variables and states
   const { lobbyId } = useParams();
   const { toast } = useToast();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
 
   // Maps list
@@ -243,7 +243,7 @@ export default function LobbyPage() {
       },
     );
 
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     return () => {
       newSocket.disconnect();
@@ -266,15 +266,15 @@ export default function LobbyPage() {
   };
 
   const handleSubmit = () => {
-    if (selectedMapIndex === null || !socket || !lobbyId) return;
+    if (selectedMapIndex === null || !socketRef.current || !lobbyId) return;
     const mapName = mapNames[selectedMapIndex];
-    const team = teamNames.find(([socketId]) => socketId === socket.id);
+    const team = teamNames.find(([socketId]) => socketId === socketRef.current!.id);
     const teamName = team ? team[1] : "Spectator";
 
     if (canBan) {
-      socket.emit("lobby.ban", { lobbyId, map: mapName, teamName });
+      socketRef.current.emit("lobby.ban", { lobbyId, map: mapName, teamName });
     } else if (canPick) {
-      socket.emit("lobby.startPick", { lobbyId, teamName, selectedMapIndex });
+      socketRef.current.emit("lobby.startPick", { lobbyId, teamName, selectedMapIndex });
       iStartedPickRef.current = true;
       setWaitingForSide(fpsGameTypeRef.current !== "bo1");
       return;
@@ -286,12 +286,12 @@ export default function LobbyPage() {
   const handlePromptClick = (side: string) => {
     setShowPrompts(false);
 
-    if (socket && lobbyId && selectedMapIndex !== null) {
+    if (socketRef.current && lobbyId && selectedMapIndex !== null) {
       const mapName = mapNames[selectedMapIndex];
-      const team = teamNames.find(([socketId]) => socketId === socket.id);
+      const team = teamNames.find(([socketId]) => socketId === socketRef.current!.id);
       const teamName = team ? team[1] : "Spectator";
 
-      socket.emit("lobby.pick", { lobbyId, map: mapName, teamName, side });
+      socketRef.current.emit("lobby.pick", { lobbyId, map: mapName, teamName, side });
       // Reset selected map
       setSelectedMapIndex(null);
       setWaitingForSide(false);
@@ -300,8 +300,8 @@ export default function LobbyPage() {
 
   const handleTeamNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (socket && lobbyId && teamName) {
-      socket.emit("lobby.teamName", { lobbyId, teamName });
+    if (socketRef.current && lobbyId && teamName) {
+      socketRef.current.emit("lobby.teamName", { lobbyId, teamName });
     }
 
     setIsWaiting(true);

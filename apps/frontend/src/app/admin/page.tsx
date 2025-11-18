@@ -125,6 +125,7 @@ export default function AdminPage() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [globalCoinFlip, setGlobalCoinFlip] = useState(true);
   const localCoinFlip = useRef(true);
+  const [localCoinFlipState, setLocalCoinFlipState] = useState<boolean>(true);
   const [localKnifeDecider, setLocalKnifeDecider] = useState(false);
   const [gameType, setGameType] = useState("BO1");
   const [gameName, setGame] = useState("CS2");
@@ -157,9 +158,11 @@ export default function AdminPage() {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  // Update game type when game changes
+  // Update game type when game changes - Splatoon only supports BO3
   useEffect(() => {
     if (gameName === "Splatoon") {
+      // Intentionally setting state in effect to enforce BO3 for Splatoon
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGameType("BO3");
     }
   }, [gameName]);
@@ -938,12 +941,14 @@ export default function AdminPage() {
                 <div className="pt-6 ml-10 text-center text-foreground space-x-4 flex flex-wrap items-center gap-4">
                   <AnimatedCheckbox
                     id="localCoinFlip"
-                    checked={localCoinFlip.current}
+                    checked={localCoinFlipState}
                     onCheckedChange={(checked) => {
-                      localCoinFlip.current = checked as boolean;
+                      const v = Boolean(checked);
+                      localCoinFlip.current = v;
+                      setLocalCoinFlipState(v);
                     }}
                     variants={checkboxVariants}
-                    animate={localCoinFlip.current ? "checked" : "unchecked"}
+                    animate={localCoinFlipState ? "checked" : "unchecked"}
                     transition={{ type: "spring", stiffness: 300, damping: 10 }}
                   />
                   <Label htmlFor="localCoinFlip">

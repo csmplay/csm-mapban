@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { io, Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Copy } from "lucide-react";
@@ -15,7 +15,6 @@ export default function LobbyPage() {
   const { lobbyId } = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const [, setSocket] = useState<Socket | null>(null);
   const [, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
@@ -47,8 +46,6 @@ export default function LobbyPage() {
       setIsLoading(false);
       setIsError(true);
     });
-
-    setSocket(newSocket);
 
     return () => {
       newSocket.disconnect();

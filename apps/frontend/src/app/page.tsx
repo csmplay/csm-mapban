@@ -58,7 +58,8 @@ export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
   const [gameType, setGameType] = useState("BO1");
   const [selectedGameId, setSelectedGameId] = useState<string>("cs2");
   const [localKnifeDecider, setLocalKnifeDecider] = useState(true);
@@ -108,17 +109,16 @@ export default function HomePage() {
       timeout: 3000,
     });
 
-    setIsConnecting(true);
-    setConnectionError(false);
-
     newSocket.on("connect", () => {
       setIsConnecting(false);
       setConnectionError(false);
+      setSocketConnected(true);
     });
 
     newSocket.on("connect_error", () => {
       setIsConnecting(false);
       setConnectionError(true);
+      setSocketConnected(false);
     });
 
     newSocket.on("lobbyCreationError", (errorMessage: string) => {
@@ -131,19 +131,23 @@ export default function HomePage() {
       router.push("/");
     });
 
-    setSocket(newSocket);
-
-    fetchMapPoolData();
+    socketRef.current = newSocket;
 
     return () => {
       newSocket.disconnect();
     };
-  }, [backendUrl, router, toast, fetchMapPoolData]);
+  }, [backendUrl, router, toast]);
+
+  // Fetch map pool data on mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional data fetch on mount
+    fetchMapPoolData();
+  }, [fetchMapPoolData]);
 
   const handleJoinLobby = async () => {
     if (lobbyId && lobbyId.length === 4) {
       try {
-        if (!socket?.connected) {
+        if (!socketRef.current?.connected) {
           toast({
             description: "Ошибка подключения к серверу",
             variant: "destructive",
@@ -152,7 +156,11 @@ export default function HomePage() {
         }
 
         const checkLobbyExists = new Promise((resolve, reject) => {
-          const s = socket as Socket;
+          const s = socketRef.current;
+          if (!s) {
+            reject(new Error("Socket not connected"));
+            return;
+          }
           s.emit("getLobbyGameCategory", lobbyId);
 
           const timeoutId = setTimeout(() => {
@@ -173,8 +181,10 @@ export default function HomePage() {
           };
 
           function cleanup() {
-            s.off("lobbyNotFound", handleLobbyNotFound);
-            s.off("lobbyGameCategory", handleSuccess);
+            if (s) {
+              s.off("lobbyNotFound", handleLobbyNotFound);
+              s.off("lobbyGameCategory", handleSuccess);
+            }
           }
 
           s.once("lobbyNotFound", handleLobbyNotFound);
@@ -204,6 +214,7 @@ export default function HomePage() {
   };
 
   const handleCreateLobby = () => {
+    const socket = socketRef.current;
     if (socket) {
       if (creatingLobby) return;
       setCreatingLobby(true);
@@ -578,7 +589,7 @@ export default function HomePage() {
                 <Button
                   onClick={() => setOverlay("game")}
                   className="w-full h-11 rounded-2xl font-medium bg-transparent border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/70 transition-all duration-200"
-                  disabled={!socket?.connected}
+                  disabled={!socketConnected}
                 >
                   Создать своё лобби
                 </Button>
@@ -623,7 +634,7 @@ export default function HomePage() {
             onOpenMapPool={handleOpenMapPoolEditor}
             onCreate={handleCreateLobby}
             creating={creatingLobby}
-            disabled={!socket?.connected}
+            disabled={!socketConnected}
             mapPoolChanged={useCustomMapPool}
           />
         )}
