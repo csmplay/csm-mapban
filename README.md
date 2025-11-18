@@ -84,8 +84,8 @@ server {
 The easiest way to run CSM Mapban in production:
 
 ```bash
-docker run -d git.csmpro.ru/csmpro/csm-mapban/backend:latest
-docker run -d git.csmpro.ru/csmpro/csm-mapban/frontend:latest
+docker run -d git.in.csmpro.ru/csmpro/csm-mapban/backend:latest
+docker run -d git.in.csmpro.ru/csmpro/csm-mapban/frontend:latest
 ```
 
 Or with docker compose:
@@ -100,7 +100,7 @@ docker compose up -d
 Use Nix package:
 
 ```bash
-nix run git+https://git.csmpro.ru/csmpro/csm-mapban
+nix run git+https://git.in.csmpro.ru/csmpro/csm-mapban
 ```
 
 ## License and Trademark Notice

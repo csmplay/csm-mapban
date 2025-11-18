@@ -3,7 +3,7 @@
 
 services:
   backend:
-    image: git.csmpro.ru/csmpro/csm-mapban/backend:latest
+    image: git.in.csmpro.ru/csmpro/csm-mapban/backend:latest
     ports:
       - 1703:4000
     environment:
@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: git.csmpro.ru/csmpro/csm-mapban/frontend:latest
+    image: git.in.csmpro.ru/csmpro/csm-mapban/frontend:latest
     ports:
       - 1702:3000
     depends_on:
