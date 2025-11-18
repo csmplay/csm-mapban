@@ -27,6 +27,12 @@ jobs:
       - name: Install bun
         uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
 
+      - name: Install Node.js 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          package-manager-cache: false
+
       - name: Log in to Forgejo Container Registry
         uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
         with:
@@ -85,6 +91,12 @@ jobs:
           apt update
           apt install -y zip jq
       
+      - name: Install Node.js 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          package-manager-cache: false
+
       - name: Generate Release Notes
         id: release_notes
         run: |
