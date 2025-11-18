@@ -7,6 +7,10 @@
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["actions/checkout"],
       "allowedVersions": "4.0.0"
+    },
+    {
+      "matchDatasources": ["bun"],
+      "abandonmentThreshold": "18 months"
     }
   ],
   "prHourlyLimit": 0,
