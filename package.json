@@ -11,7 +11,7 @@
     "bun": ">=1.2.11"
   },
   "scripts": {
-    "dev": "dotenv -- turbo run dev --parallel -- --turbopack",
+    "dev": "dotenv -- turbo run dev --parallel",
     "build": "dotenv -- turbo run build",
     "lint": "dotenv -- turbo run lint",
     "fmt": "prettier --write apps/*/src",

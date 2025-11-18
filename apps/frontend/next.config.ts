@@ -5,6 +5,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  cacheComponents: true,
   output: "standalone",
   images: {
     unoptimized: false,
@@ -15,19 +16,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
-  },
-  async headers() {
-    return [
-      {
-        source: '/(.*)\\.(jpg|jpeg|png|webp|avif|gif|svg|webm)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-    ];
   },
   env: {
     FRONTEND_URL: process.env.FRONTEND_URL,
