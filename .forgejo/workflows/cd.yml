@@ -98,26 +98,27 @@ jobs:
       - name: Generate Release Notes
         id: release_notes
         run: |
+          mkdir -p release
           API_URL="https://${{ env.REPO_URL }}/api/v1"
           CUR_TAG="${{ github.ref_name }}"
           TAGS=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/tags" | jq -r '.[] | "\(.name) \(.commit.sha)"')
           PREV_TAG=$(echo "$TAGS" | grep -v "$CUR_TAG" | head -n1 | awk '{print $2}')
-          NOTES=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/compare/$PREV_TAG...$CUR_TAG" | jq -r --arg TAG_MSG "chore: release $CUR_TAG" '.commits[] | select((.commit.message | gsub("\n";"") | ltrimstr(" ") | rtrimstr(" ")) != $TAG_MSG) | "- \(.commit.message | gsub("\n"; "")) \(.sha[0:7]) (@\(.author.login // .commit.author.name))"')
-          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
-          echo "### Changelog" >> $GITHUB_OUTPUT
-          echo "$NOTES" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "---" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "The CyberSport Masters and CSM logos are registered trademarks." >> $GITHUB_OUTPUT
-          echo "They may not be used, copied, modified, or distributed without explicit written permission." >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "Made by [**CSM**](https://csmpro.ru)" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "$GITHUB_OUTPUT"
-
-      - name: Create Release Directory
-        run: mkdir release
+          NOTES=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" "$API_URL/repos/${{ github.repository }}/compare/$PREV_TAG...$CUR_TAG" | jq -r --arg TAG_MSG "chore: release $CUR_TAG" '.commits[] as $c | ($c.commit.message | split("\n")[0] | ltrimstr(" ") | rtrimstr(" ")) as $title | select($title != $TAG_MSG) | "- \($title) \($c.sha[0:7]) (@\($c.author.login // $c.commit.author.name))"')
+          {
+            echo "### Changelog"
+            echo "$NOTES"
+            echo ""
+            echo "---"
+            echo ""
+            echo "The CyberSport Masters and CSM logos are registered trademarks."
+            echo "They may not be used, copied, modified, or distributed without explicit written permission."
+            echo ""
+            echo "Made by [**CSM**](https://csmpro.ru)"
+          } > release/RELEASE_NOTES.md
+          echo "RELEASE_NOTES<<EOF" >> "$GITHUB_OUTPUT"
+          cat release/RELEASE_NOTES.md >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          rm release/RELEASE_NOTES.md
 
       - name: Build Backend release
         run: |
@@ -149,46 +150,13 @@ jobs:
           cp docker-compose.yml release/docker-compose.yml
           sed -i "s/:latest/:${{ github.ref_name }}/g" release/docker-compose.yml
 
-      - name: Publish Release
-        uses: https://code.forgejo.org/actions/forgejo-release@fc0488c944626f9265d87fbc4dd6c08f78014c63 # v2.7.3
+      - name: Release
+        uses: actions/forgejo-release@v2.7.3
         with:
           direction: upload
-          url: https://${{ env.REPO_URL }}
+          url: ${{ github.server_url }}
           repo: ${{ github.repository }}
           token: ${{ secrets.RELEASE_TOKEN }}
           tag: ${{ github.ref_name }}
           release-dir: release
           release-notes: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
-      
-      - name: Publish Release to GitHub
-        env:
-          GH_TOKEN: ${{ secrets.GITHUBCOM_TOKEN }}
-        run: |
-          set -euo pipefail
-          TAG="${{ github.ref_name }}"
-          API_BASE="https://api.github.com/repos/csmplay/csm-mapban"
-          BODY_FILE="release_notes.txt"
-          # Write raw release notes to a file to avoid shell quoting issues (commit messages may contain double quotes)
-          printf '%s' '${{ steps.release_notes.outputs.RELEASE_NOTES }}' > "$BODY_FILE"
-          # Try to get existing release by tag (avoid 422 if already exists)
-          EXISTING=$(curl -s -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/releases/tags/$TAG" || true)
-          UPLOAD_URL=$(echo "$EXISTING" | jq -r '.upload_url // empty' | sed -e "s/{?name,label}//")
-          if [ -z "$UPLOAD_URL" ]; then
-            # Create new release; use --rawfile so jq treats file contents as a string safely
-            JSON_DATA=$(jq -n --arg tag "$TAG" --arg name "$TAG" --rawfile body "$BODY_FILE" '{tag_name:$tag,name:$name,body:$body}')
-            CREATE=$(curl -s -X POST -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github+json" "$API_BASE/releases" -d "$JSON_DATA")
-            UPLOAD_URL=$(echo "$CREATE" | jq -r '.upload_url' | sed -e "s/{?name,label}//")
-          fi
-          if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
-            echo "Failed to obtain upload_url for release $TAG" >&2
-            exit 1
-          fi
-          # Upload each artifact
-          for f in release/*; do
-            [ -f "$f" ] || continue
-            curl -s -X POST \
-              -H "Authorization: token $GH_TOKEN" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$f" "$UPLOAD_URL?name=$(basename "$f")" >/dev/null
-            echo "Uploaded $(basename "$f")"
-          done
