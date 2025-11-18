@@ -1,0 +1,22 @@
+version = 1
+SPDX-PackageName = "csm-mapban"
+SPDX-PackageSupplier = "CyberSport Masters <git@csmpro.ru>"
+SPDX-PackageDownloadLocation = "https://git.in.csmpro.ru/csmpro/csm-mapban"
+
+[[annotations]]
+path = ["**/.gitignore", "apps/frontend/public/version", ".gitignore", ".envrc", "assets/screenshot.png", "package.json", ".npmrc", "bun.lock", "**/package.json", "turbo.json", "apps/**/tsconfig.json", "apps/**/.eslintrc.json", "apps/frontend/components.json", "apps/backend/nodemon.json", ".forgejo/workflows/ci.yml", ".forgejo/workflows/cd.yml", "renovate.json", "flake.nix", "flake.lock"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024-2025 CyberSport Masters <git@csmpro.ru>"
+SPDX-License-Identifier = "AGPL-3.0-only"
+
+[[annotations]]
+path = "apps/frontend/src/app/favicon.ico"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 CyberSport Masters <git@csmpro.ru>"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
+
+[[annotations]]
+path = "apps/frontend/src/app/fonts/Geist**.woff"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2024 The Geist Project Authors"
+SPDX-License-Identifier = "OFL-1.1"

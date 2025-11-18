@@ -113,7 +113,7 @@ This project is fully compliant with the
 - Wherever technically possible, each source file contains SPDX-compliant
   license and copyright information directly in its header.
 - For files where inline annotations are not feasible (for example, binary
-  assets), the relevant information is provided in [.reuse/dep5](./.reuse/dep5).
+  assets), the relevant information is provided in [REUSE.toml](./REUSE.toml).
 - All license files can be found in the [LICENSES](./LICENSES) directory.
 
 ### Source Code License
