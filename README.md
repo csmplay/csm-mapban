@@ -127,5 +127,4 @@ The code is developed and maintained by **CyberSport Masters**.
 
 The **CyberSport Masters** and **CSM** logos are registered trademarks. They may
 not be used, copied, modified, or distributed without explicit written
-permission. Detailed rules on trademark usage can be found in the
-[CyberSport Masters Trademark Policy](./LICENSES/LicenseRef-CyberSportMasters.txt).
+permission.

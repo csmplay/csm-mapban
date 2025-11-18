@@ -101,7 +101,6 @@ jobs:
           echo "" >> $GITHUB_OUTPUT
           echo "The CyberSport Masters and CSM logos are registered trademarks." >> $GITHUB_OUTPUT
           echo "They may not be used, copied, modified, or distributed without explicit written permission." >> $GITHUB_OUTPUT
-          echo "Detailed rules on trademark usage can be found in the [CyberSport Masters Trademark Policy](https://git.in.csmpro.ru/csmpro/csm-mapban/raw/branch/main/LICENSES/LicenseRef-CyberSportMasters.txt)." >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "Made by [**CSM**](https://csmpro.ru)" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
