@@ -208,14 +208,6 @@ io.on("connection", (socket) => {
         return;
       }
 
-      if ((gameType === "bo1" || gameType === "bo2") && knifeDecider) {
-        io.to(socket.id).emit(
-          "lobbyCreationError",
-          "У вас выбран десайдер, который не поддерживается",
-        );
-        return;
-      }
-
       let lobby = lobbies.get(lobbyId) as FPSGames.Lobby;
       if (!lobby) {
         // Select map pool based on game type

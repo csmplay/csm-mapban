@@ -802,8 +802,8 @@ export default function HomePage() {
                     </div>
                   )}
 
-                {/* Decider for BO3 and BO5 */}
-                {["BO3", "BO5"].includes(gameType) &&
+                {/* Decider for BO1, BO3 and BO5 */}
+                {["BO1", "BO3", "BO5"].includes(gameType) &&
                   selectedGameInfo?.type !== "splatoon" && (
                     <div className="space-y-3">
                       <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400 text-center uppercase tracking-wider">

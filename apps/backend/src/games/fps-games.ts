@@ -24,7 +24,7 @@ export interface Lobby extends BaseLobby {
 
 // Game type patterns for different match formats
 export const mapRulesLists = {
-  bo1: ["ban", "ban", "ban", "ban", "ban", "ban", "pick"],
+  bo1: ["ban", "ban", "ban", "ban", "ban", "ban", "decider"],
   bo2: ["ban", "ban", "ban", "ban", "ban", "pick", "pick"],
   bo3: ["ban", "ban", "pick", "pick", "ban", "ban", "decider"],
   bo5: ["ban", "ban", "pick", "pick", "pick", "pick", "decider"],
