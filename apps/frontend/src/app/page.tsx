@@ -60,7 +60,7 @@ export default function HomePage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [gameType, setGameType] = useState("BO1");
   const [selectedGameId, setSelectedGameId] = useState<string>("cs2");
-  const [localKnifeDecider, setLocalKnifeDecider] = useState(false);
+  const [localKnifeDecider, setLocalKnifeDecider] = useState(true);
   const [localModesSize, setLocalModesSize] = useState(2);
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
   const [creatingLobby, setCreatingLobby] = useState(false);
