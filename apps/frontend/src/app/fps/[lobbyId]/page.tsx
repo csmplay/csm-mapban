@@ -36,6 +36,8 @@ export default function LobbyPage() {
   const [isAnimated, setIsAnimated] = useState(false);
   const [isUndefined, setIsUndefined] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [waitingForSide, setWaitingForSide] = useState(false);
+  const iStartedPickRef = useRef(false);
 
   // Lobby data
   const [teamName, setTeamName] = useState("");
@@ -50,6 +52,7 @@ export default function LobbyPage() {
   const isCoin = useRef(true);
 
   const [fpsGameType, setFpsGameType] = useState<string>("");
+  const fpsGameTypeRef = useRef<string>("");
   const [fpsMapPoolSize, setFpsMapPoolSize] = useState<number>(0);
   const [fpsKnifeDecider, setFpsKnifeDecider] = useState<boolean>(false);
 
@@ -133,6 +136,9 @@ export default function LobbyPage() {
       (picked: Array<{ map: string; teamName: string; side: string }>) => {
         setPickedMaps(picked);
         setSelectedMapIndex(null);
+        setWaitingForSide(false);
+        setShowPrompts(false);
+        iStartedPickRef.current = false;
       },
     );
 
@@ -206,12 +212,19 @@ export default function LobbyPage() {
       setPickMapId(index);
       setSelectedMapIndex(index);
       setIsWaiting(false);
-      setShowPrompts(true);
+      const gt = fpsGameTypeRef.current;
+      const pickerChooses = gt === "bo1" || !gt;
+      const iStarted = iStartedPickRef.current;
+      const shouldShowPrompts = pickerChooses ? iStarted : !iStarted;
+      setShowPrompts(shouldShowPrompts);
+      setWaitingForSide(!pickerChooses && iStarted);
     });
 
     newSocket.on("endPick", () => {
       setShowTeamNameOverlay(false);
       setIsWaiting(false);
+      setWaitingForSide(false);
+      iStartedPickRef.current = false;
     });
 
     newSocket.on(
@@ -222,6 +235,7 @@ export default function LobbyPage() {
         knifeDecider: boolean;
       }) => {
         setFpsGameType(settings.gameType);
+        fpsGameTypeRef.current = settings.gameType;
         setFpsMapPoolSize(settings.mapPoolSize);
         setFpsKnifeDecider(settings.knifeDecider);
       },
@@ -259,7 +273,8 @@ export default function LobbyPage() {
       socket.emit("lobby.ban", { lobbyId, map: mapName, teamName });
     } else if (canPick) {
       socket.emit("lobby.startPick", { lobbyId, teamName, selectedMapIndex });
-      setIsWaiting(true);
+      iStartedPickRef.current = true;
+      setWaitingForSide(fpsGameTypeRef.current !== "bo1");
       return;
     }
 
@@ -277,6 +292,7 @@ export default function LobbyPage() {
       socket.emit("lobby.pick", { lobbyId, map: mapName, teamName, side });
       // Reset selected map
       setSelectedMapIndex(null);
+      setWaitingForSide(false);
     }
   };
 
@@ -681,6 +697,35 @@ export default function LobbyPage() {
                   onClick={() => handlePromptClick("t")}
                 />
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {waitingForSide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
+            >
+              <h2 className="text-2xl font-bold mb-2 text-center">
+                Ожидание выбора стороны соперником
+              </h2>
+              {typeof pickMapId === "number" && mapNames[pickMapId] && (
+                <p className="text-center text-neutral-600 mb-4">
+                  Карта: <span className="font-semibold">{mapNames[pickMapId]}</span>
+                </p>
+              )}
             </motion.div>
           </motion.div>
         )}
