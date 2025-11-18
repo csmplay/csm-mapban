@@ -23,6 +23,7 @@ export type SettingsOverlayProps = {
   onCreate: () => void;
   creating: boolean;
   disabled?: boolean;
+  mapPoolChanged?: boolean;
 };
 
 const availableFormats = [
@@ -49,6 +50,7 @@ export function SettingsOverlay(props: SettingsOverlayProps) {
     onCreate,
     creating,
     disabled,
+    mapPoolChanged,
   } = props;
 
   return (
@@ -156,9 +158,13 @@ export function SettingsOverlay(props: SettingsOverlayProps) {
         {type === "fps" && (
           <Button
             onClick={onOpenMapPool}
-            className={`w-full h-10 rounded-2xl font-medium transition-all duration-200 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0`}
+            className={
+              mapPoolChanged
+                ? "w-full h-10 mt-[20px] rounded-2xl font-medium transition-all duration-200 bg-neutral-50 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-600 border-0"
+                : "w-full h-10 mt-[20px] rounded-2xl font-medium transition-all duration-200 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
+            }
           >
-            Редактировать маппул
+            {mapPoolChanged ? "Маппул изменён" : "Редактировать маппул"}
           </Button>
         )}
 

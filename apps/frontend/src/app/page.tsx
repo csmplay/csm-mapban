@@ -65,9 +65,10 @@ export default function HomePage() {
   const [mapPoolSize, setMapPoolSize] = useState<number>(7);
   const [creatingLobby, setCreatingLobby] = useState(false);
 
-  const [activeTab, setActiveTab] = useState(0);
+  // removed activeTab since map pool editor now only shows selected game's maps
   const [allMapsList, setAllMapsList] = useState<Record<string, string[]>>({});
   const [mapPool, setMapPool] = useState<Record<string, string[]>>({});
+  const [mapPoolDraft, setMapPoolDraft] = useState<Record<string, string[]>>({});
   const [defaultMapPool, setDefaultMapPool] = useState<
     Record<string, string[]>
   >({});
@@ -245,7 +246,7 @@ export default function HomePage() {
     if (!useCustomMapPool) {
       await fetchMapPoolData();
     }
-    setActiveTab(selectedGameId === "valorant" ? 1 : 0);
+    setMapPoolDraft({ ...mapPool, cs2: [...(mapPool.cs2 || [])], valorant: [...(mapPool.valorant || [])] });
     setOverlay("mapPool");
   };
 
@@ -254,22 +255,25 @@ export default function HomePage() {
     value: string,
     gameName: string,
   ) => {
-    const newMapPool = [...mapPool[gameName]];
-    newMapPool[index] = value;
-
+    const source = mapPoolDraft[gameName] || [];
+    const newPoolForGame = [...source];
+    newPoolForGame[index] = value;
     if (gameName === "cs2") {
-      setMapPool({ cs2: newMapPool, valorant: mapPool["valorant"] });
+      setMapPoolDraft({ cs2: newPoolForGame, valorant: mapPoolDraft["valorant"] || [] });
     } else {
-      setMapPool({ cs2: mapPool["cs2"], valorant: newMapPool });
+      setMapPoolDraft({ cs2: mapPoolDraft["cs2"] || [], valorant: newPoolForGame });
     }
-
-    setUseCustomMapPool(true);
   };
 
   const handleResetMapPool = () => {
-    setMapPool({ ...defaultMapPool });
+    const next = {
+      cs2: [...(defaultMapPool.cs2 || [])],
+      valorant: [...(defaultMapPool.valorant || [])],
+    } as Record<string, string[]>;
+
+    setMapPool(next);
+    setMapPoolDraft(next);
     setUseCustomMapPool(false);
-    setActiveTab(0);
     setOverlay("settings");
 
     toast({
@@ -278,12 +282,12 @@ export default function HomePage() {
   };
 
   const handleSaveMapPool = () => {
-    if (!Array.isArray(mapPool["cs2"]) || !Array.isArray(mapPool["valorant"])) {
+    if (!Array.isArray(mapPoolDraft["cs2"]) || !Array.isArray(mapPoolDraft["valorant"])) {
       toast({ description: "Маппул не загружен", variant: "destructive" });
       return;
     }
-    const uniqueValuesZero = new Set(mapPool["cs2"]);
-    const uniqueValuesOne = new Set(mapPool["valorant"]);
+    const uniqueValuesZero = new Set(mapPoolDraft["cs2"]);
+    const uniqueValuesOne = new Set(mapPoolDraft["valorant"]);
 
     if (
       uniqueValuesZero.size !== mapPool["cs2"].length ||
@@ -296,13 +300,20 @@ export default function HomePage() {
       return;
     }
 
-    setActiveTab(0);
+    setMapPool({
+      cs2: [...(mapPoolDraft.cs2 || [])],
+      valorant: [...(mapPoolDraft.valorant || [])],
+    });
+
+    const differs = (a: string[] = [], b: string[] = []) =>
+      a.length !== b.length || a.some((v, i) => v !== b[i]);
+    const changed = differs(mapPoolDraft.cs2, defaultMapPool.cs2) || differs(mapPoolDraft.valorant, defaultMapPool.valorant);
+    setUseCustomMapPool(changed);
+
     setOverlay("settings");
 
     toast({
-      description: useCustomMapPool
-        ? "Изменения маппула сохранены"
-        : "Используется стандартный маппул",
+      description: changed ? "Изменения маппула сохранены" : "Используется стандартный маппул",
     });
   };
 
@@ -566,19 +577,17 @@ export default function HomePage() {
             onCreate={handleCreateLobby}
             creating={creatingLobby}
             disabled={!socket?.connected}
+            mapPoolChanged={useCustomMapPool}
           />
         )}
         {overlay === "mapPool" && (
           <MapPoolEditorOverlay
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            mapPool={mapPool}
+            gameId={selectedGameId === "valorant" ? "valorant" : "cs2"}
+            gamePrettyName={selectedGameInfo?.prettyName}
+            mapPool={mapPoolDraft}
             allMapsList={allMapsList}
             onChange={handleSelectChange}
-            onBack={() => {
-              setActiveTab(0);
-              setOverlay("settings");
-            }}
+            onBack={() => setOverlay("settings")}
             onReset={handleResetMapPool}
             onSave={handleSaveMapPool}
           />
