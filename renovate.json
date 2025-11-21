@@ -14,7 +14,9 @@
     },
     {
       "matchDatasources": ["github-tags"],
-      "registryUrl": "https://code.forgejo.org"
+      "constraints": {
+        "registryUrl": "https://code.forgejo.org"
+      }
     }
   ],
   "prHourlyLimit": 0,
