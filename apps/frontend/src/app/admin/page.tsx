@@ -1922,8 +1922,8 @@ export default function AdminPage() {
         </>
       )}
       <FooterBar
-        repoUrl="https://git.in.csmpro.ru/csmpro/csm-mapban"
-        licenseUrl="https://git.in.csmpro.ru/csmpro/csm-mapban#license-and-trademark-notice"
+        repoUrl="https://git.csmpro.ru/csmpro/mapban"
+        licenseUrl="https://git.csmpro.ru/csmpro/mapban#license-and-trademark-notice"
         version={buildVersion}
       />
     </div>

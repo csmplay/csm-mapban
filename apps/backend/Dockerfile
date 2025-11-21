@@ -30,9 +30,9 @@ COPY apps/backend/package.json ./apps/backend/package.json
 WORKDIR /app/apps/backend
 CMD ["bun", "dist/index.js"]
 
-LABEL org.opencontainers.image.source="https://git.in.csmpro.ru/csmpro/csm-mapban"
-LABEL org.opencontainers.image.url="https://git.in.csmpro.ru/csmpro/csm-mapban"
+LABEL org.opencontainers.image.source="https://git.csmpro.ru/csmpro/mapban"
+LABEL org.opencontainers.image.url="https://git.csmpro.ru/csmpro/mapban"
 LABEL org.opencontainers.image.authors="CyberSport Masters"
 LABEL org.opencontainers.image.title="CSM Mapban Backend"
 LABEL org.opencontainers.image.description="Modern map veto and pick tool for tournaments."
-LABEL org.opencontainers.image.licenses="AGPL-3.0-only AND CC-BY-SA-4.0 AND OFL-1.1"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only AND CC-BY-SA-4.0 AND OFL-1.1 AND MIT"

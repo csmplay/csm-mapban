@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+# SPDX-License-Identifier: MIT
+
+:80 {
+    @api path /api/*
+    reverse_proxy @api backend:4000 {
+        header_up Host {host}
+    }
+
+    @socket path /socket.io/*
+    reverse_proxy @socket backend:4000 {
+        header_up Host {host}
+    }
+
+    @frontend path /*
+    reverse_proxy @frontend frontend:3000 {
+        header_up Host {host}
+    }
+}

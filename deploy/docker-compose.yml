@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2025 CyberSport Masters <git@csmpro.ru>
+# SPDX-License-Identifier: MIT
+
+services:
+  backend:
+    image: git.csmpro.ru/csmpro/mapban/backend:latest
+    container_name: csm-mapban-backend
+    environment:
+      - FRONTEND_URL
+    restart: unless-stopped
+
+  frontend:
+    image: git.csmpro.ru/csmpro/mapban/frontend:latest
+    container_name: csm-mapban-frontend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: csm-mapban-caddy
+    ports:
+      - 80:80
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend

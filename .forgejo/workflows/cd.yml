@@ -15,7 +15,7 @@ jobs:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
     env:
-      REGISTRY_URL: git.in.csmpro.ru
+      REGISTRY_URL: git.csmpro.ru
     strategy:
       matrix:
         service: [backend, frontend]
@@ -49,7 +49,7 @@ jobs:
       - name: Build ${{ matrix.service }} Docker Image
         run: |
           IMAGE=${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
-          GHIMAGE=ghcr.io/csmplay/csm-mapban/${{ matrix.service }}
+          GHIMAGE=ghcr.io/csmplay/mapban/${{ matrix.service }}
           TAGS="-t ${IMAGE}:${{ github.ref_name }}"
           GHTAGS="-t ${GHIMAGE}:${{ github.ref_name }}"
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
@@ -68,7 +68,7 @@ jobs:
       - name: Push ${{ matrix.service }} Docker Image
         run: |
           docker push --all-tags ${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}
-          docker push --all-tags ghcr.io/csmplay/csm-mapban/${{ matrix.service }}
+          docker push --all-tags ghcr.io/csmplay/mapban/${{ matrix.service }}
 
   build-and-push:
     name: Build and Push Release
@@ -77,23 +77,15 @@ jobs:
     permissions:
       contents: write
     env:
-      REPO_URL: git.in.csmpro.ru
+      REPO_URL: git.csmpro.ru
     steps:
       - name: Checkout Repository
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-      
-      - name: Install bun
-        uses: https://github.com/oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
 
-      - name: Install zip and jq
+      - name: Install jq
         run: |
           apt update
-          apt install -y zip jq
-      
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
-        with:
-          node-version: '24'
-          package-manager-cache: false
+          apt install -y jq
 
       - name: Generate Release Notes
         id: release_notes
@@ -120,35 +112,12 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
           rm release/RELEASE_NOTES.md
 
-      - name: Build Backend release
-        run: |
-          cd apps/backend
-          bun install --frozen-lockfile
-          bun run --bun build
-          cp ../../README.md dist
-          cp ../../LICENSES dist -r
-          mv dist csm-mapban-backend
-          tar -czf ../../release/backend-release.tar.gz csm-mapban-backend
-          zip -r ../../release/backend-release.zip csm-mapban-backend
-
-      - name: Build Frontend release
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
-        run: |
-          cd apps/frontend
-          bun install --frozen-lockfile
-          bun run --bun build
-          cp ../../README.md .next/standalone/apps/frontend/
-          cp ../../LICENSES .next/standalone/apps/frontend/ -r
-          cd .next/standalone/apps/
-          mv frontend csm-mapban-frontend
-          tar -czf ../../../../../release/frontend-release.tar.gz csm-mapban-frontend
-          zip -r ../../../../../release/frontend-release.zip csm-mapban-frontend
-
       - name: Copy and override docker-compose.yml for release
         run: |
-          cp docker-compose.yml release/docker-compose.yml
-          sed -i "s/:latest/:${{ github.ref_name }}/g" release/docker-compose.yml
+          sed -i "s/:latest/:${{ github.ref_name }}/g" deploy/docker-compose.yml
+          mv deploy csm-mapban
+          mkdir release-tmp
+          tar -czf release-tmp/release.tar.gz csm-mapban
 
       - name: Release
         uses: actions/forgejo-release@v2.7.3
@@ -158,5 +127,5 @@ jobs:
           repo: ${{ github.repository }}
           token: ${{ secrets.RELEASE_TOKEN }}
           tag: ${{ github.ref_name }}
-          release-dir: release
+          release-dir: release-tmp
           release-notes: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
