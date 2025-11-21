@@ -6,7 +6,7 @@
 [![REUSE status](https://api.reuse.software/badge/git.csmpro.ru/csmpro/mapban)](https://api.reuse.software/info/git.csmpro.ru/csmpro/mapban)
 [![Latest release](https://git.csmpro.ru/csmpro/mapban/badges/release.svg)](https://git.csmpro.ru/csmpro/mapban/releases/latest)
 [![License: AGPL v3](https://img.shields.io/badge/license-AGPL%20v3-blue?logo=open-source-initiative&logoColor=white)](./LICENSE)
-[![Service status](https://img.shields.io/website?url=https%3A%2F%2Fmapban.csmpro.ru&label=service&up_message=online&down_message=down&up_color=brightgreen&down_color=red&logo=rocket&logoColor=white)](https://mapban.csmpro.ru/)
+[![Service status](https://img.shields.io/website?url=https%3A%2F%2Fmapban.ru&label=service&up_message=online&down_message=down&up_color=brightgreen&down_color=red&logo=rocket&logoColor=white)](https://mapban.ru/)
 [![Source code at CSM Git](https://img.shields.io/badge/source-CSM%20Git-24292e?logo=forgejo&logoColor=white)](https://git.csmpro.ru/csmpro/mapban)
 
 CSM Mapban is a modern map veto and pick tool for tournaments, featuring
@@ -25,7 +25,7 @@ live-synced lobbies and OBS-ready overlays.
 ## Deployment
 
 ```bash
-curl -L -o release.tar.gz https://mapban.csmpro.ru/release.tar.gz
+curl -L -o release.tar.gz https://mapban.ru/release.tar.gz
 tar -xzf release.tar.gz
 cd csm-mapban
 cp .env.example .env # edit .env if needed
