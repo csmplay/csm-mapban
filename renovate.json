@@ -11,6 +11,10 @@
     {
       "matchDatasources": ["bun"],
       "abandonmentThreshold": "18 months"
+    },
+    {
+      "matchDatasources": ["github-tags"],
+      "registryUrl": "https://code.forgejo.org"
     }
   ],
   "prHourlyLimit": 0,
