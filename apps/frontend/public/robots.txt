@@ -1,0 +1,6 @@
+# CSM - CyberSport Masters
+# Made by GooseMooz and ch4og
+
+User-agent: *
+Allow: /$
+Disallow: /
