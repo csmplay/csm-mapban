@@ -4,6 +4,7 @@
 "use client";
 
 import Image from "next/image";
+import { CDN } from "../lib/cdn";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -30,7 +31,7 @@ export default function NotFound() {
           }}
         >
           <Image
-            src="https://cdn.csmpro.ru/CSM_white.svg"
+            src={CDN.brand()}
             alt="CSM"
             width={120}
             height={32}

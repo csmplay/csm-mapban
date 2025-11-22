@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { CDN, slugify } from "../../lib/cdn";
 
 export interface AnimatedPickCardProps {
   teamName: string;
@@ -86,7 +87,7 @@ export default function AnimatedPickCard({
                     className="pr-6"
                   >
                     <Image
-                      src={`https://cdn.csmpro.ru/mapban/${gameName}/${side}_white.png`}
+                      src={CDN.side(gameName, side, "white")}
                       alt={side}
                       draggable={false}
                       width={40}
@@ -108,8 +109,8 @@ export default function AnimatedPickCard({
               style={{ backgroundColor: cardColors.bg[1], originY: 1 }}
               className={`absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden ${getHighlightClass("base")}`}
             >
-              <Image
-                src={`https://cdn.csmpro.ru/mapban/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
+                <Image
+                  src={CDN.map(gameName, slugify(mapName))}
                 alt={mapName}
                 draggable={false}
                 priority={true}

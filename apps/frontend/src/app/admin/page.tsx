@@ -36,6 +36,7 @@ import AnimatedPickCard from "@/components/ui/pick";
 import AnimatedPickModeCard from "@/components/ui/pick_mode";
 import AnimatedDeciderCard from "@/components/ui/decider";
 import Image from "next/image";
+import { CDN } from "../../lib/cdn";
 import { fetchMapPool } from "@/lib/utils";
 import AnimatedBanModeCard from "@/components/ui/ban_mode";
 import { GameSelectionOverlay } from "@/components/overlays/GameSelectionOverlay";
@@ -638,7 +639,7 @@ export default function AdminPage() {
         {/* Hero */}
         <div className="text-center mb-10">
           <Image
-            src="https://cdn.csmpro.ru/CSM_white.svg"
+            src={CDN.brand()}
             alt="CSM"
             width={120}
             height={32}

@@ -4,6 +4,7 @@
 "use client";
 
 import React from "react";
+import { CDN, slugify } from "../../lib/cdn";
 import Image from "next/image";
 
 export type MapTileProps = {
@@ -21,8 +22,7 @@ export function MapTile({
   allMaps,
   onChange,
 }: MapTileProps) {
-  const slug = (value || "").toLowerCase().replace(/ /g, "");
-  const imgSrc = `https://cdn.csmpro.ru/mapban/${gameId}/maps/${slug}.jpg`;
+  const imgSrc = value ? CDN.map(gameId, slugify(value)) : CDN.map("cs2", "nuke");
   return (
     <div className="group bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
       <div className="relative w-full pt-[70%] overflow-hidden">

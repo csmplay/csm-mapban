@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { CDN, slugify } from "../../lib/cdn";
 
 export interface AnimatedBanCardProps {
   teamName: string;
@@ -78,7 +79,7 @@ export default function AnimatedBanCard({
               className={`absolute top-[60px] bottom-[120px] left-0 right-0 overflow-hidden ${getHighlightClass("base")}`}
             >
               <Image
-                src={`https://cdn.csmpro.ru/mapban/${gameName}/maps/${mapName.toLowerCase().replace(/\s+/g, "").replace(/["«»]/g, "")}.jpg`}
+                src={CDN.map(gameName, slugify(mapName))}
                 alt={mapName}
                 draggable={false}
                 priority={true}

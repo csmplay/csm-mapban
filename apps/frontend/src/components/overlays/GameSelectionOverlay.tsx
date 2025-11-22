@@ -5,6 +5,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { CDN } from "../../lib/cdn";
 import { Button } from "@/components/ui/button";
 import { OverlayShell } from "@/components/ui/overlay-shell";
 
@@ -41,7 +42,7 @@ export function GameSelectionOverlay({
               className="h-20 rounded-2xl font-medium transition-all duration-200 flex flex-col items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border-0"
             >
               <Image
-                src={`https://cdn.csmpro.ru/mapban/${game.id}/logo.png`}
+                    src={CDN.logo(game.id)}
                 alt={game.prettyName}
                 width={28}
                 height={28}

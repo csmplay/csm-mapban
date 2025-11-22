@@ -11,6 +11,7 @@ import React, {
   useMemo,
 } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { CDN, slugify } from "@/lib/cdn";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,16 +34,12 @@ const modeTranslations: Record<GameMode, string> = {
 // Mode images by name
 const getModeImagePath = (modeName: string): string => {
   const filename = modeName.toLowerCase();
-  return `https://cdn.csmpro.ru/mapban/splatoon/modes/${filename}.png`;
+  return CDN.mode("splatoon", filename);
 };
 
 // Map images by name
 const getMapImagePath = (mapName: string): string => {
-  const filename = mapName
-    .toLowerCase()
-    .replace(/\s+/g, "")
-    .replace(/["«»]/g, "");
-  return `https://cdn.csmpro.ru/mapban/splatoon/maps/${filename}.jpg`;
+  return CDN.map("splatoon", slugify(mapName));
 };
 
 export default function SplatoonLobbyPage() {
@@ -1106,7 +1103,7 @@ export default function SplatoonLobbyPage() {
                     Подбрасываем монетку...
                   </h2>
                   <video
-                    src={`https://cdn.csmpro.ru/mapban/coin_${coinResult}.webm`}
+                    src={`${CDN.coin(coinResult)}`}
                     preload="high"
                     autoPlay
                     muted

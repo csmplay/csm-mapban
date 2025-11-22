@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { CDN } from "../../lib/cdn";
 
 export interface AnimatedBanModeCardProps {
   teamName: string;
@@ -84,7 +85,7 @@ export default function AnimatedBanModeCard({
             >
               <div className="w-full h-full flex items-center justify-center">
                 <Image
-                  src={`https://cdn.csmpro.ru/mapban/${gameName}/modes/${mode.mode.toLowerCase()}.png`}
+                          src={CDN.mode(gameName, mode.mode)}
                   alt={mode.translatedMode}
                   draggable={false}
                   priority={true}

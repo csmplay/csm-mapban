@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { CDN } from "../lib/cdn";
 import { AnimatePresence, motion } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import { fetchMapPool } from "@/lib/utils";
@@ -413,7 +414,7 @@ export default function HomePage() {
               }}
             >
               <Image
-                src="https://cdn.csmpro.ru/CSM_white.svg"
+                src={CDN.brand()}
                 alt="CSM"
                 width={80}
                 height={21}
@@ -486,7 +487,7 @@ export default function HomePage() {
               className="text-center mb-10"
             >
               <Image
-                src="https://cdn.csmpro.ru/CSM_white.svg"
+                src={CDN.brand()}
                 alt="CSM"
                 width={120}
                 height={32}

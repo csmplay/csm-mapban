@@ -3,6 +3,9 @@
 
 import type { NextConfig } from "next";
 
+const cdnBase = process.env.NEXT_PUBLIC_CDN_BASE || "https://cdn.example.com";
+const cdnPattern = cdnBase.endsWith("/") ? `${cdnBase}**` : `${cdnBase}/**`;
+
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
@@ -12,14 +15,14 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    remotePatterns: [new URL('https://cdn.csmpro.ru/**')],
+    remotePatterns: [new URL(cdnPattern)],
   },
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
   },
   env: {
-    FRONTEND_URL: process.env.FRONTEND_URL,
-    BACKEND_URL: process.env.BACKEND_URL,
+    NEXT_PUBLIC_CDN_BASE: process.env.NEXT_PUBLIC_CDN_BASE || "https://cdn.example.com",
+    NEXT_PUBLIC_CDN_LOGO: process.env.NEXT_PUBLIC_CDN_LOGO || "logo.svg",
   },
 };
 

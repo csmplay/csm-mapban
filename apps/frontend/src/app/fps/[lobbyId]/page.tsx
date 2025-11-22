@@ -4,6 +4,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { CDN, slugify } from "@/lib/cdn";
 import { useRouter, useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
@@ -443,7 +444,7 @@ export default function LobbyPage() {
                   onClick={() => !isDisabled && handleCardClick(index)}
                 >
                   <Image
-                    src={`https://cdn.csmpro.ru/mapban/${gameName}/maps/${mapName.toLowerCase().replace(" ", "")}.jpg`}
+                    src={`${CDN.map(gameName, slugify(mapName))}`}
                     alt={mapName}
                     draggable={false}
                     fill
@@ -539,7 +540,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                   >
                                     <Image
-                                      src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "ct" : "t"}.jpg`}
+                                      src={`${CDN.side(gameName, pickSide === "ct" ? "ct" : "t")}`}
                                       alt={`${pickSide === "ct" ? "ct" : "t"}`}
                                       draggable={false}
                                       width={80}
@@ -564,7 +565,7 @@ export default function LobbyPage() {
                                     className="relative flex items-center justify-center"
                                   >
                                     <Image
-                                      src={`https://cdn.csmpro.ru/mapban/${gameName}/${pickSide === "ct" ? "t" : "ct"}.jpg`}
+                                      src={`${CDN.side(gameName, pickSide === "ct" ? "t" : "ct")}`}
                                       alt={`${pickSide === "ct" ? "t" : "ct"}`}
                                       draggable={false}
                                       width={80}
@@ -688,7 +689,7 @@ export default function LobbyPage() {
               </h2>
               <div className="flex justify-center space-x-4">
                 <Image
-                  src={`https://cdn.csmpro.ru/mapban/${gameName}/ct.jpg`}
+                  src={`${CDN.side(gameName, "ct")}`}
                   alt="CT Icon"
                   priority={true}
                   width={100}
@@ -697,7 +698,7 @@ export default function LobbyPage() {
                   onClick={() => handlePromptClick("ct")}
                 />
                 <Image
-                  src={`https://cdn.csmpro.ru/mapban/${gameName}/t.jpg`}
+                  src={`${CDN.side(gameName, "t")}`}
                   alt="T Icon"
                   width={100}
                   height={100}
@@ -901,7 +902,7 @@ export default function LobbyPage() {
                     Подбрасываем монетку...
                   </h2>
                   <video
-                    src={`https://cdn.csmpro.ru/mapban/coin_${coinResult}.webm`}
+                    src={`${CDN.coin(coinResult)}`}
                     preload={"high"}
                     autoPlay
                     muted

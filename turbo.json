@@ -14,5 +14,5 @@
     },
     "start": {}
   },
-  "globalEnv": ["FRONTEND_URL", "BACKEND_URL"]
+  "globalEnv": ["FRONTEND_URL", "NEXT_PUBLIC_CDN_BASE" ,"NEXT_PUBLIC_CDN_LOGO"]
 }
